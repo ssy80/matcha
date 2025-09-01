@@ -1,0 +1,15 @@
+
+apt install node
+apt install npm
+npm install express
+
+cd ./matcha
+
+# init a node project -y = accept default for package.json
+npm init -y
+
+# add node_modules/ to .gitignore
+
+# get node_modules according to package.json
+npm install
+
