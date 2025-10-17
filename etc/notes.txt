@@ -2,6 +2,7 @@
 apt install node
 apt install npm
 npm install express
+npm install swagger-jsdoc swagger-ui-express
 
 cd ./matcha
 
@@ -12,4 +13,43 @@ npm init -y
 
 # get node_modules according to package.json
 npm install
+
+
+Setup to use
+1) Backend REST API server - Express/node
+2) Database - sqlite during development(Simpler), later use postgresSql(final)
+
+
+
+
+Todo
+
+User module 
+1) Registration 
+    - email address, username, last name, first name, password
+    - must receive an email with a unique link to verify their account
+
+
+2) Sign In
+    - log in using their username and password
+    - request a password reset email if they forget their passwor
+    - log out with a single click
+
+3) User Profile
+    - Complete profile - gender, sexual preferences, biography, list of interests, 5 pictures(1 for profile)
+    - allow update all profiles above + last name, first name, and email address.
+    - Users must be able to see who has viewed their profile.
+    - Users must also be able to see who has “liked” them.
+    - Each user must have a public “fame rating”
+    - Users must be located via GPS positioning down to their neighborhood. 
+    - If a user opts out of location tracking, you must implement an alternative method to 
+      determine their approximate location, even without their explicit consent.
+    - Users must also have the option to manually adjust their GPS location in their profile.
+
+
+
+Database
+
+1) Setup Sqlite3
+    sudo apt install sqlite3 -y
 
