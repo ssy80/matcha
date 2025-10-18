@@ -15,9 +15,10 @@ CREATE TABLE users (
 CREATE TABLE user_activation (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     activation_uuid VARCHAR(100) NOT NULL UNIQUE,
-    activation_status VARCHAR(100) NOT NULL,
+    activation_status VARCHAR(50) NOT NULL,
     user_id INTEGER NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+
 

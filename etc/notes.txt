@@ -3,6 +3,12 @@ apt install node
 apt install npm
 npm install express
 npm install swagger-jsdoc swagger-ui-express
+npm install sqlite3
+npm install sqlite
+npm install nodemailer
+npm install bcrypt
+npm install dotenv
+npm install uuid
 
 cd ./matcha
 
@@ -53,3 +59,14 @@ Database
 1) Setup Sqlite3
     sudo apt install sqlite3 -y
 
+    npm install express sqlite3
+
+
+
+
+API Standard Responses:
+
+    {
+        "message": [],                  # success, final
+        "error": []
+    }
