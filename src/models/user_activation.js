@@ -12,12 +12,12 @@ CREATE TABLE user_activation (
 
 export class UserActivation {
 
-    constructor(id, activation_uuid, activation_status, user_id, createdAt, updatedAt) 
+    constructor(id, activationUuid, activationStatus, userId, createdAt, updatedAt) 
     {
         this._id = id;
-        this._activation_uuid = activation_uuid;
-        this._activation_status = activation_status;
-        this._user_id = user_id;
+        this._activationUuid = activationUuid;
+        this._activationStatus = activationStatus;
+        this._userId = userId;
         this._createdAt = createdAt;
         this._updatedAt = updatedAt;
     }
@@ -27,16 +27,16 @@ export class UserActivation {
         return this._id;
     }
 
-    get activation_uuid() {
-        return this._activation_uuid;
+    get activationUuid() {
+        return this._activationUuid;
     }
 
-    get activation_status() {
-        return this._activation_status;
+    get activationStatus() {
+        return this._activationStatus;
     }
 
-    get user_id() {
-        return this._user_id;
+    get userId() {
+        return this._userId;
     }
 
     get createdAt() {
@@ -52,16 +52,16 @@ export class UserActivation {
         this._id = value;
     }
 
-    set activation_uuid(value) {
-        this._activation_uuid = value;
+    set activationUuid(value) {
+        this._activationUuid = value;
     }
 
-    set activation_status(value) {
-        this._activation_status = value;
+    set activationStatus(value) {
+        this._activationStatus = value;
     }
 
-    set user_id(value) {
-        this._user_id = value;
+    set userId(value) {
+        this._userId = value;
     }
 
     set createdAt(value) {

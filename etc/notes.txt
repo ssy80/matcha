@@ -9,6 +9,7 @@ npm install nodemailer
 npm install bcrypt
 npm install dotenv
 npm install uuid
+npm install jsonwebtoken
 
 cd ./matcha
 
@@ -38,16 +39,16 @@ User module
 
 2) Sign In
     - log in using their username and password
-    - request a password reset email if they forget their passwor
+    - request a password reset email if they forget their password
     - log out with a single click
 
 3) User Profile
     - Complete profile - gender, sexual preferences, biography, list of interests, 5 pictures(1 for profile)
-    - allow update all profiles above + last name, first name, and email address.
+    - allow update all profiles above + last name, first name, and email address
     - Users must be able to see who has viewed their profile.
     - Users must also be able to see who has “liked” them.
     - Each user must have a public “fame rating”
-    - Users must be located via GPS positioning down to their neighborhood. 
+    - Users must be located via GPS positioning down to their neighborhood.
     - If a user opts out of location tracking, you must implement an alternative method to 
       determine their approximate location, even without their explicit consent.
     - Users must also have the option to manually adjust their GPS location in their profile.
