@@ -26,11 +26,7 @@ const JWT_EXPIRES_IN = "1h"; // can be "15m", "1h", "7d", etc.
 export const resetPasswordRequest = async (req, res) => {
     try{
         const resetData = req.body;
-        if (!resetData){
-            res.status(400).json(ApiJsonResponse(null, ["empty body"]));
-            return;
-        }
-        const email = resetData.email;
+        const email = resetData && resetData.email;
         if(!email){
             res.status(400).json(ApiJsonResponse(null, ["no email provided"]));
             return;
@@ -45,36 +41,30 @@ export const resetPasswordRequest = async (req, res) => {
             res.status(400).json(ApiJsonResponse(null, ["user is not activated"]));
             return;
         }
-        // need delete old user_reset record ?
         //send reset email to user
         const resetUuid = crypto.randomUUID();
         const expire_in = 10;
         const expiredAt = new Date(Date.now() + (expire_in * 60 * 1000)).toISOString();
         const userReset = new UserReset(null, resetUuid, "new", expiredAt, user.id, null, null);
-        //delete old user_reset rec with status "new"
+        //delete old user_reset rec
         await deleteUserResets(user.id);
         await addUserResets(userReset);
-        //console.log(userReset);
         await sendResetEmail(email, resetUuid);
         res.status(201).json(ApiJsonResponse(["success"], null));
-
     }catch(err){
         console.error("internal server error: ", err);
         res.status(500).json(ApiJsonResponse(null, ["internal server error"]));
     }
 }
 
+
 export const userLogin = async (req, res) => {
     try{
         const loginData = req.body;
-        if (!loginData){
-            res.status(400).json(ApiJsonResponse(null, ["empty body"]));
-            return;
-        }
-        let username = loginData.username;
-        let password = loginData.password;
+        let username = loginData && loginData.username;
+        let password = loginData && loginData.password;
         if (!username || !password){
-            res.status(400).json(ApiJsonResponse(null, ["incorrect login parameters provided"]));
+            res.status(400).json(ApiJsonResponse(null, ["no username or password provided"]));
             return;
         }
         username = username.trim();
@@ -112,7 +102,8 @@ export const userLogin = async (req, res) => {
 
 export const activateUser = async (req, res) => {
     try{
-        const activationUuid = req.query.activation_uuid;
+        const queryData = req.query;
+        const activationUuid = queryData && queryData.activation_uuid;
         if (!activationUuid){
             res.status(400).json(ApiJsonResponse(null, ["no activation uuid"]));
             return;
@@ -145,17 +136,13 @@ export const activateUser = async (req, res) => {
 export const registerUser = async (req, res) => {
     try{
         const userData = req.body;
-        if (!userData){
-            res.status(400).json(ApiJsonResponse(null, ["empty body"]));
-            return;
-        }
-        let email = userData.email;
-        let username = userData.username;
-        let firstName = userData.first_name;
-        let lastName = userData.last_name;
-        let userPassword = userData.user_password;
+        let email = userData && userData.email;
+        let username = userData && userData.username;
+        let firstName = userData && userData.first_name;
+        let lastName = userData && userData.last_name;
+        let userPassword = userData && userData.user_password;
         if (!email || !username || !firstName || !lastName || !userPassword){
-            res.status(400).json(ApiJsonResponse(null, ["incorrect user parameters provided"]));
+            res.status(400).json(ApiJsonResponse(null, ["incorrect user data provided"]));
             return;
         }
         email = email.trim();
