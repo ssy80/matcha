@@ -9,7 +9,7 @@ import { addUserProfile } from '../services/profileService.js';
 const router = express.Router();
 
 
-router.put('/profile_update', async (req, res) => {
+router.post('/add', async (req, res) => {
     addUserProfile(req, res);
     //res.status(200).json(ApiJsonResponse(["success"], null));
 });

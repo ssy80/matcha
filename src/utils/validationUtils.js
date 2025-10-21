@@ -81,4 +81,53 @@ export class Validation{
         return true;
     }
 
+    static isValidGender(gender){
+        if (typeof gender !== 'string') return false;
+
+        const validValues = ['male', 'female', 'others'];
+
+        return validValues.includes(gender);
+    }
+
+    static isValidSexualPreference(preference){
+        if (typeof preference !== 'string') return false;
+
+        const validValues = ['male', 'female', 'others'];
+        
+        return validValues.includes(preference);
+    }
+
+    static isValidInterest(interest){
+        if (typeof interest !== 'string') return false;
+
+        const validValues = ['#music', '#movie', '#sport', '#vegan', '#dinner', '#travel'];
+        
+        return validValues.includes(interest);
+    }
+
+    //accept ["male", "female"]
+    static isValidSexualPreferences(preferences){
+        
+        if (!Array.isArray(preferences)) return false;
+        if (preferences.length < 1) return false;
+
+        for (const pref of preferences){
+            if (!this.isValidSexualPreference(pref))
+                return false;
+        }
+        return true;
+    }
+
+    //accept ["#music", "#movie"]
+    static isValidInterests(interests){
+
+        if (!Array.isArray(interests)) return false;
+        if (interests.length < 1) return false;
+
+        for (const interest of interests){
+            if (!this.isValidInterest(interest))
+                return false;
+        }
+        return true;
+    }
 }
