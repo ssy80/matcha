@@ -1,24 +1,32 @@
 /*
+CREATE TABLE users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     email VARCHAR(255) NOT NULL UNIQUE,
     username VARCHAR(100) NOT NULL UNIQUE,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
+    gender VARCHAR(20),
+    biography VARCHAR(500),
+    date_of_birth TEXT CHECK(date_of_birth IS NULL OR date_of_birth = strftime('%Y-%m-%d', date_of_birth)),
     user_password VARCHAR(100) NOT NULL,
     user_status VARCHAR(50) NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
 */
 
 export class User {
 
-    constructor(id, email, username, firstName, lastName, userPassword, userStatus, createdAt, updatedAt) 
+    constructor(id, email, username, firstName, lastName, gender, biography, dateOfBirth, userPassword, userStatus, createdAt, updatedAt) 
     {
         this._id = id;
         this._email = email;
         this._username = username;
         this._firstName = firstName;
         this._lastName = lastName;
+        this._gender = gender;
+        this._biography = biography;
+        this._dateOfBirth = dateOfBirth;
         this._userPassword = userPassword;
         this._userStatus = userStatus;
         this._createdAt = createdAt;
@@ -68,6 +76,30 @@ export class User {
 
     set lastName(value) {
         this._lastName = value;
+    }
+
+    get gender() {
+        return this._gender;
+    }
+
+    set gender(value) {
+        this._gender = value;
+    }
+
+    get biography() {
+        return this._biography;
+    }
+
+    set biography(value) {
+        this._biography = value;
+    }
+
+    get dateOfBirth() {
+        return this._dateOfBirth;
+    }
+
+    set dateOfBirth(value) {
+        this._dateOfBirth = value;
     }
 
     // User Password

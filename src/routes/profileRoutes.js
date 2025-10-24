@@ -1,6 +1,6 @@
 import express from 'express';
 import { ApiJsonResponse } from '../utils/responseUtil.js';
-import { addUserProfile } from '../services/profileService.js';
+import { patchUserProfile, getProfileMe, getProfileUser, viewedProfile, likedProfile, getFameRating } from '../services/profileService.js';
 
 //import dotenv from 'dotenv';
 //import crypto from "crypto";
@@ -9,15 +9,30 @@ import { addUserProfile } from '../services/profileService.js';
 const router = express.Router();
 
 
-router.post('/add', async (req, res) => {
-    addUserProfile(req, res);
-    //res.status(200).json(ApiJsonResponse(["success"], null));
+router.patch('/update', async (req, res) => {
+    await patchUserProfile(req, res);
 });
 
-/*router.get('/me', async (req, res) => {
-    console.log("user profile", req.user);
-    res.status(200).json(ApiJsonResponse(["success"], null));
-});*/
+router.get('/me', async (req, res) => {
+    await getProfileMe(req, res);
+});
+
+router.get('/:id', async (req, res) => {
+    await getProfileUser(req, res);
+});
+
+//viewed user profile {viewed_user_id = 1}
+router.post('/viewed_profile', async (req, res) => {
+    await viewedProfile(req, res);
+});
+
+router.post('/liked_profile', async (req, res) => {
+    await likedProfile(req, res);
+});
+
+router.get('/fame_rating/:id', async (req, res) => {
+    await getFameRating(req, res);
+});
 
 
 export default router;

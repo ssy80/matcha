@@ -10,6 +10,7 @@ npm install bcrypt
 npm install dotenv
 npm install uuid
 npm install jsonwebtoken
+npm install axios
 
 cd ./matcha
 
@@ -40,18 +41,34 @@ User module
 2) Sign In
     - log in using their username and password
     - request a password reset email if they forget their password
-    - log out with a single click
+    - log out with a single click (Frontend delete the token)
 
 3) User Profile
     - Complete profile - gender, sexual preferences, biography, list of interests, 5 pictures(1 for profile)
+        gender: "male", "female", "others"
+        sexual_preferences: "male", "female", "others"
+        interests: "#music", "#movie", "#fine_dining", "#travel", "#sport", "#vegan"
     - allow update all profiles above + last name, first name, and email address
-    - Users must be able to see who has viewed their profile.
-    - Users must also be able to see who has “liked” them.
-    - Each user must have a public “fame rating”
+
+    //add date of birth
+    add who view me list
+    get who view me by id
+    get who liked me list
+    get who liked me by id
+    //add user_onlines table
+    get user online status
+    
+    add user_blocks table
+
+
+    - Users must be able to see who has viewed their profile.  -- view history
+    - Users must also be able to see who has “liked” them.     --like history
+    - Each user must have a public “fame rating”               -- most liked count ?
+    
     - Users must be located via GPS positioning down to their neighborhood.
-    - If a user opts out of location tracking, you must implement an alternative method to 
+    - If a user opts out of location tracking, you must implement an alternative method to      -- ip geolocation??
       determine their approximate location, even without their explicit consent.
-    - Users must also have the option to manually adjust their GPS location in their profile.
+    - Users must also have the option to manually adjust their GPS location in their profile.   --?? manually adjust the co ordinates or 
 
 
 
@@ -62,7 +79,8 @@ Database
 
     npm install express sqlite3
 
-
+    sqlite ./database/matcha.db 
+    .read "../scripts/db.sql"
 
 
 API Standard Responses:
@@ -71,3 +89,26 @@ API Standard Responses:
         "message": [],                  # success, final
         "error": []
     }
+
+
+
+Registration:
+1) register user
+2) activate user
+3) login
+4) send reset password email
+5) reset_password /api/user/reset_password
+6) get profile /api/profile/me
+7) update profile /api/profile/update (patch)
+8) update picture as profile pic /api/profile/profile_picture_update
+
+get profile other /api/profile/{id}
+
+
+
+
+await db.run( INSERT INTO user_locations (user_id, latitude, longitude, updated_at) 
+VALUES (?, ?, ?, CURRENT_TIMESTAMP) 
+ON CONFLICT(user_id) 
+DO UPDATE SET latitude = excluded.latitude, longitude = excluded.longitude, 
+updated_at = CURRENT_TIMESTAMP; , [userId, latitude, longitude]);

@@ -11,7 +11,7 @@ export class PictureUtil{
 
     static async savePicture(picture){
 
-        console.log(typeof picture.isProfilePicture);
+        //console.log(typeof picture.isProfilePicture);
         // Check if it's an object
         if (typeof picture !== 'object' || picture === null) return null;
         
@@ -54,14 +54,19 @@ export class PictureUtil{
         if (!Array.isArray(pictures)) return null;
 
         let saved = [];
+        let isProfilePictureCount = 0;
         for (const pic of pictures){
             const savedPic = await this.savePicture(pic);
             if (!savedPic)
                 return null;
             else{
+                if (savedPic.isProfilePicture) //1 === true
+                    isProfilePictureCount++;
                 saved.push(savedPic);
             }
         }
+        if (isProfilePictureCount > 1)
+            return null;
         return saved;
     }
 }

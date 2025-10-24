@@ -9,7 +9,7 @@ import dotenv from 'dotenv';
 //import crypto from "crypto";
 //import { UserActivation } from '../models/user_activation.js';
 //import { sendActivationEmail } from '../services/emailService.js';
-import { registerUser, activateUser, userLogin, resetPasswordRequest } from '../services/userServices.js';
+import { registerUser, activateUser, userLogin, resetPasswordRequest, resetUserPassword } from '../services/userServices.js';
 
 dotenv.config();
 
@@ -30,7 +30,7 @@ router.post('/register', async (req, res) => {
 });
 
 
-router.get('/activate', async (req, res) => {
+router.post('/activate', async (req, res) => {
     await activateUser(req, res);
 });
 
@@ -43,6 +43,11 @@ router.post('/login', async (req, res) => {
 router.post('/reset_password_request', async (req, res) => {
     await resetPasswordRequest(req, res);
 });
+
+router.post('/reset_user_password', async (req, res) => {
+    await resetUserPassword(req, res);
+});
+
 
 router.get('/is_valid_email', (req, res) => {
   res.json({ message: 'Users route' });

@@ -44,8 +44,8 @@ export const sendActivationEmail = async (recipientEmail, activationUuid) =>
         from: `"No Reply" <${process.env.SMTP_USER}>`,
         to: recipientEmail,
         subject: 'Activate Your Account',
-        text: `Please activate your account by visiting this link in your web browser: ${process.env.API_HOST_URL}:${process.env.API_HOST_PORT}/api/users/activate?activation_uuid=${activationUuid}.`,
-        html: `<p>Please activate your account by visiting this link in your web browser : <strong>${process.env.API_HOST_URL}:${process.env.API_HOST_PORT}/api/users/activate?activation_uuid=${activationUuid}</strong>.</p>`
+        text: `Please activate your account by visiting this link in your web browser: ${process.env.FRONTEND_HOST_URL}:${process.env.FRONTEND_HOST_PORT}/users/activate?activation_uuid=${activationUuid}.`,
+        html: `<p>Please activate your account by visiting this link in your web browser : <strong>${process.env.FRONTEND_HOST_URL}:${process.env.FRONTEND_HOST_PORT}/users/activate?activation_uuid=${activationUuid}</strong>.</p>`
     };
 
     try 

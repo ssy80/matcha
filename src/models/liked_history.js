@@ -1,40 +1,44 @@
+
+
 /*
-CREATE TABLE user_profiles (
+CREATE TABLE liked_histories (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
-    gender VARCHAR(20) NOT NULL,
-    biography VARCHAR(500),
+    liked_user_id INTEGER NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (user_id),
     FOREIGN KEY (user_id) REFERENCES users(id) 
+    ON DELETE CASCADE 
+    ON UPDATE NO ACTION,
+    FOREIGN KEY (liked_user_id) REFERENCES users(id)
     ON DELETE CASCADE 
     ON UPDATE NO ACTION
 );
 */
 
 
-export class UserProfile {
+export class LikedHistory {
 
-    constructor(userId, gender, biography, createdAt, updatedAt) 
+    constructor(id, userId, likedUserId, createdAt, updatedAt)
     {
+        this._id = id;
         this._userId = userId;
-        this._gender = gender;
-        this._biography = biography;
+        this._likedUserId = likedUserId;
         this._createdAt = createdAt;
         this._updatedAt = updatedAt;
     }
 
     // Getters
+    get id() {
+        return this._id;
+    }
+
     get userId() {
         return this._userId;
     }
 
-    get gender() {
-        return this._gender;
-    }
-
-    get biography() {
-        return this._biography;
+    get likedUserId() {
+        return this._likedUserId;
     }
 
     get createdAt() {
@@ -46,16 +50,16 @@ export class UserProfile {
     }
 
     // Setters
+    set id(value) {
+        this._id = value;
+    }
+
     set userId(value) {
         this._userId = value;
     }
 
-    set gender(value) {
-        this._gender = value;
-    }
-
-    set biography(value) {
-        this._biography = value;
+    set likedUserId(value) {
+        this._likedUserId = value;
     }
 
     set createdAt(value) {
@@ -65,5 +69,4 @@ export class UserProfile {
     set updatedAt(value) {
         this._updatedAt = value;
     }
-
 }

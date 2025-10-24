@@ -2,6 +2,7 @@ import express from 'express';
 //import {router as userRoutes} from './routes/userRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import profileRoutes from './routes/profileRoutes.js'
+import locationRoutes from './routes/locationRoutes.js'
 import { swaggerUi, swaggerSpec } from './swagger/swagger.js';
 import { authenticateToken } from './middlewares/authentication.js';
 
@@ -15,6 +16,7 @@ const port = 3000; // Or any other desired port
 // 1. Security middleware (first)
 //app.use(helmet());
 //app.use(cors());
+app.use("/images", express.static("public/images"));
 
 //middleware 
 app.use(express.json())  //without path, all req will use
@@ -23,6 +25,7 @@ app.use(express.json())  //without path, all req will use
 // Routes
 app.use('/api/users', userRoutes);
 app.use('/api/profile', authenticateToken, profileRoutes);
+app.use('/api/location', authenticateToken, locationRoutes);
 
 
 // Define a basic route
