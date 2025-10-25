@@ -44,7 +44,7 @@ export class PictureUtil{
             filename: filename,
             isProfilePicture: isProfilePicture
         }
-        console.log(fileObj);
+        //console.log(fileObj);
         return fileObj;
     }
 

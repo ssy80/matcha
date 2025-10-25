@@ -1,6 +1,7 @@
 import express from 'express';
-import { ApiJsonResponse } from '../utils/responseUtil.js';
-import { patchUserProfile, getProfileMe, getProfileUser, viewedProfile, likedProfile, getFameRating } from '../services/profileService.js';
+//import { ApiJsonResponse } from '../utils/responseUtil.js';
+import { patchUserProfile, getProfileMe, getProfileUser, viewedProfile, likedProfile, getFameRating, getOnlineStatus } from '../services/profileService.js';
+import { isUserViewedMe, isUserLikedMe } from '../services/profileService.js';
 
 //import dotenv from 'dotenv';
 //import crypto from "crypto";
@@ -34,5 +35,18 @@ router.get('/fame_rating/:id', async (req, res) => {
     await getFameRating(req, res);
 });
 
+//get user online status
+router.get('/online/:id', async (req, res) => {
+    await getOnlineStatus(req, res);
+});
+
+//check userid got view me?
+router.get('/viewed_me/:id', async (req, res) => {
+    await isUserViewedMe(req, res);
+});
+
+router.get('/liked_me/:id', async (req, res) => {
+    await isUserLikedMe(req, res);
+});
 
 export default router;

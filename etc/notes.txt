@@ -52,11 +52,11 @@ User module
 
     //add date of birth
     add who view me list
-    get who view me by id
+    //get id user_id view me? return 1 
     get who liked me list
     get who liked me by id
     //add user_onlines table
-    get user online status
+    //get user online status
     
     add user_blocks table
 
