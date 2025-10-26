@@ -135,3 +135,22 @@ async function updateUserLocationDb(userLocation){
         throw (err);
     }
 }
+
+//constructor(userId, latitude, longitude, neighborhood, city, country, createdAt, updatedAt)
+export async function getUserLocationByUserId(userId)
+{
+    try{
+        const row = await db.get('SELECT * FROM user_locations WHERE user_id = ?', [userId]);
+
+        if (row){
+            const userLocation = new UserLocation(row.user_id, row.latitude, row.longitude, row.neighborhood, row.city, row.country, row.created_at, row.updated_at);
+            return userLocation;
+        }
+        else
+            return null;
+    }
+    catch(err){
+        console.error("error getUserLocationByUserId: ", err);
+        throw err;
+    }
+}

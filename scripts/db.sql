@@ -10,7 +10,7 @@ drop table liked_histories;
 drop table fame_ratings;
 drop table user_locations;
 drop table user_onlines;
-
+drop table user_blockeds;
 
 --email address, username, last name, first name, password
 
@@ -187,6 +187,21 @@ CREATE TABLE user_onlines (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) 
+    ON DELETE CASCADE 
+    ON UPDATE NO ACTION
+);
+
+
+CREATE TABLE user_blockeds (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    blocked_user_id INTEGER NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) 
+    ON DELETE CASCADE 
+    ON UPDATE NO ACTION,
+    FOREIGN KEY (blocked_user_id) REFERENCES users(id)
     ON DELETE CASCADE 
     ON UPDATE NO ACTION
 );

@@ -1,7 +1,7 @@
 import express from 'express';
 //import { ApiJsonResponse } from '../utils/responseUtil.js';
 import { patchUserProfile, getProfileMe, getProfileUser, viewedProfile, likedProfile, getFameRating, getOnlineStatus } from '../services/profileService.js';
-import { isUserViewedMe, isUserLikedMe } from '../services/profileService.js';
+import { isUserViewedMe, isUserLikedMe, blockedProfile, getViewedMeList, getLikedMeList } from '../services/profileService.js';
 
 //import dotenv from 'dotenv';
 //import crypto from "crypto";
@@ -16,6 +16,18 @@ router.patch('/update', async (req, res) => {
 
 router.get('/me', async (req, res) => {
     await getProfileMe(req, res);
+});
+
+//get list of who viewed me
+router.get('/viewed_me_list', async (req, res) => {
+    console.log("/viewed_me_list");
+    await getViewedMeList(req, res);
+});
+
+//get list of who liked me
+router.get('/liked_me_list', async (req, res) => {
+    console.log("/liked_me_list");
+    await getLikedMeList(req, res);
 });
 
 router.get('/:id', async (req, res) => {
@@ -48,5 +60,12 @@ router.get('/viewed_me/:id', async (req, res) => {
 router.get('/liked_me/:id', async (req, res) => {
     await isUserLikedMe(req, res);
 });
+
+//blocking user
+router.post('/blocked_user', async (req, res) => {
+    await blockedProfile(req, res);
+});
+
+
 
 export default router;

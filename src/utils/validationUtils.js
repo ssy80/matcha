@@ -92,7 +92,7 @@ export class Validation{
     static isValidSexualPreference(preference){
         if (typeof preference !== 'string') return false;
 
-        const validValues = ['male', 'female', 'others'];
+        const validValues = ['male', 'female', 'bi-sexual'];
         
         return validValues.includes(preference);
     }
@@ -100,7 +100,7 @@ export class Validation{
     static isValidInterest(interest){
         if (typeof interest !== 'string') return false;
 
-        const validValues = ['#music', '#movie', '#sport', '#vegan', '#dinner', '#travel'];
+        const validValues = ['#music', '#movie', '#gym', '#swim', '#jog', '#cycle', '#animal','#vegan', '#dinner', '#travel', '#dance'];
         
         return validValues.includes(interest);
     }

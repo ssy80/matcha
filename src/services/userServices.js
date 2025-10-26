@@ -200,7 +200,6 @@ export const registerUser = async (req, res) => {
         let lastName = userData?.last_name ?? null;
         let userPassword = userData?.user_password ?? null;
         let dateOfBirth = userData?.date_of_birth ?? null;
-        
         if (email === null || typeof email !== "string" || !Validation.isEmail(email.trim()) || !Validation.isLengthBetween(email.trim(), 3, 50)) {
             res.status(400).json(ApiJsonResponse(null, ["invalid email"]));
             return;

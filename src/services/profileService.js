@@ -12,6 +12,7 @@ import { getUserById, getUserByEmail } from './userDbService.js';
 import { ViewedHistory } from '../models/viewed_history.js';
 import { LikedHistory } from '../models/liked_history.js';
 import { UserOnline } from '../models/user_online.js';
+import { UserBlocked } from '../models/user_blocked.js';
 
 dotenv.config();
 
@@ -22,6 +23,64 @@ const db = await open({
   driver: sqlite3.Database
 });
 
+//await getLikedMeList(req, res);
+export const getLikedMeList = async (req, res) =>{
+    try{
+        const userId = req.user.id;
+        const likedMeList= await getLikedMeListDb(userId);
+        res.status(200).json(ApiJsonResponse([likedMeList], null));
+    }catch(err){
+        console.error("error getLikedMeList: ", err);
+        res.status(500).json(ApiJsonResponse(null, ["internal server error"]));
+    }
+}
+
+//await getViewedMeList(req, res);
+export const getViewedMeList = async (req, res) =>{
+    try{
+        const userId = req.user.id;
+        const viewedMeList= await getViewedMeListDb(userId);
+        res.status(200).json(ApiJsonResponse([viewedMeList], null));
+    }catch(err){
+        console.error("error getViewedMeList: ", err);
+        res.status(500).json(ApiJsonResponse(null, ["internal server error"]));
+    }
+}
+
+
+//await blockedProfile(req, res);
+export const blockedProfile = async (req, res) =>{
+    try{
+        const userId = req.user.id;
+        const blockedData = req.body;
+        let blockedUserId = blockedData?.blocked_user_id ?? null;
+        const isBlocked = blockedData?.is_blocked ?? null; //true/false
+        //console.log(isNaN(blockedUserId))
+        //console.log(typeof blockedUserId)
+        if (blockedUserId === null || typeof blockedUserId === "boolean" || typeof blockedUserId === "string" || isNaN(blockedUserId)) {
+            res.status(400).json(ApiJsonResponse(null, ["invalid blocked user id"]));
+            return;
+        }
+        if (isBlocked === null || typeof isBlocked !== "boolean") {
+            res.status(400).json(ApiJsonResponse(null, ["invalid is_blocked"]));
+            return;
+        }
+        blockedUserId = Number(blockedUserId);
+
+        const user = getUserById(blockedUserId);
+        if (!user){
+            res.status(400).json(ApiJsonResponse(null, ["invalid blocked user"]));
+            return;
+        }
+
+        const userBlocked = new UserBlocked(null, userId, blockedUserId, null, null);
+        await addUserBlocked(userBlocked, isBlocked);
+        res.status(201).json(ApiJsonResponse(["success"], null));
+    }catch(err){
+        console.error("error blockedProfile: ", err);
+        res.status(500).json(ApiJsonResponse(null, ["internal server error"]));
+    }
+}
 
 export const isUserLikedMe = async (req, res) => {
     try{
@@ -414,7 +473,7 @@ async function updateUserData(user, sexualPreferences, interests, savedPictures)
 }
 
 //? if empty?
-async function getUserInterestsByUserId(userId){
+export const getUserInterestsByUserId = async (userId) => {
     try{
         const rows = await db.all('SELECT * FROM user_interests WHERE user_id = ?', [userId]);
         const interests = rows.map(row => row.interest);
@@ -426,7 +485,7 @@ async function getUserInterestsByUserId(userId){
 }
 
 // if empty?
-async function getUserSexualPreferencesByUserId(userId){
+export const getUserSexualPreferencesByUserId = async (userId) => {
     try{
         const rows = await db.all('SELECT * FROM user_sexual_preferences WHERE user_id = ?', [userId]);
         const sexualPreferences = rows.map(row => row.preference);
@@ -555,6 +614,55 @@ async function getLikedHistoryDb(likedMeUserId, userId){
         return null;
     }catch(err){
         console.error("error getLikedHistoryDb: ", err);
+        throw (err);
+    }
+}
+
+
+async function addUserBlocked(userBlocked, isBlocked){
+    try{
+        const row = await db.get('SELECT * FROM user_blockeds WHERE user_id = ? AND blocked_user_id = ?;', [userBlocked.userId, userBlocked.blockedUserId]);
+        if (isBlocked){
+            if (!row){
+                await db.run('INSERT INTO user_blockeds(user_id, blocked_user_id) values(?,?);', [userBlocked.userId, userBlocked.blockedUserId]);
+            }
+        }
+        else{
+            if (row){
+                await db.run('DELETE FROM user_blockeds WHERE user_id = ? AND blocked_user_id = ?;', [userBlocked.userId, userBlocked.blockedUserId]);
+            }
+        }
+    }catch(err){
+        console.error("error addUserBlocked: ", err);
+        throw (err);
+    }
+}
+
+
+async function getViewedMeListDb(userId){
+    try{
+        const rows = await db.all('SELECT v.user_id, v.updated_at, u.username FROM viewed_histories v \
+            INNER JOIN users u ON v.user_id = u.id WHERE v.viewed_user_id = ? ORDER BY v.updated_at DESC;', [userId]);
+        const result = rows.map((row) => ({"user_id":row.user_id, "username": row.username, "updated_at": row.updated_at}));
+        //console.log(result)
+        return result;
+    }catch(err){
+        console.error("error getViewedMeListDb: ", err);
+        throw (err);
+    }
+}
+
+
+//getLikedMeListDb(userId);
+async function getLikedMeListDb(userId){
+    try{
+        const rows = await db.all('SELECT v.user_id, v.updated_at, u.username FROM liked_histories v \
+            INNER JOIN users u ON v.user_id = u.id WHERE v.liked_user_id = ? ORDER BY v.updated_at DESC;', [userId]);
+        const result = rows.map((row) => ({"user_id":row.user_id, "username": row.username, "updated_at": row.updated_at}));
+        console.log(result)
+        return result;
+    }catch(err){
+        console.error("error getLikedMeListDb: ", err);
         throw (err);
     }
 }

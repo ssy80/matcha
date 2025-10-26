@@ -5,6 +5,7 @@ import profileRoutes from './routes/profileRoutes.js'
 import locationRoutes from './routes/locationRoutes.js'
 import { swaggerUi, swaggerSpec } from './swagger/swagger.js';
 import { authenticateToken } from './middlewares/authentication.js';
+import searchRoutes from './routes/searchRoutes.js';
 
 
 const app = express();
@@ -26,6 +27,8 @@ app.use(express.json())  //without path, all req will use
 app.use('/api/users', userRoutes);
 app.use('/api/profile', authenticateToken, profileRoutes);
 app.use('/api/location', authenticateToken, locationRoutes);
+app.use('/api/search', authenticateToken, searchRoutes);
+
 
 
 // Define a basic route
