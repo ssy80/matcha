@@ -231,7 +231,7 @@ export const registerUser = async (req, res) => {
         userPassword = userPassword.trim();
         dateOfBirth = dateOfBirth.trim();
     
-        const user = new User(null, email, username, firstName, lastName, null, null, dateOfBirth, userPassword, "new", null, null);
+        const user = new User(null, email, username, firstName, lastName, null, null, dateOfBirth, null, userPassword, "new", null, null);
         const hashedPassword = await bcrypt.hash(userPassword, saltRounds);
         user.userPassword = hashedPassword;
         const isValidUsername = await validateUsername(user);
@@ -343,9 +343,9 @@ async function addUser(user, fameRating, userLocation, userActivation, userOnlin
 {
   try{
         await db.run("BEGIN TRANSACTION");
-        const result = await db.run('INSERT INTO users(email, username, first_name, last_name, gender, biography, date_of_birth, user_password, user_status, created_at, updated_at) \
-                                values(?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)',
-                                [user.email, user.username, user.firstName, user.lastName, user.gender, user.biography, user.dateOfBirth, user.userPassword, user.userStatus]);
+        const result = await db.run('INSERT INTO users(email, username, first_name, last_name, gender, biography, date_of_birth, sexual_preference, user_password, user_status, created_at, updated_at) \
+                                values(?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)',
+                                [user.email, user.username, user.firstName, user.lastName, user.gender, user.biography, user.dateOfBirth, user.sexualPreference, user.userPassword, user.userStatus]);
         const userId = result.lastID;
         fameRating.userId = userId;
         userLocation.userId = userId;

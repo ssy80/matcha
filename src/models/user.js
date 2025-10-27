@@ -17,7 +17,7 @@ CREATE TABLE users (
 
 export class User {
 
-    constructor(id, email, username, firstName, lastName, gender, biography, dateOfBirth, userPassword, userStatus, createdAt, updatedAt) 
+    constructor(id, email, username, firstName, lastName, gender, biography, dateOfBirth, sexualPreference,userPassword, userStatus, createdAt, updatedAt) 
     {
         this._id = id;
         this._email = email;
@@ -27,6 +27,7 @@ export class User {
         this._gender = gender;
         this._biography = biography;
         this._dateOfBirth = dateOfBirth;
+        this._sexualPreference = sexualPreference;
         this._userPassword = userPassword;
         this._userStatus = userStatus;
         this._createdAt = createdAt;
@@ -100,6 +101,14 @@ export class User {
 
     set dateOfBirth(value) {
         this._dateOfBirth = value;
+    }
+
+    get sexualPreference() {
+        return this._sexualPreference;
+    }
+
+    set sexualPreference(value) {
+        this._sexualPreference = value;
     }
 
     // User Password

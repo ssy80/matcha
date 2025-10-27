@@ -57,7 +57,7 @@ export const blockedProfile = async (req, res) =>{
         const isBlocked = blockedData?.is_blocked ?? null; //true/false
         //console.log(isNaN(blockedUserId))
         //console.log(typeof blockedUserId)
-        if (blockedUserId === null || typeof blockedUserId === "boolean" || typeof blockedUserId === "string" || isNaN(blockedUserId)) {
+        if (blockedUserId === null || typeof blockedUserId === "boolean" || typeof blockedUserId === "string" || Number.isNaN(blockedUserId)) {
             res.status(400).json(ApiJsonResponse(null, ["invalid blocked user id"]));
             return;
         }
@@ -89,7 +89,7 @@ export const isUserLikedMe = async (req, res) => {
         //console.log(likedMeUserId);
         //console.log(typeof likedMeUserId);
         //if (likedMeUserId === null || typeof Number(likedMeUserId) !== "number") {
-        if (likedMeUserId === null || isNaN(likedMeUserId)) {  
+        if (likedMeUserId === null || Number.isNaN(likedMeUserId)) {  
             res.status(400).json(ApiJsonResponse(null, ["invalid liked me user id"]));
             return;
         }
@@ -118,7 +118,7 @@ export const isUserViewedMe = async (req, res) => {
         console.log(typeof Number(viewedMeUserId)) //why can become a number ?
         console.log(Number(viewedMeUserId))        //Nan
         console.log(typeof Number(viewedMeUserId !== "number")) // why NaN === "number"*/
-        if (viewedMeUserId === null || isNaN(viewedMeUserId)) {
+        if (viewedMeUserId === null || Number.isNaN(viewedMeUserId)) {
             res.status(400).json(ApiJsonResponse(null, ["invalid viewed me user id"]));
             return;
         }
@@ -141,7 +141,7 @@ export const getOnlineStatus = async (req, res) => {
     try{
         let userId = req.params?.id ?? null;
         //if (userId === null || typeof userId !== "number") {
-        if (userId === null || isNaN(userId)) {
+        if (userId === null || Number.isNaN(userId)) {
             res.status(400).json(ApiJsonResponse(null, ["invalid user id"]));
             return;
         }
@@ -166,7 +166,7 @@ export const getFameRating = async(req, res) => {
     try{
         let userId = req.params?.id ?? null;
         //if (userId === null || typeof userId !== "number") {
-        if (userId === null || isNaN(userId)) {
+        if (userId === null || Number.isNaN(userId)) {
             res.status(400).json(ApiJsonResponse(null, ["invalid user id"]));
             return;
         }
@@ -194,7 +194,7 @@ export const likedProfile = async(req, res) => {
         const isLiked = likedData?.is_liked ?? null; //true/false
         //console.log(isNaN(likedUserId))
         //console.log(typeof Number(likedUserId))
-        if (likedUserId === null || typeof likedUserId === "boolean" || typeof likedUserId === "string" || isNaN(likedUserId)) {
+        if (likedUserId === null || typeof likedUserId === "boolean" || typeof likedUserId === "string" || Number.isNaN(likedUserId)) {
             res.status(400).json(ApiJsonResponse(null, ["invalid liked user id"]));
             return;
         }
@@ -225,7 +225,7 @@ export const viewedProfile = async(req, res) => {
         const userId = req.user.id;
         const viewedData = req.body;
         let viewedUserId = viewedData?.viewed_user_id ?? null;
-        if (viewedUserId === null || typeof viewedUserId === "boolean" || typeof viewedUserId === "string" || isNaN(viewedUserId)) {
+        if (viewedUserId === null || typeof viewedUserId === "boolean" || typeof viewedUserId === "string" || Number.isNaN(viewedUserId)) {
             res.status(400).json(ApiJsonResponse(null, ["invalid viewed user id"]));
             return;
         }
@@ -247,7 +247,7 @@ export const getProfileUser = async (req, res) => {
         let viewUserId = req.params?.id ?? null;
         console.log(userId);
         console.log(viewUserId);
-        if (viewUserId === null || isNaN(viewUserId)) {
+        if (viewUserId === null || Number.isNaN(viewUserId)) {
             res.status(400).json(ApiJsonResponse(null, ["invalid view user id"]));
             return;
         }
@@ -268,7 +268,7 @@ export const getProfileUser = async (req, res) => {
             return;
         }
         const interests = await getUserInterestsByUserId(viewUserId);
-        const sexualPreferences = await getUserSexualPreferencesByUserId(viewUserId);
+        //const sexualPreferences = await getUserSexualPreferencesByUserId(viewUserId);
         const pictures = await getUserPicturesByUserId(viewUserId);
 
         const data = {
@@ -281,10 +281,10 @@ export const getProfileUser = async (req, res) => {
             "biography": user.biography,
             "date_of_birth": user.dateOfBirth,
             "interests": interests,
-            "sexual_preferences": sexualPreferences,
+            "sexual_preference": user.sexualPreference,
             "pictures": pictures
         }
-        console.log(data);
+        //console.log(data);
         //add to viewed_histories
         const viewedHistory = new ViewedHistory(null, userId, viewUserId, null, null);
         await addViewedHistory(viewedHistory);
@@ -305,7 +305,7 @@ export const getProfileMe = async (req, res) => {
             return;
         }
         const interests = await getUserInterestsByUserId(userId);
-        const sexualPreferences = await getUserSexualPreferencesByUserId(userId);
+        //const sexualPreferences = await getUserSexualPreferencesByUserId(userId);
         const pictures = await getUserPicturesByUserId(userId);
 
         const data = {
@@ -318,10 +318,10 @@ export const getProfileMe = async (req, res) => {
             "biography": user.biography,
             "date_of_birth": user.dateOfBirth,
             "interests": interests,
-            "sexual_preferences": sexualPreferences,
+            "sexual_preference": user.sexualPreference,
             "pictures": pictures
         }
-        console.log(data);
+        //console.log(data);
         res.status(200).json(ApiJsonResponse([data], null));
     }catch(err){
         console.error("error getProfileMe: ", err);
@@ -346,16 +346,16 @@ export const patchUserProfile = async (req, res) => {
     try{
         const userId = req.user.id; 
         const profileData = req.body;
-        let firstName = profileData?.first_name.trim() ?? null;
+        let firstName = profileData?.first_name ?? null;
         let lastName = profileData?.last_name ?? null;
         let email = profileData?.email ?? null;
         let gender = profileData?.gender ?? null;
         let biography = profileData?.biography ?? null;
         let dateOfBirth = profileData?.date_of_birth ?? null;
-        const sexualPreferences = profileData?.sexual_preferences ?? null;
+        let sexualPreference = profileData?.sexual_preference ?? null;
         const interests = profileData?.interests ?? null;
         const pictures = profileData?.pictures ?? null;
-        if (firstName && (typeof firstName !== "string" || !Validation.isLengthBetween(lastName.trim(), 3, 50))){
+        if (firstName && (typeof firstName !== "string" || !Validation.isLengthBetween(firstName.trim(), 3, 50))){
             res.status(400).json(ApiJsonResponse(null, ["invalid firstname"]));
             return;
         }
@@ -381,7 +381,7 @@ export const patchUserProfile = async (req, res) => {
             return;
         }
 
-        if (sexualPreferences && !Validation.isValidSexualPreferences(sexualPreferences)){
+        if (sexualPreference && !Validation.isValidSexualPreference(sexualPreference)){
             res.status(400).json(ApiJsonResponse(null, ["invalid sexual preferences"]));
             return;
         }
@@ -418,6 +418,10 @@ export const patchUserProfile = async (req, res) => {
             dateOfBirth = dateOfBirth.trim();
             user.dateOfBirth = dateOfBirth;
         }
+        if (sexualPreference){
+            sexualPreference = sexualPreference.trim();
+            user.sexualPreference = sexualPreference;
+        }
         if (email){
             email = email.trim();
             const userByEmail = await getUserByEmail(email);
@@ -430,8 +434,8 @@ export const patchUserProfile = async (req, res) => {
                 }
             }
         }
-        console.log(interests);
-        await updateUserData(user, sexualPreferences, interests, savedPictures);
+        //console.log(interests);
+        await updateUserData(user, interests, savedPictures);
         res.status(200).json(ApiJsonResponse(["success"], null));
       }catch(err){
           console.error("Error patchUserProfile: ", err);
@@ -440,18 +444,18 @@ export const patchUserProfile = async (req, res) => {
 }
 
 
-async function updateUserData(user, sexualPreferences, interests, savedPictures){
+async function updateUserData(user, interests, savedPictures){
     try{
         await db.run("BEGIN TRANSACTION");
         await db.run('UPDATE users SET first_name = ?, last_name = ?, email = ?, gender = ?, biography = ?, date_of_birth = ?, \
-            updated_at = CURRENT_TIMESTAMP WHERE id = ?;',
-            [user.firstName, user.lastName, user.email, user.gender, user.biography, user.dateOfBirth, user.id]);
-        if (sexualPreferences){
+            sexual_preference = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?;',
+            [user.firstName, user.lastName, user.email, user.gender, user.biography, user.dateOfBirth, user.sexualPreference, user.id]);
+        /*if (sexualPreferences){
             await db.run('DELETE FROM user_sexual_preferences WHERE user_id = ?;', [user.id]);
             for (const pref of sexualPreferences){
                 await db.run('INSERT INTO user_sexual_preferences(user_id, preference) values(?,?);', [user.id, pref]);
             }
-        }
+        }*/
         if (interests){
             await db.run('DELETE FROM user_interests WHERE user_id = ?;', [user.id]);
             for (const interest of interests){
@@ -485,7 +489,7 @@ export const getUserInterestsByUserId = async (userId) => {
 }
 
 // if empty?
-export const getUserSexualPreferencesByUserId = async (userId) => {
+/*export const getUserSexualPreferencesByUserId = async (userId) => {
     try{
         const rows = await db.all('SELECT * FROM user_sexual_preferences WHERE user_id = ?', [userId]);
         const sexualPreferences = rows.map(row => row.preference);
@@ -494,7 +498,7 @@ export const getUserSexualPreferencesByUserId = async (userId) => {
         console.error("error getUserSexualPreferencesByUserId: ", err);
         throw (err);
     }
-}
+}*/
 
 // if empty?
 async function getUserPicturesByUserId(userId){
@@ -546,8 +550,10 @@ async function addLikedHistory(likedHistory, isLiked){
 
 async function fameRatingByUserId(userId){
     try{
-        const totalRow = await db.get('select count(*) as total from fame_ratings;');
-        const total = totalRow.total;
+
+        /*const totalRow = await db.get('SELECT sum(liked_count) as total from fame_ratings;');*/
+        
+        const total = getTotalUsers();//getTotalLikedCount(); //totalRow.total;
         if (total < 1)
             return null;
 
@@ -557,14 +563,16 @@ async function fameRatingByUserId(userId){
             return null;
         }
 
-        const fifth = total / 5;
+        const stars = getStars(total, likedCount);
+
+        /*const fifth = total / 5;
         let stars = Math.floor(likedCount / fifth);
 
         if (likedCount === 0){
             return {"stars":0, "liked_count": likedCount};    
         }
 
-        stars = Math.max(1, Math.min(5, stars));
+        stars = Math.max(1, Math.min(5, stars));*/
         return {"stars":stars, "liked_count": likedCount};
     }catch(err){
         console.error("error fameRatingByUserId: ", err);
@@ -572,6 +580,49 @@ async function fameRatingByUserId(userId){
     }
 }
 
+
+export function getStars(total, likedCount){
+    if (total < 1){
+        return 0;
+    }
+
+    const fifth = total / 5;
+    //let stars = Math.floor(likedCount / fifth);
+    let stars = Math.ceil(likedCount / fifth); 
+
+    if (likedCount === 0){
+        return 0;    
+    }
+
+    stars = Math.max(1, Math.min(5, stars));
+    return stars;
+}
+
+export async function getTotalLikedCount(){
+    try{
+        const row = await db.get('SELECT sum(liked_count) as total from fame_ratings;');
+        let total = 0;
+        if (row)
+            total = row.total;
+        return total;
+    }catch(err){
+        console.error("error getTotalLikedCount: ", err);
+        throw err;
+    }
+}
+
+export async function getTotalUsers(){
+    try{
+        const row = await db.get('SELECT count(*) as total from fame_ratings;');
+        let total = 0;
+        if (row)
+            total = row.total;
+        return total;
+    }catch(err){
+        console.error("error getTotalUsers: ", err);
+        throw err;
+    }
+}
 
 async function getUserOnlineDb(userId){
     try{

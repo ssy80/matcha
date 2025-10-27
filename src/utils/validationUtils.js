@@ -84,7 +84,7 @@ export class Validation{
     static isValidGender(gender){
         if (typeof gender !== 'string') return false;
 
-        const validValues = ['male', 'female', 'others'];
+        const validValues = ['male', 'female'];
 
         return validValues.includes(gender);
     }
@@ -106,7 +106,7 @@ export class Validation{
     }
 
     //accept ["male", "female"]
-    static isValidSexualPreferences(preferences){
+    /*static isValidSexualPreferences(preferences){
         
         if (!Array.isArray(preferences)) return false;
         if (preferences.length < 1) return false;
@@ -116,7 +116,7 @@ export class Validation{
                 return false;
         }
         return true;
-    }
+    }*/
 
     //accept ["#music", "#movie"]
     static isValidInterests(interests){
@@ -162,7 +162,7 @@ export class Validation{
             return false;
 
         const dob = new Date(dateOfBirth);
-        if (!(dob instanceof Date && !isNaN(dob))) 
+        if (!(dob instanceof Date && !Number.isNaN(dob))) 
             return false;
 
         const today = new Date();

@@ -2,7 +2,7 @@
 drop table users;
 drop table user_activations;
 drop table user_resets;
-drop table user_sexual_preferences;
+--drop table user_sexual_preferences;
 drop table user_interests;
 drop table user_pictures;
 drop table viewed_histories;
@@ -23,6 +23,7 @@ CREATE TABLE users (
     gender VARCHAR(20),
     biography VARCHAR(500),
     date_of_birth TEXT CHECK(date_of_birth IS NULL OR date_of_birth = strftime('%Y-%m-%d', date_of_birth)),
+    sexual_preference VARCHAR(20),
     user_password VARCHAR(100) NOT NULL,
     user_status VARCHAR(50) NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -71,7 +72,7 @@ CREATE TABLE user_resets (
 );*/
 
 
-CREATE TABLE user_sexual_preferences (
+/*CREATE TABLE user_sexual_preferences (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
     preference VARCHAR(100) NOT NULL,
@@ -81,7 +82,7 @@ CREATE TABLE user_sexual_preferences (
     FOREIGN KEY (user_id) REFERENCES users(id) 
     ON DELETE CASCADE
     ON UPDATE NO ACTION
-);
+);*/
 
 
 CREATE TABLE user_interests (

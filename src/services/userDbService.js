@@ -13,7 +13,7 @@ export async function getUserById(userId)
         const row = await db.get('SELECT * FROM users WHERE id = ?', [userId])
 
         if (row){
-            const user = new User(row.id, row.email, row.username, row.first_name, row.last_name, row.gender, row.biography, row.date_of_birth, row.user_password, row.user_status, row.created_at, row.updated_at);
+            const user = new User(row.id, row.email, row.username, row.first_name, row.last_name, row.gender, row.biography, row.date_of_birth, row.sexual_preference, row.user_password, row.user_status, row.created_at, row.updated_at);
             return user;
         }
         else
@@ -32,7 +32,7 @@ export async function getUserByEmail(email)
         const row = await db.get('SELECT * FROM users WHERE email = ?', [email])
 
         if (row){
-            const user = new User(row.id, row.email, row.username, row.first_name, row.last_name, row.gender, row.biography, row.date_of_birth, row.user_password, row.user_status, row.created_at, row.updated_at);
+            const user = new User(row.id, row.email, row.username, row.first_name, row.last_name, row.gender, row.biography, row.date_of_birth, row.sexual_preference, row.user_password, row.user_status, row.created_at, row.updated_at);
             return user;
         }
         else
@@ -51,7 +51,7 @@ export async function getUserByUsername(username)
         const row = await db.get('SELECT * FROM users WHERE username = ?', [username])
 
         if (row){
-            const user = new User(row.id, row.email, row.username, row.first_name, row.last_name, row.gender, row.biography, row.date_of_birth, row.user_password, row.user_status, row.created_at, row.updated_at);
+            const user = new User(row.id, row.email, row.username, row.first_name, row.last_name, row.gender, row.biography, row.date_of_birth, row.sexual_preference, row.user_password, row.user_status, row.created_at, row.updated_at);
             return user;
         }
         else

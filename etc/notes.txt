@@ -51,9 +51,9 @@ User module
     - allow update all profiles above + last name, first name, and email address
 
     //add date of birth
-    add who view me list
+    //add who view me list
     //get id user_id view me? return 1 
-    get who liked me list
+    //get who liked me list
     //get who liked me by id
     //add user_onlines table
     //get user online status
@@ -107,10 +107,60 @@ get profile other /api/profile/{id}
 
 to check:
 1) upload pictures file size
-
+2) constraint max 5 pictures
+3) only jpg/png picture format
 
 await db.run( INSERT INTO user_locations (user_id, latitude, longitude, updated_at) 
 VALUES (?, ?, ?, CURRENT_TIMESTAMP) 
 ON CONFLICT(user_id) 
 DO UPDATE SET latitude = excluded.latitude, longitude = excluded.longitude, 
 updated_at = CURRENT_TIMESTAMP; , [userId, latitude, longitude]);
+
+
+NaN values: NaN is technically a "number" type
+❌ Infinite values: Infinity, -Infinity are number types
+❌ Invalid coordinate ranges: latitude 200, longitude -999
+
+
+pictures = [
+"p1.jpeg",
+"p2.jpeg",
+"p3.jpeg",
+"p4.jpeg",
+"p5.jpeg",
+"p6.jpeg",
+"p7.jpeg",
+"p8.jpeg",
+"p9.jpeg",
+"p10.jpeg",
+"p11.jpeg",
+"p12.jpeg",
+"p13.jpeg",
+"p14.jpeg",
+"p15.jpeg",
+"p16.jpeg",
+"p17.jpeg",
+"p18.jpeg",
+"p19.jpeg",
+"p20.jpeg",
+"p21.jpeg",
+"p22.jpeg",
+"p23.jpeg",
+"p24.jpeg",
+"p25.jpeg",
+"p26.jpeg",
+"p27.jpeg",
+"p28.jpeg",
+"p29.jpeg",
+"p30.jpeg",
+"p31.jpeg",
+"p32.jpeg",
+"p33.jpeg",
+"p34.jpeg",
+"p35.jpeg",
+"p36.jpeg",
+"p37.jpeg",
+"p38.jpeg",
+"p39.jpeg",
+"p40.png",
+]
