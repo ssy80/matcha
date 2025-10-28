@@ -6,6 +6,9 @@ import locationRoutes from './routes/locationRoutes.js'
 import { swaggerUi, swaggerSpec } from './swagger/swagger.js';
 import { authenticateToken } from './middlewares/authentication.js';
 import searchRoutes from './routes/searchRoutes.js';
+import chatRoutes from './routes/chatRoutes.js';
+import eventRoutes from './routes/eventRoutes.js';
+
 
 
 const app = express();
@@ -28,6 +31,9 @@ app.use('/api/users', userRoutes);
 app.use('/api/profile', authenticateToken, profileRoutes);
 app.use('/api/location', authenticateToken, locationRoutes);
 app.use('/api/search', authenticateToken, searchRoutes);
+app.use('/api/chat', authenticateToken, chatRoutes);
+app.use('/api/event', authenticateToken, eventRoutes);
+
 
 
 

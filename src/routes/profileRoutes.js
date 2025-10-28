@@ -1,7 +1,7 @@
 import express from 'express';
 //import { ApiJsonResponse } from '../utils/responseUtil.js';
 import { patchUserProfile, getProfileMe, getProfileUser, viewedProfile, likedProfile, getFameRating, getOnlineStatus } from '../services/profileService.js';
-import { isUserViewedMe, isUserLikedMe, blockedProfile, getViewedMeList, getLikedMeList } from '../services/profileService.js';
+import { isUserViewedMe, isUserLikedMe, blockedProfile, getViewedMeList, getLikedMeList, fakedProfile } from '../services/profileService.js';
 
 //import dotenv from 'dotenv';
 //import crypto from "crypto";
@@ -66,6 +66,8 @@ router.post('/blocked_user', async (req, res) => {
     await blockedProfile(req, res);
 });
 
-
+router.post('/faked_user', async (req, res) => {
+    await fakedProfile(req, res);
+});
 
 export default router;

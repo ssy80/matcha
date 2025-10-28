@@ -11,6 +11,10 @@ drop table fame_ratings;
 drop table user_locations;
 drop table user_onlines;
 drop table user_blockeds;
+drop table user_fakeds;
+drop table chat_messages;
+drop table events;
+
 
 --email address, username, last name, first name, password
 
@@ -204,5 +208,50 @@ CREATE TABLE user_blockeds (
     ON UPDATE NO ACTION,
     FOREIGN KEY (blocked_user_id) REFERENCES users(id)
     ON DELETE CASCADE 
+    ON UPDATE NO ACTION
+);
+
+CREATE TABLE user_fakeds (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    faked_user_id INTEGER NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) 
+    ON DELETE CASCADE 
+    ON UPDATE NO ACTION,
+    FOREIGN KEY (faked_user_id) REFERENCES users(id)
+    ON DELETE CASCADE 
+    ON UPDATE NO ACTION
+);
+
+
+CREATE TABLE chat_messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    from_user_id INTEGER NOT NULL,
+    to_user_id INTEGER NOT NULL,
+    message VARCHAR(500) NOT NULL,
+    message_status varchar(30) NOT NULL,           -- new, sent, 
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (from_user_id) REFERENCES users(id)
+    ON DELETE CASCADE 
+    ON UPDATE NO ACTION
+    FOREIGN KEY (to_user_id) REFERENCES users(id)
+    ON DELETE CASCADE 
+    ON UPDATE NO ACTION
+);
+
+
+CREATE TABLE events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    from_user_id INTEGER NOT NULL,
+    event_type varchar(30) NOT NULL,    -- liked_me, viewed_me, new_message, connected, disconnect
+    event_status varchar(30) NOT NULL,  -- new, notified
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (from_user_id) REFERENCES users(id)
+    ON DELETE CASCADE
     ON UPDATE NO ACTION
 );

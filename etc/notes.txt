@@ -60,6 +60,7 @@ User module
     
     // add user_blocks table
     check userServices valifate inputs
+    Report a user as a “fake account”
 
 
     - Users must be able to see who has viewed their profile.  -- view history
@@ -72,6 +73,9 @@ User module
     - Users must also have the option to manually adjust their GPS location in their profile.   --?? manually adjust the co ordinates or 
 
 
+    chat_messages table
+    /send
+    /get
 
 Database
 

@@ -13,6 +13,11 @@ import { ViewedHistory } from '../models/viewed_history.js';
 import { LikedHistory } from '../models/liked_history.js';
 import { UserOnline } from '../models/user_online.js';
 import { UserBlocked } from '../models/user_blocked.js';
+import { UserFaked } from '../models/user_faked.js';
+import { getUserLocationByUserId, getDistanceKm } from './locationService.js';
+import { Event } from '../models/event.js';
+import { addEvent } from './eventService.js';
+
 
 dotenv.config();
 
@@ -22,6 +27,42 @@ const db = await open({
   filename: '././database/matcha.db',
   driver: sqlite3.Database
 });
+
+
+//await fakedProfile(req, res);
+export const fakedProfile = async (req, res) =>{
+    try{
+        const userId = req.user.id;
+        const fakedData = req.body;
+        let fakedUserId = fakedData?.faked_user_id ?? null;
+        const isfaked = fakedData?.is_faked ?? null; //true/false
+        //console.log(isNaN(blockedUserId))
+        //console.log(typeof blockedUserId)
+        if (fakedUserId === null || typeof fakedUserId === "boolean" || typeof fakedUserId === "string" || isNaN(fakedUserId)) {
+            res.status(400).json(ApiJsonResponse(null, ["invalid faked user id"]));
+            return;
+        }
+        if (isfaked === null || typeof isfaked !== "boolean") {
+            res.status(400).json(ApiJsonResponse(null, ["invalid is_faked"]));
+            return;
+        }
+        fakedUserId = Number(fakedUserId);
+
+        const user = getUserById(fakedUserId);
+        if (!user){
+            res.status(400).json(ApiJsonResponse(null, ["invalid faked user"]));
+            return;
+        }
+
+        const userFaked = new UserFaked(null, userId, fakedUserId, null, null);
+        await addUserFaked(userFaked, isfaked);
+        res.status(201).json(ApiJsonResponse(["success"], null));
+    }catch(err){
+        console.error("error fakedProfile: ", err);
+        res.status(500).json(ApiJsonResponse(null, ["internal server error"]));
+    }
+}
+
 
 //await getLikedMeList(req, res);
 export const getLikedMeList = async (req, res) =>{
@@ -57,7 +98,7 @@ export const blockedProfile = async (req, res) =>{
         const isBlocked = blockedData?.is_blocked ?? null; //true/false
         //console.log(isNaN(blockedUserId))
         //console.log(typeof blockedUserId)
-        if (blockedUserId === null || typeof blockedUserId === "boolean" || typeof blockedUserId === "string" || Number.isNaN(blockedUserId)) {
+        if (blockedUserId === null || typeof blockedUserId === "boolean" || typeof blockedUserId === "string" || isNaN(blockedUserId)) {
             res.status(400).json(ApiJsonResponse(null, ["invalid blocked user id"]));
             return;
         }
@@ -89,7 +130,7 @@ export const isUserLikedMe = async (req, res) => {
         //console.log(likedMeUserId);
         //console.log(typeof likedMeUserId);
         //if (likedMeUserId === null || typeof Number(likedMeUserId) !== "number") {
-        if (likedMeUserId === null || Number.isNaN(likedMeUserId)) {  
+        if (likedMeUserId === null || (likedMeUserId)) {  
             res.status(400).json(ApiJsonResponse(null, ["invalid liked me user id"]));
             return;
         }
@@ -118,7 +159,7 @@ export const isUserViewedMe = async (req, res) => {
         console.log(typeof Number(viewedMeUserId)) //why can become a number ?
         console.log(Number(viewedMeUserId))        //Nan
         console.log(typeof Number(viewedMeUserId !== "number")) // why NaN === "number"*/
-        if (viewedMeUserId === null || Number.isNaN(viewedMeUserId)) {
+        if (viewedMeUserId === null || isNaN(viewedMeUserId)) {
             res.status(400).json(ApiJsonResponse(null, ["invalid viewed me user id"]));
             return;
         }
@@ -141,7 +182,7 @@ export const getOnlineStatus = async (req, res) => {
     try{
         let userId = req.params?.id ?? null;
         //if (userId === null || typeof userId !== "number") {
-        if (userId === null || Number.isNaN(userId)) {
+        if (userId === null || isNaN(userId)) {
             res.status(400).json(ApiJsonResponse(null, ["invalid user id"]));
             return;
         }
@@ -166,7 +207,7 @@ export const getFameRating = async(req, res) => {
     try{
         let userId = req.params?.id ?? null;
         //if (userId === null || typeof userId !== "number") {
-        if (userId === null || Number.isNaN(userId)) {
+        if (userId === null || isNaN(userId)) {
             res.status(400).json(ApiJsonResponse(null, ["invalid user id"]));
             return;
         }
@@ -194,7 +235,7 @@ export const likedProfile = async(req, res) => {
         const isLiked = likedData?.is_liked ?? null; //true/false
         //console.log(isNaN(likedUserId))
         //console.log(typeof Number(likedUserId))
-        if (likedUserId === null || typeof likedUserId === "boolean" || typeof likedUserId === "string" || Number.isNaN(likedUserId)) {
+        if (likedUserId === null || typeof likedUserId === "boolean" || typeof likedUserId === "string" || isNaN(likedUserId)) {
             res.status(400).json(ApiJsonResponse(null, ["invalid liked user id"]));
             return;
         }
@@ -225,7 +266,7 @@ export const viewedProfile = async(req, res) => {
         const userId = req.user.id;
         const viewedData = req.body;
         let viewedUserId = viewedData?.viewed_user_id ?? null;
-        if (viewedUserId === null || typeof viewedUserId === "boolean" || typeof viewedUserId === "string" || Number.isNaN(viewedUserId)) {
+        if (viewedUserId === null || typeof viewedUserId === "boolean" || typeof viewedUserId === "string" || isNaN(viewedUserId)) {
             res.status(400).json(ApiJsonResponse(null, ["invalid viewed user id"]));
             return;
         }
@@ -247,42 +288,83 @@ export const getProfileUser = async (req, res) => {
         let viewUserId = req.params?.id ?? null;
         console.log(userId);
         console.log(viewUserId);
-        if (viewUserId === null || Number.isNaN(viewUserId)) {
+        if (viewUserId === null || isNaN(viewUserId)) {
             res.status(400).json(ApiJsonResponse(null, ["invalid view user id"]));
             return;
         }
         viewUserId = Number(viewUserId);
 
-        /*if (!viewUserId){
-            res.status(400).json(ApiJsonResponse(null, ["no view user id provided"]));
-            return;
-        }
-        if (isNaN(viewUserId)){
-            res.status(400).json(ApiJsonResponse(null, ["invalid view user id"]));
-            return;
-        }*/
-
-        const user = await getUserById(viewUserId);
-        if (!user){
+        const viewedUser = await getUserById(viewUserId);
+        if (!viewedUser){
             res.status(400).json(ApiJsonResponse(null, ["no such user"]));
             return;
         }
+        const age = calculateAge(viewedUser.dateOfBirth);
         const interests = await getUserInterestsByUserId(viewUserId);
         //const sexualPreferences = await getUserSexualPreferencesByUserId(viewUserId);
         const pictures = await getUserPicturesByUserId(viewUserId);
 
+        const userLocation = await getUserLocationByUserId(userId);
+        const viewedUserLocation = await getUserLocationByUserId(viewUserId);
+
+        let distanceKm = getDistanceKm(userLocation.latitude, userLocation.longitude, viewedUserLocation.latitude, viewedUserLocation.longitude);
+        distanceKm = parseFloat(distanceKm.toFixed(2));
+
+        const location = {
+            "latitude": viewedUserLocation.latitude,
+            "longitude": viewedUserLocation.longitude,
+            "neighborhood": viewedUserLocation.neighborhood,
+            "city": viewedUserLocation.city,
+            "country": viewedUserLocation.country
+        };
+        //const liked_count = await getUserLikedCount(viewUserId);
+        const fameRating = await fameRatingByUserId(viewUserId);
+        const userOnline = await getUserOnlineDb(viewUserId);
+        console.log(userOnline);
+
+        //is blocked?
+        //is_liked_me?
+        //is_i_liked?
+        const likedMeHistory = await getLikedHistoryDb(viewUserId, userId);
+        const iLikedHistory = await getLikedHistoryDb(userId, viewUserId);
+        console.log(likedMeHistory);
+        console.log(iLikedHistory);
+        
+        let isLikedMe = false;
+        let isILiked = false;
+        if (likedMeHistory){
+            isLikedMe = true;
+        }
+        if (iLikedHistory){
+            isILiked = true;
+        }
+
+        let isBlocked = false;
+        const userBlocked = await getUserBlocked(userId, viewUserId);
+        if (userBlocked){
+            isBlocked = true;
+        }
+        
+
         const data = {
             "id": viewUserId,
-            "username": user.username,
-            "first_name": user.firstName,
-            "last_name": user.lastName,
-            //"email": user.email,
-            "gender": user.gender,
-            "biography": user.biography,
-            "date_of_birth": user.dateOfBirth,
+            "username": viewedUser.username,
+            "first_name": viewedUser.firstName,
+            "last_name": viewedUser.lastName,
+            "gender": viewedUser.gender,
+            "biography": viewedUser.biography,
+            "date_of_birth": viewedUser.dateOfBirth,
+            "age": age,
             "interests": interests,
-            "sexual_preference": user.sexualPreference,
-            "pictures": pictures
+            "sexual_preference": viewedUser.sexualPreference,
+            "pictures": pictures,
+            "location": location,
+            "distance_km": distanceKm,
+            "fame_rating": fameRating,
+            "last_seen": userOnline?.updatedAt ?? null,
+            "is_liked_me": isLikedMe,
+            "is_i_liked": isILiked,
+            "is_blocked": isBlocked
         }
         //console.log(data);
         //add to viewed_histories
@@ -515,8 +597,17 @@ async function getUserPicturesByUserId(userId){
 
 async function addViewedHistory(viewedHistory){
     try{
-        await db.run('DELETE FROM viewed_histories WHERE user_id = ? AND viewed_user_id = ?;', [viewedHistory.userId, viewedHistory.viewedUserId]);
-        await db.run('INSERT INTO viewed_histories(user_id, viewed_user_id) values(?,?);', [viewedHistory.userId, viewedHistory.viewedUserId]);
+        console.log(viewedHistory);
+        const row = await db.get('SELECT 1 FROM viewed_histories WHERE user_id = ? AND viewed_user_id = ?;', [viewedHistory.userId, viewedHistory.viewedUserId]);
+        console.log(row);
+        if (!row){
+            await db.run('INSERT INTO viewed_histories(user_id, viewed_user_id) values(?,?);', [viewedHistory.userId, viewedHistory.viewedUserId]);
+            const event = new Event(null, viewedHistory.viewedUserId, viewedHistory.userId, "viewed_me", "new", null, null);
+            await addEvent(event);
+        }
+        
+        //await db.run('DELETE FROM viewed_histories WHERE user_id = ? AND viewed_user_id = ?;', [viewedHistory.userId, viewedHistory.viewedUserId]);
+        
     }catch(err){
         console.error("error addViewedHistory: ", err);
         throw (err);
@@ -532,6 +623,15 @@ async function addLikedHistory(likedHistory, isLiked){
                 await db.run('INSERT INTO liked_histories(user_id, liked_user_id) values(?,?);', [likedHistory.userId, likedHistory.likedUserId]);
                 //add fame count
                 await db.run('UPDATE fame_ratings SET liked_count = liked_count + 1, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?;', [likedHistory.likedUserId]);
+
+                const event = new Event(null, likedHistory.likedUserId, likedHistory.userId, "liked_me", "new", null, null);
+                await addEvent(event);
+
+                const likedRow = await db.get('SELECT 1 FROM liked_histories WHERE user_id = ? AND liked_user_id = ?;', [likedHistory.likedUserId, likedHistory.userId]);
+                if (likedRow){
+                    const connectedEvent = new Event(null, likedHistory.likedUserId, likedHistory.userId, "connected", "new", null, null);
+                    await addEvent(connectedEvent);
+                }
             }
         }
         else{
@@ -539,6 +639,12 @@ async function addLikedHistory(likedHistory, isLiked){
                 await db.run('DELETE FROM liked_histories WHERE user_id = ? AND liked_user_id = ?;', [likedHistory.userId, likedHistory.likedUserId]);
                 //remove fame count
                 await db.run('UPDATE fame_ratings SET liked_count = liked_count - 1, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?;', [likedHistory.likedUserId]);
+
+                const likedRow = await db.get('SELECT 1 FROM liked_histories WHERE user_id = ? AND liked_user_id = ?;', [likedHistory.likedUserId, likedHistory.userId]);
+                if (likedRow){
+                    const disconnectedEvent = new Event(null, likedHistory.likedUserId, likedHistory.userId, "disconnected", "new", null, null);
+                    await addEvent(disconnectedEvent);
+                }
             }
         }
     }catch(err){
@@ -553,17 +659,20 @@ async function fameRatingByUserId(userId){
 
         /*const totalRow = await db.get('SELECT sum(liked_count) as total from fame_ratings;');*/
         
-        const total = getTotalUsers();//getTotalLikedCount(); //totalRow.total;
+        const total = await getTotalUsers();//getTotalLikedCount(); //totalRow.total;
         if (total < 1)
             return null;
 
-        const likedCountRow = await db.get('select liked_count from fame_ratings WHERE user_id = ?;', [userId]);
-        const likedCount = likedCountRow?.liked_count ?? null;
+        //const likedCountRow = await db.get('SELECT liked_count from fame_ratings WHERE user_id = ?;', [userId]);
+        const likedCount = await getUserLikedCount(userId);
+        console.log(likedCount)
+        //const likedCount = likedCountRow?.liked_count ?? null;
         if (likedCount === null){
             return null;
         }
 
         const stars = getStars(total, likedCount);
+        console.log(stars);
 
         /*const fifth = total / 5;
         let stars = Math.floor(likedCount / fifth);
@@ -582,6 +691,9 @@ async function fameRatingByUserId(userId){
 
 
 export function getStars(total, likedCount){
+
+    console.log(total);
+
     if (total < 1){
         return 0;
     }
@@ -598,7 +710,7 @@ export function getStars(total, likedCount){
     return stars;
 }
 
-export async function getTotalLikedCount(){
+/*export async function getTotalLikedCount(){
     try{
         const row = await db.get('SELECT sum(liked_count) as total from fame_ratings;');
         let total = 0;
@@ -607,6 +719,20 @@ export async function getTotalLikedCount(){
         return total;
     }catch(err){
         console.error("error getTotalLikedCount: ", err);
+        throw err;
+    }
+}*/
+
+export async function getUserLikedCount(userId){
+    try{
+        const row = await db.get('SELECT liked_count from fame_ratings WHERE user_id = ?;', [userId]);
+        if (!row){
+            return null;
+        }
+        else
+            return row.liked_count;
+    }catch(err){
+        console.error("error getUserLikedCount: ", err);
         throw err;
     }
 }
@@ -626,7 +752,7 @@ export async function getTotalUsers(){
 
 async function getUserOnlineDb(userId){
     try{
-        const row = await db.get('select * from user_onlines WHERE user_id = ?;', [userId]);
+        const row = await db.get('SELECT * from user_onlines WHERE user_id = ?;', [userId]);
         if(row){
             const userOnline = new UserOnline(row.user_id, row.created_at, row.updated_at);
             return userOnline;
@@ -655,9 +781,9 @@ async function getViewedHistoryDb(viewedMeUserId, userId){
 
 
 //await getLikedHistoryDb(likedMeUserId, userId);
-async function getLikedHistoryDb(likedMeUserId, userId){
+export async function getLikedHistoryDb(likedMeUserId, userId){
     try{
-        const row = await db.get('select * from liked_histories WHERE user_id = ? AND liked_user_id = ?;', [likedMeUserId, userId]);
+        const row = await db.get('SELECT * from liked_histories WHERE user_id = ? AND liked_user_id = ?;', [likedMeUserId, userId]);
         if(row){
             const likedHistory = new LikedHistory(row.id, row.user_id, row.liked_user_id, row.created_at, row.updated_at);
             return likedHistory;
@@ -714,6 +840,62 @@ async function getLikedMeListDb(userId){
         return result;
     }catch(err){
         console.error("error getLikedMeListDb: ", err);
+        throw (err);
+    }
+}
+
+
+//fakedProfile
+//addUserFaked(userFaked, isfaked);
+async function addUserFaked(userFaked, isFaked){
+    try{
+        const row = await db.get('SELECT * FROM user_fakeds WHERE user_id = ? AND faked_user_id = ?;', [userFaked.userId, userFaked.fakedUserId]);
+        if (isFaked){
+            if (!row){
+                await db.run('INSERT INTO user_fakeds(user_id, faked_user_id) values(?,?);', [userFaked.userId, userFaked.fakedUserId]);
+            }
+        }
+        else{
+            if (row){
+                await db.run('DELETE FROM user_fakeds WHERE user_id = ? AND faked_user_id = ?;', [userFaked.userId, userFaked.fakedUserId]);
+            }
+        }
+    }catch(err){
+        console.error("error addUserFaked: ", err);
+        throw (err);
+    }
+}
+
+
+export function calculateAge(dateOfBirth) {
+  const today = new Date();
+  const birthDate = new Date(dateOfBirth);
+
+  let age = today.getFullYear() - birthDate.getFullYear();
+
+  // Check if the birthday hasn't happened yet this year
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  const dayDiff = today.getDate() - birthDate.getDate();
+
+  if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+    age--;
+  }
+
+  return age;
+}
+
+
+//getUserBlocked(viewUserId, userId);
+export async function getUserBlocked(userId, blockdUserId){
+    try{
+        const row = await db.get('SELECT * from user_blockeds WHERE user_id = ? AND blocked_user_id = ?;', [userId, blockdUserId]);
+        if(row){
+            const userBlocked = new UserBlocked(row.id, row.user_id, row.blocked_user_id, row.created_at, row.updated_at);
+            return userBlocked;
+        }
+        return null;
+    }catch(err){
+        console.error("error getUserBlocked: ", err);
         throw (err);
     }
 }

@@ -120,8 +120,10 @@ export class Validation{
 
     //accept ["#music", "#movie"]
     static isValidInterests(interests){
+        //console.log(interests);
+        //console.log(Array.isArray(interests))
 
-        if (!Array.isArray(interests)) return false;
+        if (Array.isArray(interests) === false) return false;
         if (interests.length < 1) return false;
 
         for (const interest of interests){
@@ -162,7 +164,7 @@ export class Validation{
             return false;
 
         const dob = new Date(dateOfBirth);
-        if (!(dob instanceof Date && !Number.isNaN(dob))) 
+        if (!(dob instanceof Date && !isNaN(dob)))
             return false;
 
         const today = new Date();
