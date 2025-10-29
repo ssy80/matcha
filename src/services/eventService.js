@@ -23,7 +23,9 @@ export async function getEvents(req, res){
     try{
         const userId = req.user.id;
         const events = await getEventsDb(userId, "new");
-
+        for (const evt of events) {
+            await updateEventStatus(evt, "delivered");
+        }
         res.status(400).json(ApiJsonResponse([events], null));
     }catch(err){
         console.error("error getEvents: ", err);
@@ -48,11 +50,23 @@ export async function addEvent(event){
 async function getEventsDb(userId, eventStatus){
     try{
 
-        const rows =await db.all("SELECT * FROM events WHERE user_id = ? AND event_status = ?;",
+        const rows =await db.all("SELECT e.*, fu.username as from_username FROM events e, users fu WHERE e.user_id = ? AND e.event_status = ? AND fu.id = e.from_user_id;",
             [userId, eventStatus]);
         return rows;
     }catch(err){
             console.error("error getEventsDb: ", err);
+            throw (err);
+    }
+}
+
+
+async function updateEventStatus(event, status){
+    try{
+        
+        await db.run("UPDATE events SET event_status = ? WHERE id = ?;",[status, event.id]);
+        
+    }catch(err){
+            console.error("error updateEventStatus: ", err);
             throw (err);
     }
 }

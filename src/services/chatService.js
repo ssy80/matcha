@@ -7,6 +7,8 @@ import { UserLocation } from '../models/user_location.js';
 import { Validation } from '../utils/validationUtils.js';
 import { getLikedHistoryDb, getUserBlocked } from './profileService.js';
 import { ChatMessage } from '../models/chat_message.js';
+import { Event } from '../models/event.js';
+import { addEvent } from './eventService.js';
 
 dotenv.config();
 
@@ -86,10 +88,12 @@ export async function sendChatMessage(req, res){
 //addChatMessage(chatMessage);
 async function addChatMessage(chatMessage){
     try{
+        
         await db.run("INSERT INTO chat_messages(from_user_id, to_user_id, message, message_status) VALUES(?,?,?,?)",
             [chatMessage.fromUserId, chatMessage.toUserId, chatMessage.message, chatMessage.messageStatus]);
-
+        console.log(chatMessage)
         const event = new Event(null, chatMessage.toUserId, chatMessage.fromUserId, "new_message", "new", null, null);
+        console.log(event)
         await addEvent(event);
     }catch(err){
             console.error("error addChatMessage: ", err);
@@ -115,7 +119,7 @@ async function addChatMessage(chatMessage){
 async function getChatMessagesDb(userId){
     try{
         
-        const rows = db.all("SELECT * FROM chat_messages WHERE to_user_id = ? AND message_status = 'new';",[userId]);
+        const rows = db.all("SELECT c.*, fu.username as from_username FROM chat_messages c, users fu WHERE to_user_id = ? AND message_status = 'new' AND c.from_user_id = fu.id;",[userId]);
         return rows;
         
     }catch(err){

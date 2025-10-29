@@ -23,7 +23,8 @@ const port = 3000; // Or any other desired port
 app.use("/images", express.static("public/images"));
 
 //middleware 
-app.use(express.json())  //without path, all req will use
+//app.use(express.json())  //without path, all req will use
+app.use(express.json({ limit: '5mb' }));
 //app.use(express.urlencoded({ extended: true }));   //form data
 
 // Routes

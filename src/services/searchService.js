@@ -19,7 +19,8 @@ import { getTotalUsers, getStars, getUserBlocked } from '../services/profileServ
 
 dotenv.config();
 
-const saltRounds = Number(process.env.BCRYPT_SALT_ROUNDS)
+//const saltRounds = Number(process.env.BCRYPT_SALT_ROUNDS);
+const suggestedProfileDistKm = Number(process.env.SUGGESTED_PROFILE_DIST_KM);
 
 const db = await open({
   filename: '././database/matcha.db',
@@ -283,12 +284,15 @@ export const getSuggestedProfiles = async (req, res) =>{
 
         const user = await getUserById(userId);
         const userLocation = await getUserLocationByUserId(userId);
-        if(isNaN(userLocation.latitude) || isNaN(userLocation.longitude)){
+        console.log(userLocation)
+        console.log((userLocation.latitude))
+        console.log(isNaN(userLocation.latitude))
+        if(userLocation.latitude === null || isNaN(userLocation.latitude) || userLocation.longitude === null || isNaN(userLocation.longitude)){
             res.status(400).json(ApiJsonResponse(null, ["invalid user location"]));
             return;
         }
-           
-        let suggestedProfiles = await getSuggestedProfilesDb(user, userLocation, 10); //within 10km
+        console.log(suggestedProfileDistKm)
+        let suggestedProfiles = await getSuggestedProfilesDb(user, userLocation, suggestedProfileDistKm);
 
         const totalUsers = await getTotalUsers();
 
@@ -305,8 +309,10 @@ export const getSuggestedProfiles = async (req, res) =>{
             b.fame_rating.stars - a.fame_rating.stars
         );
 
-        console.log(suggestedProfiles);
-        console.log(suggestedProfiles.length);
+        //suggestedProfiles.splice(10);
+
+        //console.log(suggestedProfiles);
+        //console.log(suggestedProfiles.length);
 
         res.status(200).json(ApiJsonResponse([suggestedProfiles], null));
     }catch(err){
@@ -327,7 +333,7 @@ const sql = `
 */
 async function getSuggestedProfilesDb(user, userLocation, dist){
     try{
-        const pref = getComplementarySexualPreference(user.sexualPreference);
+        //const pref = getComplementarySexualPreference(user.sexualPreference);
 
         const sql = `
             WITH current_user_interests AS (
@@ -338,6 +344,7 @@ async function getSuggestedProfilesDb(user, userLocation, dist){
             nearby_users AS (
                 SELECT 
                 l.user_id,
+                u.username,
                 u.gender,
                 u.date_of_birth,
                 u.sexual_preference,
@@ -358,20 +365,22 @@ async function getSuggestedProfilesDb(user, userLocation, dist){
                 WHERE 
                 u.user_status = 'activated'
                 AND u.id != ?
-                AND u.sexual_preference = ?
+                AND (
+                    u.sexual_preference = ? OR u.sexual_preference = 'bi-sexual'
+                )
+                AND (
+                    ? = 'bi-sexual' OR u.gender = ?
+                )
+                
             )
 
             SELECT 
                 n.user_id,
+                n.username,
                 n.gender,
                 (strftime('%Y', 'now') - strftime('%Y', n.date_of_birth)) -
                     (strftime('%m-%d', 'now') < strftime('%m-%d', n.date_of_birth)) AS age,
                 n.sexual_preference,
-                n.latitude,
-                n.longitude,
-                n.neighborhood,
-                n.city,
-                n.country,
                 n.distance_km,
 
                 (
@@ -402,11 +411,6 @@ async function getSuggestedProfilesDb(user, userLocation, dist){
             LEFT JOIN fame_ratings fr
                 ON fr.user_id = n.user_id
             WHERE n.distance_km <= ?
-            AND EXISTS (
-                SELECT 1
-                FROM user_pictures p
-                WHERE p.user_id = n.user_id AND p.is_profile_picture = 1
-            )
             AND NOT EXISTS (
                 SELECT 1 
                 FROM user_blockeds ub
@@ -420,7 +424,19 @@ async function getSuggestedProfilesDb(user, userLocation, dist){
                 liked_count DESC;
             `;
 
-        const rows = await db.all(sql, [user.id, userLocation.latitude, userLocation.longitude, userLocation.latitude, user.id, pref, dist, user.id]);
+        //const rows = await db.all(sql, [user.id, userLocation.latitude, userLocation.longitude, userLocation.latitude, user.id, user.gender, user.sexualPreference, user.gender, dist, user.id]);
+        const rows = await db.all(sql, 
+            [user.id, 
+                userLocation.latitude, 
+                userLocation.longitude, 
+                userLocation.latitude, 
+                user.id, 
+                user.gender, 
+                user.sexualPreference, 
+                user.sexualPreference === 'bi-sexual' ? user.gender : user.sexualPreference, 
+                dist, 
+                user.id]);
+
         return rows;
     }catch(err){
         console.error("error getSuggestedProfilesDb: ", err);
@@ -469,6 +485,12 @@ function getComplementarySexualPreference(sexualPreference) {
 
 async function getUsersByDist(user, userLocation, criteria){
     try{
+
+        const rows = await db.all("SELECT id, username, sexual_preference FROM users LIMIT 5;");
+        console.log(rows);
+        console.log(criteria);
+        
+
         const pref = getComplementarySexualPreference(user.sexualPreference);
         // 1️⃣ Get users by distance
         const distQuery = `
@@ -485,10 +507,25 @@ async function getUsersByDist(user, userLocation, criteria){
             AND
             u.user_status = 'activated'
             AND u.id != ?
-            AND u.sexual_preference = ?
+            AND (
+                u.sexual_preference = ? OR u.sexual_preference = 'bi-sexual'
+            )
+            AND (
+                ? = 'bi-sexual' OR u.gender = ?
+            )
         ;`
-        const distUsers = await db.all(distQuery, [userLocation.latitude, userLocation.longitude, userLocation.latitude,
-            criteria.min_dist_km, criteria.max_dist_km, user.id, pref]);
+        const distUsers = await db.all(distQuery, 
+            [
+                userLocation.latitude,
+                userLocation.longitude,
+                userLocation.latitude,
+                criteria.min_dist_km,
+                criteria.max_dist_km,
+                user.id,
+                user.gender,
+                user.sexualPreference,
+                user.sexualPreference === 'bi-sexual' ? user.gender : user.sexualPreference
+            ]);
         return distUsers;
         
     }catch(err){
@@ -503,21 +540,35 @@ async function getUsersByAge(user, userLocation, criteria){
         // 2️⃣ Get users by age
         const ageQuery = `
             SELECT id
-            FROM users
+            FROM users u
             WHERE (
             (strftime('%Y', 'now') - strftime('%Y', date_of_birth)) -
             (strftime('%m-%d', 'now') < strftime('%m-%d', date_of_birth))
             ) BETWEEN ? AND ?
             AND
-            user_status = 'activated'
-            AND id != ?
-            AND sexual_preference = ?
+            u.user_status = 'activated'
+            AND u.id != ?
+            AND (
+                u.sexual_preference = ? OR u.sexual_preference = 'bi-sexual'
+            )
+            AND (
+                ? = 'bi-sexual' OR u.gender = ?
+            )
+
         `;
-        const ageUsers = await db.all(ageQuery, [criteria.min_age, criteria.max_age, user.id, pref]);
+        const ageUsers = await db.all(ageQuery, 
+            [
+                criteria.min_age,
+                criteria.max_age,
+                user.id,
+                user.gender,
+                user.sexualPreference,
+                user.sexualPreference === 'bi-sexual' ? user.gender : user.sexualPreference
+            ]);
         return ageUsers;
         
     }catch(err){
-        console.error("error getUsersByDist: ", err);
+        console.error("error getUsersByAge: ", err);
         throw err;
     }
 }
@@ -554,7 +605,12 @@ async function getUsersByInterests(user, userLocation, criteria){
             AND
             u.user_status = 'activated'
             AND u.id != ?
-            AND u.sexual_preference = ?
+            AND (
+                u.sexual_preference = ? OR u.sexual_preference = 'bi-sexual'
+            )
+            AND (
+                ? = 'bi-sexual' OR u.gender = ?
+            )
             GROUP BY ui.user_id
             HAVING COUNT(DISTINCT interest) = ?
             `;
@@ -563,7 +619,16 @@ async function getUsersByInterests(user, userLocation, criteria){
         
         //const interestUsers = await db.all(interestQuery, ...criteria.interests, criteria.interests.length);
         //const interestUsers = await db.all(interestQuery, criteria_interests, criteria.interests.length);
-        const interestUsers = await db.all(interestQuery, ...criteria.interests, user.id, pref, criteria.interests.length);
+        //const interestUsers = await db.all(interestQuery, ...criteria.interests, user.id, pref, criteria.interests.length);
+        const interestUsers = await db.all(interestQuery,
+            [
+                ...criteria.interests,
+                user.id,
+                user.gender,
+                user.sexualPreference,
+                user.sexualPreference === 'bi-sexual' ? user.gender : user.sexualPreference,
+                criteria.interests.length
+            ]);
         return interestUsers;
         //}
     }catch(err){
@@ -584,9 +649,22 @@ async function getUsersByFameRating(user, userLocation, criteria){
             AND 
             u.user_status = 'activated'
             AND u.id != ?
-            AND u.sexual_preference = ?
+            AND (
+                u.sexual_preference = ? OR u.sexual_preference = 'bi-sexual'
+            )
+            AND (
+                ? = 'bi-sexual' OR u.gender = ?
+            )
         `;
-        const likedUsers = await db.all(likedQuery, [criteria.min_liked_count, criteria.max_liked_count, user.id, pref]);
+        const likedUsers = await db.all(likedQuery,
+            [
+                criteria.min_liked_count,
+                criteria.max_liked_count,
+                user.id,
+                user.gender,
+                user.sexualPreference,
+                user.sexualPreference === 'bi-sexual' ? user.gender : user.sexualPreference
+            ]);
         return likedUsers;
     }catch(err){
         console.error("error getUsersByFameRating: ", err);
@@ -673,7 +751,7 @@ async function getUsersByCriteria(user, location, criteria) {
 }
 
 
-async function searchProfilesDb(user, userLocation, criteria){
+/*async function searchProfilesDb(user, userLocation, criteria){
     try{
         const pref = getComplementarySexualPreference(user.sexualPreference);
 
@@ -741,7 +819,7 @@ async function searchProfilesDb(user, userLocation, criteria){
         console.error("error getSuggestedProfilesDb: ", err);
         throw err;
     }
-}
+}*/
 
 
 //getSearchProfileUser(user_id); 
@@ -777,15 +855,11 @@ async function getSearchProfileUser(user_id, userLocation){
         
         const profileQuery = `
             SELECT u.id, 
+            u.username,
             u.gender, 
             u.sexual_preference,
             (strftime('%Y', 'now') - strftime('%Y', u.date_of_birth)) -
                     (strftime('%m-%d', 'now') < strftime('%m-%d', u.date_of_birth)) AS age,
-            l.latitude,
-            l.longitude,
-            l.neighborhood,
-            l.city,
-            l.country,
             (
                 6371 * acos(
                 cos(radians(?)) * cos(radians(l.latitude)) *
@@ -799,10 +873,10 @@ async function getSearchProfileUser(user_id, userLocation){
                 WHERE ui.user_id = u.id
             ) AS interests,
             (
-                    SELECT picture
-                    FROM user_pictures up
-                    WHERE up.user_id = u.id AND is_profile_picture = 1
-                    LIMIT 1
+                SELECT picture
+                FROM user_pictures up
+                WHERE up.user_id = u.id AND is_profile_picture = 1
+                LIMIT 1
             ) AS profile_picture,
             (
                 SELECT fr.liked_count 

@@ -6,6 +6,7 @@ import path from 'path';
 dotenv.config();
 
 const IMAGE_DIR = process.env.IMAGE_DIR;
+const MAX_SIZE = process.env.MAX_IMAGE_SIZE * 1024 * 1024;
 
 export class PictureUtil{
 
@@ -28,7 +29,15 @@ export class PictureUtil{
         if (!matches || matches.length !== 3) {
             return null;
         }
-        const imageType = matches[1];
+        //const imageType = matches[1];
+
+        const imageType = matches[1].toLowerCase(); // Convert to lowercase for consistent checking
+        // Check allowed file types (jpeg, png)
+        const allowedTypes = ['jpeg', 'jpg', 'png'];
+        if (!allowedTypes.includes(imageType)) {
+            return null; // or throw new Error('Only JPEG and PNG files are allowed');
+        }
+
         const base64Image = matches[2];
         const randomBytes = crypto.randomBytes(16);
         const randomName = randomBytes.toString('hex');
@@ -38,6 +47,12 @@ export class PictureUtil{
         const filePath = path.join(uploadPath, filename);
 
         const imageBuffer = Buffer.from(base64Image, 'base64');
+
+        //const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+        if (imageBuffer.length > MAX_SIZE) {
+            return null; // or throw new Error('File size exceeds 5MB limit');
+        }
+
         await fs.writeFile(filePath, imageBuffer);
 
         const fileObj = {

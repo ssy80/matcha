@@ -1,6 +1,6 @@
 import express from 'express';
 //import { ApiJsonResponse } from '../utils/responseUtil.js';
-import { patchUserProfile, getProfileMe, getProfileUser, viewedProfile, likedProfile, getFameRating, getOnlineStatus } from '../services/profileService.js';
+import { patchUserProfile, getProfileMe, getProfileUser, likedProfile, getFameRating, getOnlineStatus } from '../services/profileService.js';
 import { isUserViewedMe, isUserLikedMe, blockedProfile, getViewedMeList, getLikedMeList, fakedProfile } from '../services/profileService.js';
 
 //import dotenv from 'dotenv';
@@ -20,13 +20,13 @@ router.get('/me', async (req, res) => {
 
 //get list of who viewed me
 router.get('/viewed_me_list', async (req, res) => {
-    console.log("/viewed_me_list");
+    //console.log("/viewed_me_list");
     await getViewedMeList(req, res);
 });
 
 //get list of who liked me
 router.get('/liked_me_list', async (req, res) => {
-    console.log("/liked_me_list");
+    //console.log("/liked_me_list");
     await getLikedMeList(req, res);
 });
 
@@ -35,9 +35,9 @@ router.get('/:id', async (req, res) => {
 });
 
 //viewed user profile {viewed_user_id = 1}
-router.post('/viewed_profile', async (req, res) => {
+/*router.post('/viewed_profile', async (req, res) => {
     await viewedProfile(req, res);
-});
+});*/
 
 router.post('/liked_profile', async (req, res) => {
     await likedProfile(req, res);

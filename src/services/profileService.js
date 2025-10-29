@@ -128,13 +128,14 @@ export const isUserLikedMe = async (req, res) => {
         const userId = req.user.id; //me
         let likedMeUserId = req.params?.id ?? null; //liked me id
         //console.log(likedMeUserId);
-        //console.log(typeof likedMeUserId);
+        console.log(typeof likedMeUserId);
         //if (likedMeUserId === null || typeof Number(likedMeUserId) !== "number") {
-        if (likedMeUserId === null || (likedMeUserId)) {  
+        if (likedMeUserId === null || isNaN(likedMeUserId)) {  
             res.status(400).json(ApiJsonResponse(null, ["invalid liked me user id"]));
             return;
         }
         likedMeUserId = Number(likedMeUserId);
+        console.log(likedMeUserId);
 
         const likedHistory = await getLikedHistoryDb(likedMeUserId, userId);
         if (likedHistory){
@@ -235,7 +236,8 @@ export const likedProfile = async(req, res) => {
         const isLiked = likedData?.is_liked ?? null; //true/false
         //console.log(isNaN(likedUserId))
         //console.log(typeof Number(likedUserId))
-        if (likedUserId === null || typeof likedUserId === "boolean" || typeof likedUserId === "string" || isNaN(likedUserId)) {
+        //if (likedUserId === null || typeof likedUserId === "boolean" || typeof likedUserId === "string" || isNaN(likedUserId)) {
+        if (likedUserId === null || typeof likedUserId !== "number" ){//|| typeof likedUserId === "string" || isNaN(likedUserId)) {  
             res.status(400).json(ApiJsonResponse(null, ["invalid liked user id"]));
             return;
         }
@@ -244,13 +246,44 @@ export const likedProfile = async(req, res) => {
             return;
         }
         likedUserId = Number(likedUserId);
-
-        const user = getUserById(likedUserId);
-        if (!user){
+        console.log(likedUserId);
+        const likedUser = await getUserById(likedUserId);
+        console.log(likedUser);
+        if (!likedUser){
             res.status(400).json(ApiJsonResponse(null, ["invalid liked user"]));
             return;
         }
-
+        //check got profile picture
+        const likedUserPictures = await getUserPicturesByUserId(likedUserId);
+        console.log(likedUserPictures);
+        let likedUserProfilePic = false;
+        for(const pic of likedUserPictures){
+            if (pic.is_profile_picture === 1){
+                likedUserProfilePic = true;
+                break;
+            }
+        }
+        if (!likedUserProfilePic){
+            res.status(400).json(ApiJsonResponse(null, ["no profile picture"]));
+            return;
+        }
+        const userPictures = await getUserPicturesByUserId(userId);
+        console.log(userPictures);
+        let userProfilePic = false;
+        for(const pic of userPictures){
+            if (pic.is_profile_picture === 1){
+                userProfilePic = true;
+                break;
+            }
+        }
+        if (!userProfilePic){
+            res.status(400).json(ApiJsonResponse(null, ["no profile picture"]));
+            return;
+        }
+        if (userId === likedUserId){
+            res.status(400).json(ApiJsonResponse(null, ["cannot liked ownself"]));
+            return;
+        }
         const likedHistory = new LikedHistory(null, userId, likedUserId, null, null);
         await addLikedHistory(likedHistory, isLiked);
         res.status(201).json(ApiJsonResponse(["success"], null));
@@ -261,7 +294,7 @@ export const likedProfile = async(req, res) => {
 }
 
 
-export const viewedProfile = async(req, res) => {
+/*export const viewedProfile = async(req, res) => {
     try{
         const userId = req.user.id;
         const viewedData = req.body;
@@ -279,7 +312,7 @@ export const viewedProfile = async(req, res) => {
         console.error("error viewedProfile: ", err);
         res.status(500).json(ApiJsonResponse(null, ["internal server error"]));
     }
-}
+}*/
 
 
 export const getProfileUser = async (req, res) => {
@@ -368,8 +401,10 @@ export const getProfileUser = async (req, res) => {
         }
         //console.log(data);
         //add to viewed_histories
-        const viewedHistory = new ViewedHistory(null, userId, viewUserId, null, null);
-        await addViewedHistory(viewedHistory);
+        if (userId !== viewUserId){
+            const viewedHistory = new ViewedHistory(null, userId, viewUserId, null, null);
+            await addViewedHistory(viewedHistory);
+        }
         res.status(200).json(ApiJsonResponse([data], null));
     }catch(err){
         console.error("error getProfileUser: ", err);
@@ -665,14 +700,14 @@ async function fameRatingByUserId(userId){
 
         //const likedCountRow = await db.get('SELECT liked_count from fame_ratings WHERE user_id = ?;', [userId]);
         const likedCount = await getUserLikedCount(userId);
-        console.log(likedCount)
+        //console.log(likedCount)
         //const likedCount = likedCountRow?.liked_count ?? null;
         if (likedCount === null){
             return null;
         }
 
         const stars = getStars(total, likedCount);
-        console.log(stars);
+        //console.log(stars);
 
         /*const fifth = total / 5;
         let stars = Math.floor(likedCount / fifth);
@@ -692,7 +727,7 @@ async function fameRatingByUserId(userId){
 
 export function getStars(total, likedCount){
 
-    console.log(total);
+    //console.log(total);
 
     if (total < 1){
         return 0;

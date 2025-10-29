@@ -15,6 +15,22 @@ const db = await open({
   driver: sqlite3.Database
 });
 
+export async function getMyLocation(req, res){
+    try{
+        const userId = req.user.id;
+
+        const userLocation = await getUserLocationByUserId(userId);
+        //return userLocation;
+        const myLocation = {
+            "latitude": userLocation.latitude,
+            "longitude": userLocation.longitude
+        }
+        res.status(200).json(ApiJsonResponse([myLocation], null));
+    }catch(err){
+        console.error("error updateUserLocation: ", err);
+        res.status(500).json(ApiJsonResponse(null, ["internal server error"]));
+    }
+}
 
 export const updateUserLocation = async(req, res) => {
     try{
