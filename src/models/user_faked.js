@@ -1,4 +1,3 @@
-
 export class UserFaked {
 
     constructor(id, userId, fakedUserId, createdAt, updatedAt)
@@ -10,7 +9,6 @@ export class UserFaked {
         this._updatedAt = updatedAt;
     }
 
-    // ID getter/setter
     get id() {
         return this._id;
     }
@@ -19,7 +17,6 @@ export class UserFaked {
         this._id = value;
     }
 
-    // User ID getter/setter
     get userId() {
         return this._userId;
     }
@@ -36,7 +33,6 @@ export class UserFaked {
         this._fakedUserId = value;
     }
 
-    // Created At getter/setter
     get createdAt() {
         return this._createdAt;
     }
@@ -45,7 +41,6 @@ export class UserFaked {
         this._createdAt = value;
     }
 
-    // Updated At getter/setter
     get updatedAt() {
         return this._updatedAt;
     }

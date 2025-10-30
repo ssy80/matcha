@@ -1,7 +1,5 @@
-import { ApiJsonResponse } from '../utils/responseUtil.js';
-import sqlite3 from 'sqlite3';
-import { open } from 'sqlite';
-import { User } from '../models/user.js'
+import { db } from '../db/database.js';
+import { User } from '../models/user.js';
 import { Validation } from '../utils/validationUtils.js';
 import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
@@ -15,17 +13,13 @@ import { FameRating } from '../models/fame_rating.js';
 import { UserLocation } from '../models/user_location.js'
 import { UserOnline } from '../models/user_online.js';
 
+
 dotenv.config();
 
-const saltRounds = Number(process.env.BCRYPT_SALT_ROUNDS)
 
-const db = await open({
-  filename: '././database/matcha.db',
-  driver: sqlite3.Database
-});
-
+const saltRounds = Number(process.env.BCRYPT_SALT_ROUNDS);
 const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_EXPIRES_IN = "6h"; // can be "15m", "1h", "7d", etc.
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN;
 
 
 export const resetUserPassword = async (req, res) => {
@@ -34,11 +28,11 @@ export const resetUserPassword = async (req, res) => {
         let password = resetData?.password ?? null;
         let resetUuid = resetData?.reset_uuid ?? null;
         if (password === null || typeof password !== "string" || !Validation.isValidPassword(password.trim())) {
-            res.status(400).json(ApiJsonResponse(null, ["invalid password"]));
+            res.status(400).json({"success": false, "error": "invalid password"});
             return;
         }
          if (resetUuid === null || typeof resetUuid !== "string") {
-            res.status(400).json(ApiJsonResponse(null, ["invalid reset uuid"]));
+            res.status(400).json({"success": false, "error": "invalid reset uuid"});
             return;
         }
         password = password.trim();
@@ -46,13 +40,13 @@ export const resetUserPassword = async (req, res) => {
 
         const userReset = await getUserResetByUuid(resetUuid);
         if (!userReset){
-            res.status(400).json(ApiJsonResponse(null, ["invalid reset uuid"]));
+            res.status(409).json({"success": false, "error": "invalid reset uuid"});
             return;
         }
         const now = new Date();
         const expiredDate = new Date(userReset.expiredAt);
         if (now > expiredDate || userReset.resetStatus !== "new"){
-            res.status(400).json(ApiJsonResponse(null, ["reset password expired"]));
+            res.status(409).json({"success": false, "error": "reset password expired"});
             return;
         }
         const hashedPassword = await bcrypt.hash(password, saltRounds);
@@ -61,10 +55,10 @@ export const resetUserPassword = async (req, res) => {
         await updateUserPassword(user);
         userReset.resetStatus = "expired";
         await updateUserResetStatus(userReset);
-        res.status(201).json(ApiJsonResponse(["success"], null));
+        res.status(201).json({"success": true});
     }catch(err){
-        console.error("internal server error: ", err);
-        res.status(500).json(ApiJsonResponse(null, ["internal server error"]));
+        console.error("error resetUserPassword: ", err);
+        res.status(500).json({"success": false, "error": "internal server error"});
     }
 }
 
@@ -74,17 +68,18 @@ export const resetPasswordRequest = async (req, res) => {
         const resetData = req.body;
         let email = resetData?.email ?? null;
         if (email === null || typeof email !== "string" || !Validation.isEmail(email.trim()) || !Validation.isLengthBetween(email.trim(), 3, 50)) {
-            res.status(400).json(ApiJsonResponse(null, ["invalid email"]));
+            res.status(400).json({"success": false, "error": "invalid email"});
             return;
         }
         email = email.trim();
+
         const user = await getUserByEmail(email);
         if (!user){
-            res.status(400).json(ApiJsonResponse(null, ["no user with this email"]));
+            res.status(409).json({"success": false, "error": "no user with this email"});
             return;
         }
         if (user.userStatus !== "activated"){
-            res.status(400).json(ApiJsonResponse(null, ["user is not activated"]));
+            res.status(409).json({"success": false, "error": "user is not activated"});
             return;
         }
         //send reset email to user
@@ -96,10 +91,10 @@ export const resetPasswordRequest = async (req, res) => {
         await deleteUserResets(user.id);
         await addUserResets(userReset);
         await sendResetEmail(email, resetUuid);
-        res.status(201).json(ApiJsonResponse(["success"], null));
+        res.status(201).json({"success": true});
     }catch(err){
-        console.error("internal server error: ", err);
-        res.status(500).json(ApiJsonResponse(null, ["internal server error"]));
+        console.error("error resetPasswordRequest: ", err);
+        res.status(500).json({"success": false, "error": "internal server error"});
     }
 }
 
@@ -111,11 +106,11 @@ export const userLogin = async (req, res) => {
         let password = loginData?.password ?? null;
         
         if (username === null || typeof username !== "string" || !Validation.isAlphaNumeric(username.trim())  || !Validation.isLengthBetween(username.trim(), 3, 50)) {
-            res.status(400).json(ApiJsonResponse(null, ["invalid username"]));
+            res.status(400).json({"success": false, "error": "invalid username"});
             return;
         }
         if (password === null || typeof password !== "string" || !Validation.isValidPassword(password.trim())) {
-            res.status(400).json(ApiJsonResponse(null, ["invalid password"]));
+            res.status(400).json({"success": false, "error": "invalid password"});
             return;
         }
         username = username.trim();
@@ -123,16 +118,16 @@ export const userLogin = async (req, res) => {
         
         const user = await getUserByUsername(username);
         if (!user){
-            res.status(400).json(ApiJsonResponse(null, ["no user with this username"]));
+            res.status(409).json({"success": false, "error": "no user with this username"});
             return;
         }
         if (user.userStatus !== "activated"){
-            res.status(400).json(ApiJsonResponse(null, ["user is not activated"]));
+            res.status(409).json({"success": false, "error": "user is not activated"});
             return;
         }
         const isMatch = await matchPasswords(password, user.userPassword)
         if (!isMatch){
-            res.status(400).json(ApiJsonResponse(null, ["passwords does not match"]));
+            res.status(409).json({"success": false, "error": "passwords does not match"});
             return;
         }
         //generate jwt token
@@ -141,10 +136,10 @@ export const userLogin = async (req, res) => {
             username: user.username
         };
         const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-        res.status(200).json(ApiJsonResponse([{token}], null));
+        res.status(200).json({"success": true, "token": token});
     }catch (err){
-        console.error("internal server error: ", err);
-        res.status(500).json(ApiJsonResponse(null, ["internal server error"]));
+        console.error("error userLogin: ", err);
+        res.status(500).json({"success": false, "error": "internal server error"});
     }
 }
 
@@ -154,7 +149,7 @@ export const activateUser = async (req, res) => {
         const activateData = req.body;
         let activationUuid = activateData?.activation_uuid ?? null;
         if (activationUuid === null || typeof activationUuid !== "string") {
-            res.status(400).json(ApiJsonResponse(null, ["invalid activation uuid"]));
+            res.status(400).json({"success": false, "error": "invalid activation uuid"});
             return;
         }
         activationUuid = activationUuid.trim();
@@ -167,19 +162,20 @@ export const activateUser = async (req, res) => {
                     user.userStatus = "activated";
                     userActivation.activationStatus = "activated";
                     await updateUserActivationStatus(user, userActivation);
-                    res.status(200).json(ApiJsonResponse(["success"], null));
+                    res.status(201).json({"success": true});
                 }
                 else
-                    res.status(409).json(ApiJsonResponse(null, ["invalid user status"]));
+                    res.status(409).json({"success": false, "error": "invalid user status"});
             }
             else
-                res.status(409).json(ApiJsonResponse(null, ["invalid user activation status"]));
+                res.status(409).json({"success": false, "error": "invalid user activation status"});
         }
         else
-            res.status(400).json(ApiJsonResponse(null, ["invalid activation uuid"]));
+            res.status(409).json({"success": false, "error": "invalid activation uuid"});
+
     }catch(err){
-        console.error("internal server error: ", err);
-        res.status(500).json(ApiJsonResponse(null, ["internal server error"]));
+        console.error("error activateUser: ", err);
+        res.status(500).json({"success": false, "error": "internal server error"});
     }
 }
 
@@ -201,27 +197,27 @@ export const registerUser = async (req, res) => {
         let userPassword = userData?.user_password ?? null;
         let dateOfBirth = userData?.date_of_birth ?? null;
         if (email === null || typeof email !== "string" || !Validation.isEmail(email.trim()) || !Validation.isLengthBetween(email.trim(), 3, 50)) {
-            res.status(400).json(ApiJsonResponse(null, ["invalid email"]));
+            res.status(400).json({"success": false, "error": "invalid email"});
             return;
         }
         if (username === null || typeof username !== "string" || !Validation.isAlphaNumeric(username.trim())  || !Validation.isLengthBetween(username.trim(), 3, 50)) {
-            res.status(400).json(ApiJsonResponse(null, ["invalid username"]));
+            res.status(400).json({"success": false, "error": "invalid username"});
             return;
         }
         if (firstName === null || typeof firstName !== "string" || !Validation.isLengthBetween(firstName.trim(), 3, 50)) {
-            res.status(400).json(ApiJsonResponse(null, ["invalid first name"]));
+            res.status(400).json({"success": false, "error": "invalid first name"});
             return;
         }
         if (lastName === null || typeof lastName !== "string" || !Validation.isLengthBetween(lastName.trim(), 3, 50)) {
-            res.status(400).json(ApiJsonResponse(null, ["invalid last name"]));
+            res.status(400).json({"success": false, "error": "invalid last name"});
             return;
         }
         if (userPassword === null || typeof userPassword !== "string" || !Validation.isValidPassword(userPassword.trim())) {
-            res.status(400).json(ApiJsonResponse(null, ["invalid password"]));
+            res.status(400).json({"success": false, "error": "invalid password"});
             return;
         }
         if (dateOfBirth === null || typeof dateOfBirth !== "string" || !Validation.isValidDateOfBirth(dateOfBirth.trim(), 18)) {
-            res.status(400).json(ApiJsonResponse(null, ["invalid date of birth"]));
+            res.status(400).json({"success": false, "error": "invalid date of birth"});
             return;
         }
         email = email.trim();
@@ -234,14 +230,14 @@ export const registerUser = async (req, res) => {
         const user = new User(null, email, username, firstName, lastName, null, null, dateOfBirth, null, userPassword, "new", null, null);
         const hashedPassword = await bcrypt.hash(userPassword, saltRounds);
         user.userPassword = hashedPassword;
-        const isValidUsername = await validateUsername(user);
+        const isValidUsername = await isValidUsernameDb(user);
         if (!isValidUsername) {
-            res.status(409).json(ApiJsonResponse(null, ["username in use"]));
+            res.status(409).json({"success": false, "error": "username in use"});
             return;  
         }
-        const isValidUserEmail = await validateUserEmail(user);
+        const isValidUserEmail = await isValidUserEmailDb(user);
         if (!isValidUserEmail) {
-            res.status(409).json(ApiJsonResponse(null, ["email in use"]));
+            res.status(409).json({"success": false, "error": "email in use"});
             return;
         }
         //insert user
@@ -252,62 +248,31 @@ export const registerUser = async (req, res) => {
         const userActivation = new UserActivation(null, activationUuid, "new", null, null, null);
         const userId = await addUser(user, fameRating, userLocation, userActivation, userOnline);
         await sendActivationEmail(user.email, activationUuid);
-        res.status(201).json(ApiJsonResponse(["success"], null));
+        res.status(201).json({"success": true});
     }catch (err){
-        console.error("internal server error:", err);
-        return res.status(500).json(ApiJsonResponse(null, ["internal server error"]));
+        console.error("error registerUser:", err);
+        res.status(500).json({"success": false, "error": "internal server error"});
     }
 }
 
 
-//validate user fields
-//email - 3-50 valid email 
-//username - 3-50 (alphanumeric)
-//firstname - 3-50 (alpha)
-//lastname - 3-50 (alpha)
-//userPassword - 6-12 (1 upper, 1 lower, 1 number, 1 special char)
-//dateOfBirth - "YYYY-MM-DD"
-/*function validateUserFields(user)
-{
-    if (!Validation.isEmail(user.email) || !Validation.isLengthBetween(user.email, 3, 50))
-        return false;
-
-    if (!Validation.isAlphaNumeric(user.username) || !Validation.isLengthBetween(user.username, 3, 50))
-        return false;
-
-    if (!Validation.isLengthBetween(user.firstName, 3, 50))
-        return false;
-
-    if (!Validation.isLengthBetween(user.lastName, 3, 50))
-        return false;
-
-    if (!Validation.isValidPassword(user.userPassword))
-        return false;
-
-    if (!Validation.isValidDateOfBirth(user.dateOfBirth, 18))
-        return false;
-
-    return true;
-}*/
-
-
-async function validateUserEmail(user)
+async function isValidUserEmailDb(user)
 {
     try{
-        const row = await db.get('SELECT * FROM users WHERE email = ?', [user.email])
+        const row = await db.get('SELECT * FROM users WHERE email = ?', [user.email]);
         if (row)
             return false;
         else
           return true;
     }
     catch(err){
-        console.error("error validateUserEmail: ", err);
+        console.error("error isValidUserEmailDb: ", err);
         throw err;
     }
 }
 
 
-async function validateUsername(user)
+async function isValidUsernameDb(user)
 {
     try{
         const row = await db.get('SELECT * FROM users WHERE username = ?', [user.username])
@@ -318,25 +283,10 @@ async function validateUsername(user)
             return true;
     }
     catch(err){
-        console.error("error validateUsername: ", err);
+        console.error("error isValidUsernameDb: ", err);
         throw err;
     }
 }
-
-
-/*async function addUser(user)
-{
-  try{
-        const result = await db.run('INSERT INTO users(email, username, first_name, last_name, gender, biography, date_of_birth, user_password, user_status, created_at, updated_at) \
-                                values(?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)',
-                                [user.email, user.username, user.firstName, user.lastName, user.gender, user.biography, user.dateOfBirth, user.userPassword, user.userStatus]);
-        return result.lastID;
-    }
-    catch(err){
-        console.error("error addUser: ", err);
-        throw err;
-    }
-}*/
 
 
 async function addUser(user, fameRating, userLocation, userActivation, userOnline)
@@ -376,22 +326,6 @@ async function addUser(user, fameRating, userLocation, userActivation, userOnlin
 }
 
 
-/*async function addUserActivation(userActivation)
-{
-  try{
-        const result = await db.run('INSERT INTO user_activations(activation_uuid, activation_status, user_id, created_at, updated_at) \
-                            values(?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)',
-                            [userActivation.activationUuid, userActivation.activationStatus, userActivation.userId])
-
-        return result.lastID;
-    }
-    catch(err){
-        console.error("error addUserActivation: ", err);
-        throw err;
-    }
-}*/
-
-
 async function getUserActivation(activationUuid)
 {
     try{
@@ -411,25 +345,6 @@ async function getUserActivation(activationUuid)
 }
 
 
-/*async function getUserById(userId)
-{
-    try{
-        const row = await db.get('SELECT * FROM users WHERE id = ?', [userId])
-
-        if (row){
-            const user = new User(row.id, row.email, row.username, row.first_name, row.last_name, row.user_password, row.user_status, row.created_at, row.updated_at);
-            return user;
-        }
-        else
-            return null;
-    }
-    catch(err){
-        console.error("error db:", err);
-        throw err;
-    }
-}*/
-
-
 async function updateUserActivationStatus(user, userActivation)
 {
   try{
@@ -446,25 +361,6 @@ async function updateUserActivationStatus(user, userActivation)
 }
 
 
-/*async function getUserByUsername(username)
-{
-    try{
-        const row = await db.get('SELECT * FROM users WHERE username = ?', [username])
-
-        if (row){
-            const user = new User(row.id, row.email, row.username, row.first_name, row.last_name, row.gender, row.biography, row.date_of_birth, row.user_password, row.user_status, row.created_at, row.updated_at);
-            return user;
-        }
-        else
-            return null;
-    }
-    catch(err){
-        console.error("error getUserByUsername: ", err);
-        throw err;
-    }
-}*/
-
-
 async function matchPasswords(password, hashedPassword){
     try{
         const isMatch = await bcrypt.compare(password, hashedPassword);
@@ -474,25 +370,6 @@ async function matchPasswords(password, hashedPassword){
         throw err;
     }
 }
-
-
-/*async function getUserByEmail(email)
-{
-    try{
-        const row = await db.get('SELECT * FROM users WHERE email = ?', [email])
-
-        if (row){
-            const user = new User(row.id, row.email, row.username, row.first_name, row.last_name, row.user_password, row.user_status, row.created_at, row.updated_at);
-            return user;
-        }
-        else
-            return null;
-    }
-    catch(err){
-        console.error("error db:", err);
-        throw err;
-    }
-}*/
 
 
 async function deleteUserResets(userId)
@@ -558,30 +435,3 @@ async function updateUserResetStatus(userReset){
         throw err;
     }
 }
-
-
-/*async function addFameRating(fameRating){
-    try{
-        await db.run('INSERT INTO fame_ratings(user_id, liked_count, created_at, updated_at) \
-                            values(?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)',
-                            [fameRating.userId, fameRating.likedCount])
-    }
-    catch(err){
-        console.error("error addFameRating: ", err);
-        throw err;
-    }
-}*/
-
-
-/*async function addUserLocationDb(userLocation){
-    try{
-        await db.run('INSERT INTO user_locations(user_id, latitude, longitude, neighborhood, city, country, created_at, updated_at) \
-                            values(?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)',
-                            [userLocation.userId, userLocation.latitude, userLocation.longitude, userLocation.neighborhood,
-                                userLocation.city, userLocation.country]);
-    }
-    catch(err){
-        console.error("error addUserLocationDb: ", err);
-        throw err;
-    }
-}*/

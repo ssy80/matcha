@@ -1,18 +1,3 @@
-/**
- * CREATE TABLE events (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    from_user_id INTEGER NOT NULL,
-    event_type varchar(30) NOT NULL,    -- liked_me, viewed_me, new_message, connected, disconnect
-    event_status varchar(30) NOT NULL,  -- new, notified
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (from_user_id) REFERENCES users(id)
-    ON DELETE CASCADE
-    ON UPDATE NO ACTION
-);
- */
-
 export class Event {
 
     constructor(id, userId, fromUserId, eventType, eventStatus, createdAt, updatedAt)
@@ -26,7 +11,6 @@ export class Event {
         this._updatedAt = updatedAt;
     }
 
-    // id getter/setter
     get id() {
         return this._id;
     }
@@ -35,7 +19,6 @@ export class Event {
         this._id = value;
     }
 
-    // userId getter/setter
     get userId() {
         return this._userId;
     }
@@ -44,7 +27,6 @@ export class Event {
         this._userId = value;
     }
 
-    // fromUserId getter/setter
     get fromUserId() {
         return this._fromUserId;
     }
@@ -53,7 +35,6 @@ export class Event {
         this._fromUserId = value;
     }
 
-    // eventType getter/setter
     get eventType() {
         return this._eventType;
     }
@@ -62,7 +43,6 @@ export class Event {
         this._eventType = value;
     }
 
-    // eventStatus getter/setter
     get eventStatus() {
         return this._eventStatus;
     }
@@ -71,7 +51,6 @@ export class Event {
         this._eventStatus = value;
     }
 
-    // createdAt getter/setter
     get createdAt() {
         return this._createdAt;
     }
@@ -80,7 +59,6 @@ export class Event {
         this._createdAt = value;
     }
 
-    // updatedAt getter/setter
     get updatedAt() {
         return this._updatedAt;
     }
@@ -88,4 +66,5 @@ export class Event {
     set updatedAt(value) {
         this._updatedAt = value;
     }
+
 }

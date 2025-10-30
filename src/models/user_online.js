@@ -1,6 +1,3 @@
-
-
-
 export class UserOnline {
 
     constructor(user_id, createdAt, updatedAt)
@@ -10,7 +7,6 @@ export class UserOnline {
         this._updatedAt = updatedAt;
     }
 
-    // User ID
     get userId() {
         return this._user_id;
     }
@@ -19,7 +15,6 @@ export class UserOnline {
         this._user_id = value;
     }
 
-    // Created At
     get createdAt() {
         return this._createdAt;
     }
@@ -28,7 +23,6 @@ export class UserOnline {
         this._createdAt = value;
     }
 
-    // Updated At
     get updatedAt() {
         return this._updatedAt;
     }

@@ -59,9 +59,12 @@ User module
     //get user online status
     
     // add user_blocks table
-    check userServices valifate inputs
-    Report a user as a “fake account”
-
+    //check userServices valifate inputs
+    //Report a user as a “fake account”
+    ?? getBlockedList ?
+    ?? new users profile not filled in yet, should not participate in searches?
+    ?? ["#music", "#jog", "#music", "#travel"] ??
+    
 
     - Users must be able to see who has viewed their profile.  -- view history
     - Users must also be able to see who has “liked” them.     --like history
@@ -72,10 +75,20 @@ User module
       determine their approximate location, even without their explicit consent.
     - Users must also have the option to manually adjust their GPS location in their profile.   --?? manually adjust the co ordinates or 
 
+    ***check***
+    user.userStatus !== "activated"
+    from body
+        if (blockedUserId == null || typeof blockedUserId !== "number" || !Number.isInteger(blockedUserId)) {
+        if (isBlocked == null || typeof isBlocked !== "boolean") {
+    if (userId === blockedUserId){
+        res.status(400).json(ApiJsonResponse(null, ["cannot block ownself"]));
+        return;
+    }
+    from Params    
+        let likedMeUserId = req.params?.id ?? null;
+        likedMeUserId = likedMeUserId !== null ? Number(likedMeUserId) : null;
+        if (likedMeUserId === null || isNaN(likedMeUserId) || !Number.isInteger(likedMeUserId)) {
 
-    chat_messages table
-    /send
-    /get
 
 Database
 
@@ -125,46 +138,10 @@ NaN values: NaN is technically a "number" type
 ❌ Infinite values: Infinity, -Infinity are number types
 ❌ Invalid coordinate ranges: latitude 200, longitude -999
 
+if success query
+return { "success": true }
+return { "success": true, "data": data }
+return { "success": true, "liked_me": true }
+return { "success": true, "viewed_me": false }
+return { "success": false, "error"; "error string" }
 
-pictures = [
-"p1.jpeg",
-"p2.jpeg",
-"p3.jpeg",
-"p4.jpeg",
-"p5.jpeg",
-"p6.jpeg",
-"p7.jpeg",
-"p8.jpeg",
-"p9.jpeg",
-"p10.jpeg",
-"p11.jpeg",
-"p12.jpeg",
-"p13.jpeg",
-"p14.jpeg",
-"p15.jpeg",
-"p16.jpeg",
-"p17.jpeg",
-"p18.jpeg",
-"p19.jpeg",
-"p20.jpeg",
-"p21.jpeg",
-"p22.jpeg",
-"p23.jpeg",
-"p24.jpeg",
-"p25.jpeg",
-"p26.jpeg",
-"p27.jpeg",
-"p28.jpeg",
-"p29.jpeg",
-"p30.jpeg",
-"p31.jpeg",
-"p32.jpeg",
-"p33.jpeg",
-"p34.jpeg",
-"p35.jpeg",
-"p36.jpeg",
-"p37.jpeg",
-"p38.jpeg",
-"p39.jpeg",
-"p40.png",
-]

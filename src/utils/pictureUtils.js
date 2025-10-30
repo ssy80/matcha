@@ -3,16 +3,17 @@ import dotenv from 'dotenv';
 import crypto from "crypto";
 import path from 'path';
 
+
 dotenv.config();
 
 const IMAGE_DIR = process.env.IMAGE_DIR;
 const MAX_SIZE = process.env.MAX_IMAGE_SIZE * 1024 * 1024;
 
+
 export class PictureUtil{
 
     static async savePicture(picture){
 
-        //console.log(typeof picture.isProfilePicture);
         // Check if it's an object
         if (typeof picture !== 'object' || picture === null) return null;
         
@@ -29,13 +30,11 @@ export class PictureUtil{
         if (!matches || matches.length !== 3) {
             return null;
         }
-        //const imageType = matches[1];
+        const imageType = matches[1].toLowerCase();
 
-        const imageType = matches[1].toLowerCase(); // Convert to lowercase for consistent checking
-        // Check allowed file types (jpeg, png)
         const allowedTypes = ['jpeg', 'jpg', 'png'];
         if (!allowedTypes.includes(imageType)) {
-            return null; // or throw new Error('Only JPEG and PNG files are allowed');
+            return null;
         }
 
         const base64Image = matches[2];
@@ -48,9 +47,8 @@ export class PictureUtil{
 
         const imageBuffer = Buffer.from(base64Image, 'base64');
 
-        //const maxSize = 5 * 1024 * 1024; // 5MB in bytes
         if (imageBuffer.length > MAX_SIZE) {
-            return null; // or throw new Error('File size exceeds 5MB limit');
+            return null;
         }
 
         await fs.writeFile(filePath, imageBuffer);
@@ -59,14 +57,13 @@ export class PictureUtil{
             filename: filename,
             isProfilePicture: isProfilePicture
         }
-        //console.log(fileObj);
         return fileObj;
     }
 
     static async savePictures(pictures){
         
-        //console.log(pictures);
-        if (!Array.isArray(pictures)) return null;
+        if (!Array.isArray(pictures)) 
+            return null;
 
         let saved = [];
         let isProfilePictureCount = 0;
@@ -75,7 +72,7 @@ export class PictureUtil{
             if (!savedPic)
                 return null;
             else{
-                if (savedPic.isProfilePicture) //1 === true
+                if (savedPic.isProfilePicture)
                     isProfilePictureCount++;
                 saved.push(savedPic);
             }

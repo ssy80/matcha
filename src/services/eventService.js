@@ -1,24 +1,10 @@
-import { ApiJsonResponse } from '../utils/responseUtil.js';
-import sqlite3 from 'sqlite3';
-import { open } from 'sqlite';
+import { db } from '../db/database.js';
 import dotenv from 'dotenv';
-import axios from 'axios';
-import { UserLocation } from '../models/user_location.js';
-import { Validation } from '../utils/validationUtils.js';
-import { getLikedHistoryDb, getUserBlocked } from './profileService.js';
-import { ChatMessage } from '../models/chat_message.js';
+
 
 dotenv.config();
 
-//const OPENCAGE_API_KEY = process.env.OPENCAGE_API_KEY;
 
-const db = await open({
-  filename: '././database/matcha.db',
-  driver: sqlite3.Database
-});
-
-
-//getEvents(req, res);
 export async function getEvents(req, res){
     try{
         const userId = req.user.id;
@@ -26,47 +12,41 @@ export async function getEvents(req, res){
         for (const evt of events) {
             await updateEventStatus(evt, "delivered");
         }
-        res.status(400).json(ApiJsonResponse([events], null));
+        res.status(200).json({"success": true, "events": events});
     }catch(err){
         console.error("error getEvents: ", err);
-        res.status(500).json(ApiJsonResponse(null, ["internal server error"]));
+        res.status(500).json({"success": false, "error": "internal server error"});
     }
 }
 
 
 export async function addEvent(event){
     try{
-        console.log(event);
-
         await db.run("INSERT INTO events(user_id, from_user_id, event_type, event_status) VALUES(?,?,?,?)",
             [event.userId, event.fromUserId, event.eventType, event.eventStatus]);
-        
     }catch(err){
-            console.error("error addEvent: ", err);
-            throw (err);
+        console.error("error addEvent: ", err);
+        throw (err);
     }
 }
 
 async function getEventsDb(userId, eventStatus){
     try{
-
         const rows =await db.all("SELECT e.*, fu.username as from_username FROM events e, users fu WHERE e.user_id = ? AND e.event_status = ? AND fu.id = e.from_user_id;",
             [userId, eventStatus]);
         return rows;
     }catch(err){
-            console.error("error getEventsDb: ", err);
-            throw (err);
+        console.error("error getEventsDb: ", err);
+        throw (err);
     }
 }
 
 
 async function updateEventStatus(event, status){
     try{
-        
         await db.run("UPDATE events SET event_status = ? WHERE id = ?;",[status, event.id]);
-        
     }catch(err){
-            console.error("error updateEventStatus: ", err);
-            throw (err);
+        console.error("error updateEventStatus: ", err);
+        throw (err);
     }
 }

@@ -1,7 +1,9 @@
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 
+
 dotenv.config();
+
 
 const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
@@ -16,8 +18,7 @@ const transporter = nodemailer.createTransport({
 
 export const sendResetEmail = async (recipientEmail, resetUuid) =>
 {
-    const mailOptions = 
-    {
+    const mailOptions = {
         from: `"No Reply" <${process.env.SMTP_USER}>`,
         to: recipientEmail,
         subject: 'Reset your login password',
@@ -25,12 +26,10 @@ export const sendResetEmail = async (recipientEmail, resetUuid) =>
         html: `<p>Please reset your login password by visiting this link in your web browser : <strong>${process.env.FRONTEND_HOST_URL}:${process.env.FRONTEND_HOST_PORT}/users/reset_password?reset_uuid=${resetUuid}</strong>.</p>`
     };
 
-    try
-    {
+    try{
         await transporter.sendMail(mailOptions);
     } 
-    catch (error) 
-    {
+    catch (error){
         console.error('Error sending reset password email:', error);
         throw error;
     }
@@ -39,8 +38,7 @@ export const sendResetEmail = async (recipientEmail, resetUuid) =>
 
 export const sendActivationEmail = async (recipientEmail, activationUuid) =>
 {
-    const mailOptions = 
-    {
+    const mailOptions = {
         from: `"No Reply" <${process.env.SMTP_USER}>`,
         to: recipientEmail,
         subject: 'Activate Your Account',
@@ -48,13 +46,11 @@ export const sendActivationEmail = async (recipientEmail, activationUuid) =>
         html: `<p>Please activate your account by visiting this link in your web browser : <strong>${process.env.FRONTEND_HOST_URL}:${process.env.FRONTEND_HOST_PORT}/users/activate?activation_uuid=${activationUuid}</strong>.</p>`
     };
 
-    try 
-    {
+    try {
         await transporter.sendMail(mailOptions);
     } 
-    catch (error) 
-    {
-        console.error('Error sending Activation email:', error);
+    catch (error){
+        console.error('error sendActivationEmail: ', error);
         throw error;
     }
 }

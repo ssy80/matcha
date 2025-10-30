@@ -1,21 +1,3 @@
-
-
-/*
-CREATE TABLE viewed_histories (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    viewed_user_id INTEGER NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)
-    ON DELETE CASCADE 
-    ON UPDATE NO ACTION
-    FOREIGN KEY (viewed_user_id) REFERENCES users(id)
-    ON DELETE CASCADE 
-    ON UPDATE NO ACTION
-);
-*/
-
 export class ViewedHistory {
 
     constructor(id, userId, viewedUserId, createdAt, updatedAt)
@@ -27,7 +9,6 @@ export class ViewedHistory {
         this._updatedAt = updatedAt;
     }
 
-    // Getters
     get id() {
         return this._id;
     }
@@ -48,7 +29,6 @@ export class ViewedHistory {
         return this._updatedAt;
     }
 
-    // Setters
     set id(value) {
         this._id = value;
     }

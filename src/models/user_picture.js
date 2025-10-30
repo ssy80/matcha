@@ -1,17 +1,3 @@
-/*
-CREATE TABLE user_pictures (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    picture VARCHAR(200) NOT NULL,
-    is_profile_picture INTEGER DEFAULT 0,
-    UNIQUE (user_id, picture),
-    FOREIGN KEY (user_id) REFERENCES users(id) 
-    ON DELETE CASCADE 
-    ON UPDATE NO ACTION
-);
-*/
-
-
 export class UserPicture {
 
     constructor(id, userId, picture, isProfilePicture, createdAt, updatedAt)
@@ -24,7 +10,6 @@ export class UserPicture {
         this._updatedAt = updatedAt;
     }
 
-    // Getters
     get id() {
         return this._id;
     }
@@ -49,7 +34,6 @@ export class UserPicture {
         return this._updatedAt;
     }
 
-    // Setters
     set id(value) {
         this._id = value;
     }

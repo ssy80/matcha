@@ -1,18 +1,3 @@
-/*
-CREATE TABLE user_resets (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    reset_uuid VARCHAR(100) NOT NULL UNIQUE,
-    reset_status VARCHAR(50) NOT NULL,
-    expired_at DATETIME NOT NULL,
-    user_id INTEGER NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) 
-    ON DELETE CASCADE 
-    ON UPDATE NO ACTION
-);
-*/
-
 export class UserReset {
 
     constructor(id, resetUuid, resetStatus, expiredAt, userId, createdAt, updatedAt) 
@@ -26,7 +11,6 @@ export class UserReset {
         this._updatedAt = updatedAt;
     }
 
-    // ======= Getters =======
     get id() {
         return this._id;
     }
@@ -55,7 +39,6 @@ export class UserReset {
         return this._updatedAt;
     }
 
-    // ======= Setters =======
     set id(value) {
         this._id = value;
     }

@@ -1,15 +1,3 @@
-
-/*
-CREATE TABLE user_activation (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    activation_uuid VARCHAR(100) NOT NULL UNIQUE,
-    activation_status VARCHAR(50) NOT NULL,
-    user_id INTEGER NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-*/
-
 export class UserActivation {
 
     constructor(id, activationUuid, activationStatus, userId, createdAt, updatedAt) 
@@ -22,7 +10,6 @@ export class UserActivation {
         this._updatedAt = updatedAt;
     }
 
-    // Getters
     get id() {
         return this._id;
     }
@@ -47,7 +34,6 @@ export class UserActivation {
         return this._updatedAt;
     }
 
-    // Setters
     set id(value) {
         this._id = value;
     }

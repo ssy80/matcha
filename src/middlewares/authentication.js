@@ -1,27 +1,25 @@
-import { ApiJsonResponse } from '../utils/responseUtil.js';
 import jwt from "jsonwebtoken";
 import { promisify } from "util";
 import dotenv from "dotenv";
-import sqlite3 from 'sqlite3';
-import { open } from 'sqlite';
+import { db } from '../db/database.js';
+
 
 dotenv.config();
 
-const db = await open({
-  filename: '././database/matcha.db',
-  driver: sqlite3.Database
-});
 
 const jwtVerifyAsync = promisify(jwt.verify); //wrap the callback nature of jwt.verify to be a async func
 
 
 export const authenticateToken = async (req, res, next) => {
-    const header = req.headers;
-    const authorization = header && header.authorization;
-    const jwtToken = authorization && authorization.split(" ")[1]
+    const authorization = req.headers.authorization;
+    if (!authorization || !authorization.startsWith('Bearer ')) {
+        res.status(401).json({"success": false, "error": "invalid authorization format"});
+        return;
+    }
 
+    const jwtToken = authorization.split(' ')[1];
     if (!jwtToken){
-        res.status(401).json(ApiJsonResponse(null, ["no token provided"]));
+        res.status(401).json({"success": false, "error": "no token provided"});
         return;
     }
 
@@ -36,11 +34,11 @@ export const authenticateToken = async (req, res, next) => {
     }catch(err){
         console.error("error authenticateToken:", err);
         if (err.name === "TokenExpiredError") {
-            res.status(403).json(ApiJsonResponse(null, ["token expired"]));
+            res.status(403).json({"success": false, "error": "token expired"});
         } else if (err.name === "JsonWebTokenError") {
-            res.status(403).json(ApiJsonResponse(null, ["invalid token"]));
+            res.status(403).json({"success": false, "error": "invalid token"});
         } else {
-            res.status(500).json(ApiJsonResponse(null, ["internal server error"]));
+            res.status(500).json({"success": false, "error": "internal server error"});
         }
         return;
     }
@@ -49,7 +47,7 @@ export const authenticateToken = async (req, res, next) => {
 
 async function updateUserOnline(userId){
     try{
-        await db.run('UPDATE user_onlines set updated_at = CURRENT_TIMESTAMP WHERE user_id = ?;',[userId]);
+        await db.run('UPDATE user_onlines SET updated_at = CURRENT_TIMESTAMP WHERE user_id = ?;',[userId]);
     }
     catch(err){
         console.error("error updateUserOnline: ", err);

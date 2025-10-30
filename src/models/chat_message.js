@@ -1,23 +1,3 @@
-
-
-/*
-CREATE TABLE chat_messages (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    from_user_id INTEGER NOT NULL,
-    to_user_id INTEGER NOT NULL,
-    message VARCHAR(500) NOT NULL,
-    message_status varchar(30) NOT NULL,           -- new, sent, 
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (from_user_id) REFERENCES users(id)
-    ON DELETE CASCADE 
-    ON UPDATE NO ACTION
-    FOREIGN KEY (to_user_id) REFERENCES users(id)
-    ON DELETE CASCADE 
-    ON UPDATE NO ACTION
-);
-*/
-
 export class ChatMessage {
 
     constructor(id, fromUserId, toUserId, message, messageStatus, createdAt, updatedAt)
@@ -31,7 +11,6 @@ export class ChatMessage {
         this._updatedAt = updatedAt;
     }
 
-    // ID getter/setter
     get id() {
         return this._id;
     }
@@ -40,7 +19,6 @@ export class ChatMessage {
         this._id = value;
     }
 
-    // fromUserId getter/setter
     get fromUserId() {
         return this._fromUserId;
     }
@@ -49,7 +27,6 @@ export class ChatMessage {
         this._fromUserId = value;
     }
 
-    // toUserId getter/setter
     get toUserId() {
         return this._toUserId;
     }
@@ -58,7 +35,6 @@ export class ChatMessage {
         this._toUserId = value;
     }
 
-    // message getter/setter
     get message() {
         return this._message;
     }
@@ -67,7 +43,6 @@ export class ChatMessage {
         this._message = value;
     }
 
-    // messageStatus getter/setter
     get messageStatus() {
         return this._messageStatus;
     }
@@ -76,7 +51,6 @@ export class ChatMessage {
         this._messageStatus = value;
     }
 
-    // createdAt getter/setter
     get createdAt() {
         return this._createdAt;
     }
@@ -85,7 +59,6 @@ export class ChatMessage {
         this._createdAt = value;
     }
 
-    // updatedAt getter/setter
     get updatedAt() {
         return this._updatedAt;
     }
@@ -93,5 +66,5 @@ export class ChatMessage {
     set updatedAt(value) {
         this._updatedAt = value;
     }
-    
+
 }

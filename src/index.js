@@ -1,5 +1,4 @@
 import express from 'express';
-//import {router as userRoutes} from './routes/userRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import profileRoutes from './routes/profileRoutes.js'
 import locationRoutes from './routes/locationRoutes.js'
@@ -8,15 +7,14 @@ import { authenticateToken } from './middlewares/authentication.js';
 import searchRoutes from './routes/searchRoutes.js';
 import chatRoutes from './routes/chatRoutes.js';
 import eventRoutes from './routes/eventRoutes.js';
+import dotenv from 'dotenv';
 
-
+dotenv.config();
 
 const app = express();
-const port = 3000; // Or any other desired port
+const port = process.env.API_HOST_PORT;
 
 
-
-//app.use() = "Use this function/middleware for incoming requests"
 // 1. Security middleware (first)
 //app.use(helmet());
 //app.use(cors());
@@ -36,13 +34,6 @@ app.use('/api/chat', authenticateToken, chatRoutes);
 app.use('/api/event', authenticateToken, eventRoutes);
 
 
-
-
-// Define a basic route
-/*app.get('/', (req, res) => {
-    console.log(`req method: ${req.method}`);
-    res.send('Hello World from Express!');
-});*/
 
 // Swagger documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
@@ -68,6 +59,8 @@ app.use((req, res) => {
   console.error('Error:', err);
   res.status(500).json({ error: 'Internal server error' });
 });*/
+
+
 
 // Start the server
 app.listen(port, () => {

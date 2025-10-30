@@ -1,20 +1,3 @@
-/*
-CREATE TABLE users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    email VARCHAR(255) NOT NULL UNIQUE,
-    username VARCHAR(100) NOT NULL UNIQUE,
-    first_name VARCHAR(100) NOT NULL,
-    last_name VARCHAR(100) NOT NULL,
-    gender VARCHAR(20),
-    biography VARCHAR(500),
-    date_of_birth TEXT CHECK(date_of_birth IS NULL OR date_of_birth = strftime('%Y-%m-%d', date_of_birth)),
-    user_password VARCHAR(100) NOT NULL,
-    user_status VARCHAR(50) NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-*/
-
 export class User {
 
     constructor(id, email, username, firstName, lastName, gender, biography, dateOfBirth, sexualPreference,userPassword, userStatus, createdAt, updatedAt) 
@@ -34,7 +17,6 @@ export class User {
         this._updatedAt = updatedAt;
     }
 
-    // ID
     get id() {
         return this._id;
     }
@@ -43,7 +25,6 @@ export class User {
         this._id = value;
     }
 
-    // Email
     get email() {
         return this._email;
     }
@@ -52,7 +33,6 @@ export class User {
         this._email = value;
     }
 
-    // Username
     get username() {
         return this._username;
     }
@@ -61,7 +41,6 @@ export class User {
         this._username = value;
     }
 
-    // First Name
     get firstName() {
         return this._firstName;
     }
@@ -70,7 +49,6 @@ export class User {
         this._firstName = value;
     }
 
-    // Last Name
     get lastName() {
         return this._lastName;
     }
@@ -111,7 +89,6 @@ export class User {
         this._sexualPreference = value;
     }
 
-    // User Password
     get userPassword() {
         return this._userPassword;
     }
@@ -120,7 +97,6 @@ export class User {
         this._userPassword = value;
     }
 
-    // User Status
     get userStatus() {
         return this._userStatus;
     }
@@ -129,7 +105,6 @@ export class User {
         this._userStatus = value;
     }
 
-    // Created At
     get createdAt() {
         return this._createdAt;
     }
@@ -138,7 +113,6 @@ export class User {
         this._createdAt = value;
     }
 
-    // Updated At
     get updatedAt() {
         return this._updatedAt;
     }
@@ -146,31 +120,4 @@ export class User {
     set updatedAt(value) {
         this._updatedAt = value;
     }
-    /*getUser(){
-        return {
-            "id": this.id,
-            
-        }
-    }
-    updateTimestamp() {
-        this.updatedAt = new Date();
-    }
-
-    getFullName() {
-        return `${this.firstName} ${this.lastName}`;
-    }
-
-    toString() {
-        return `User(id=${this.id}, username='${this.username}', email='${this.email}')`;
-    }*/
 }
-
-// Usage
-/*const user = new User({
-    email: "john@example.com",
-    username: "johndoe",
-    firstName: "John",
-    lastName: "Doe",
-    userPassword: "hashed_password",
-    userStatus: "active"
-});*/

@@ -1,15 +1,4 @@
-
-  //validate user fields
-  //email - valid email
-  //username - 3-50 (alphanumeric)
-  //firstname - 3-50 (alpha)
-  //lastname - 3-50 (alpha)
-  //userPassword - 6-12 (1 upper, 1 lower, 1 number, 1 special char)
-
-
 export class Validation{
-
-    //constructor(){}
 
     static isEmail(value)
     {
@@ -48,27 +37,22 @@ export class Validation{
     {
         if (typeof value !== 'string') return false;
         
-        // Check length
-        if (value.length < 6 || value.length > 12) 
-        {
+        if (value.length < 6 || value.length > 12) {
             return false;
         }
 
         // Check for at least one uppercase letter
-        if (!/[A-Z]/.test(value)) 
-        {
+        if (!/[A-Z]/.test(value)) {
             return false;
         }
 
         // Check for at least one lowercase letter
-        if (!/[a-z]/.test(value)) 
-        {
+        if (!/[a-z]/.test(value)) {
             return false;
         }
 
         // Check for at least one number
-        if (!/\d/.test(value)) 
-        {
+        if (!/\d/.test(value)) {
             return false;
         }
 
@@ -90,7 +74,8 @@ export class Validation{
     }
 
     static isValidSexualPreference(preference){
-        if (typeof preference !== 'string') return false;
+        if (typeof preference !== 'string') 
+            return false;
 
         const validValues = ['male', 'female', 'bi-sexual'];
         
@@ -98,33 +83,19 @@ export class Validation{
     }
 
     static isValidInterest(interest){
-        if (typeof interest !== 'string') return false;
+        if (typeof interest !== 'string') 
+            return false;
 
         const validValues = ['#music', '#movie', '#gym', '#swim', '#jog', '#cycle', '#animal','#vegan', '#dinner', '#travel', '#dance'];
         
         return validValues.includes(interest);
     }
 
-    //accept ["male", "female"]
-    /*static isValidSexualPreferences(preferences){
-        
-        if (!Array.isArray(preferences)) return false;
-        if (preferences.length < 1) return false;
-
-        for (const pref of preferences){
-            if (!this.isValidSexualPreference(pref))
-                return false;
-        }
-        return true;
-    }*/
-
-    //accept ["#music", "#movie"]
     static isValidInterests(interests){
-        //console.log(interests);
-        //console.log(Array.isArray(interests))
-
-        if (Array.isArray(interests) === false) return false;
-        if (interests.length < 1) return false;
+        if (Array.isArray(interests) === false) 
+            return false;
+        if (interests.length < 1) 
+            return false;
 
         for (const interest of interests){
             if (!this.isValidInterest(interest))
@@ -191,5 +162,3 @@ export class Validation{
         return true;
     }
 }
-
-

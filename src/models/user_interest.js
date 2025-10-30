@@ -1,15 +1,3 @@
-/*
-CREATE TABLE user_interests (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    interest VARCHAR(100) NOT NULL,
-    UNIQUE (user_id, interest),
-    FOREIGN KEY (user_id) REFERENCES users(id) 
-    ON DELETE CASCADE 
-    ON UPDATE NO ACTION
-);
-*/
-
 export class UserInterest {
 
     constructor(id, userId, interest, createdAt, updatedAt)
@@ -21,7 +9,6 @@ export class UserInterest {
         this._updatedAt = updatedAt;
     }
 
-    // Getters
     get id() {
         return this._id;
     }
@@ -42,7 +29,6 @@ export class UserInterest {
         return this._updatedAt;
     }
 
-    // Setters
     set id(value) {
         this._id = value;
     }

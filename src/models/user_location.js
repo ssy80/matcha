@@ -1,23 +1,3 @@
-/*
-
-CREATE TABLE user_locations (
-    user_id INTEGER PRIMARY KEY NOT NULL,
-    --latitude DECIMAL(10, 8) NOT NULL,  -- e.g., 40.712776
-    --longitude DECIMAL(11, 8) NOT NULL, -- e.g., -74.005974
-    latitude REAL,                        -- e.g., 40.712776
-    longitude REAL,                       -- e.g., -74.005974
-    neighborhood VARCHAR(100),            -- Extracted neighborhood name/ suburb 
-    city VARCHAR(100),
-    country VARCHAR(100),
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) 
-    ON DELETE CASCADE 
-    ON UPDATE NO ACTION
-);
-*/
-
-
 export class UserLocation {
 
     constructor(userId, latitude, longitude, neighborhood, city, country, createdAt, updatedAt)
@@ -32,7 +12,6 @@ export class UserLocation {
         this._updatedAt = updatedAt;
     }
 
-    // Getters
     get userId() {
         return this._userId;
     }
@@ -65,7 +44,6 @@ export class UserLocation {
         return this._updatedAt;
     }
 
-    // Setters
     set userId(value) {
         this._userId = value;
     }
