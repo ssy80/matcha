@@ -27,6 +27,7 @@ export async function getMyLocation(req, res){
     }
 }
 
+
 export const updateUserLocation = async(req, res) => {
     try{
         const userId = req.user.id;
@@ -53,8 +54,7 @@ export const updateUserLocation = async(req, res) => {
         if (ip){
             ip = ip.trim();
         }
-
-        if (latitude && longitude && Validation.isValidCoordinates(latitude, longitude)){
+        if (latitude !== null && longitude !== null && Validation.isValidCoordinates(latitude, longitude)){
             const coordinates = `${latitude}, ${longitude}`;
             const encodedCoordinates = encodeURIComponent(coordinates);
             const geolocateUrl = `https://api.opencagedata.com/geocode/v1/json?q=${encodedCoordinates}&key=${OPENCAGE_API_KEY}`;
@@ -99,6 +99,11 @@ export const updateUserLocation = async(req, res) => {
             }
             const ipCity = ipData?.city || "unknown";
             const ipCountry = ipData?.country_name || "unknown";
+            const reason = ipData?.reason || "unknown";
+            if (reason === "Reserved IP Address"){
+                res.status(409).json({"success": false, "error": "invalid ip"});
+                return;
+            }
             const ipLocation = ipCity + ", " + ipCountry;
             const encodedLocation = encodeURIComponent(ipLocation);
             const geolocateUrl = "https://api.opencagedata.com/geocode/v1/json?q=" + encodedLocation + "&key=" + OPENCAGE_API_KEY;

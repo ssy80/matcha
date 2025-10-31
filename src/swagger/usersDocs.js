@@ -5,7 +5,7 @@
  *     summary: Register a new user
  *     description: Creates a new user account with the provided information and sends an activation email
  *     tags:
- *       - Authentication
+ *       - User
  *     requestBody:
  *       required: true
  *       content:
@@ -113,7 +113,7 @@
  *     summary: Activate user account
  *     description: Activates a user account using the activation UUID sent via email
  *     tags:
- *       - Authentication
+ *       - User
  *     requestBody:
  *       required: true
  *       content:
@@ -194,7 +194,7 @@
  *     summary: User login
  *     description: Authenticates a user with username and password, returns JWT token upon successful login
  *     tags:
- *       - Authentication
+ *       - User
  *     requestBody:
  *       required: true
  *       content:
@@ -291,7 +291,7 @@
  *     summary: Request password reset
  *     description: Initiates a password reset process by sending a reset email with UUID token (valid for 10 minutes)
  *     tags:
- *       - Authentication
+ *       - User
  *     requestBody:
  *       required: true
  *       content:
@@ -371,7 +371,7 @@
  *     summary: Reset user password
  *     description: Resets user password using the reset UUID from email (token valid for 10 minutes)
  *     tags:
- *       - Authentication
+ *       - User
  *     requestBody:
  *       required: true
  *       content:

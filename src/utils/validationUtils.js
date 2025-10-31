@@ -97,6 +97,11 @@ export class Validation{
         if (interests.length < 1) 
             return false;
 
+        // Check for duplicates using Set
+        const uniqueInterests = new Set(interests);
+        if (uniqueInterests.size !== interests.length) 
+            return false;
+
         for (const interest of interests){
             if (!this.isValidInterest(interest))
                 return false;
@@ -107,9 +112,6 @@ export class Validation{
     static isValidCoordinates(lat, lon) {
         const latitude = Number(lat);
         const longitude = Number(lon);
-
-        if (!latitude || !longitude)
-            return false;
 
         // Check if they are valid numbers
         if (!Number.isFinite(latitude) || !Number.isFinite(longitude))

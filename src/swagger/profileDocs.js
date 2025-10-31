@@ -58,7 +58,7 @@
  *                 items:
  *                   type: string
  *                 description: Array of user interests
- *                 example: ["#music", "#jog", "#music", "#travel"]
+ *                 example: ["#music", "#jog", "#movie"]
  *               pictures:
  *                 type: array
  *                 items:
@@ -669,6 +669,514 @@
  *                       value: "no profile picture"
  *                     cannotLikeOwnself:
  *                       value: "cannot liked ownself"
+ *       '401':
+ *         description: Unauthorized - Missing or invalid authentication token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "Unauthorized"
+ *       '500':
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "internal server error"
+ */
+
+
+/**
+ * @swagger
+ * /api/profile/fame_rating/{id}:
+ *   get:
+ *     summary: Get user's fame rating
+ *     description: Retrieve the fame rating information for a specific user including stars and like count.
+ *     tags:
+ *       - Profile
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: User ID to get fame rating for
+ *         example: 456
+ *     responses:
+ *       '200':
+ *         description: Successfully retrieved fame rating
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 fame_rating:
+ *                   type: object
+ *                   properties:
+ *                     stars:
+ *                       type: integer
+ *                       description: Star rating based on popularity (0-5)
+ *                       example: 4
+ *                     liked_count:
+ *                       type: integer
+ *                       description: Number of likes received by the user
+ *                       example: 150
+ *       '400':
+ *         description: Invalid user ID parameter
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "invalid user id"
+ *       '409':
+ *         description: Unable to calculate fame rating
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "unable to calculate fame rating"
+ *       '500':
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "internal server error"
+ */
+
+
+/**
+ * @swagger
+ * /api/profile/online/{id}:
+ *   get:
+ *     summary: Get user's online status
+ *     description: Retrieve the last seen timestamp for a specific user to determine their online status.
+ *     tags:
+ *       - Profile
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: User ID to get online status for
+ *         example: 456
+ *     responses:
+ *       '200':
+ *         description: Successfully retrieved online status
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 last_seen:
+ *                   type: string
+ *                   format: date-time
+ *                   description: Timestamp when the user was last active
+ *                   example: "2024-01-15T14:30:00Z"
+ *       '400':
+ *         description: Invalid user ID parameter
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "invalid user id"
+ *       '409':
+ *         description: User not found or no online status available
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "invalid user id"
+ *       '500':
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "internal server error"
+ */
+
+
+/**
+ * @swagger
+ * /api/profile/viewed_me/{id}:
+ *   get:
+ *     summary: Check if a user viewed my profile
+ *     description: Check whether a specific user has viewed the current user's profile.
+ *     tags:
+ *       - Profile
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: User ID to check if they viewed current user's profile
+ *         example: 456
+ *     responses:
+ *       '200':
+ *         description: Successfully checked view status
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 is_viewed_me:
+ *                   type: boolean
+ *                   description: Whether the specified user has viewed the current user's profile
+ *                   example: true
+ *       '400':
+ *         description: Invalid user ID parameter
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "invalid viewed me user id"
+ *       '401':
+ *         description: Unauthorized - Missing or invalid authentication token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "Unauthorized"
+ *       '500':
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "internal server error"
+ */
+
+
+/**
+ * @swagger
+ * /api/profile/liked_me/{id}:
+ *   get:
+ *     summary: Check if a user liked my profile
+ *     description: Check whether a specific user has liked the current user's profile.
+ *     tags:
+ *       - Profile
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: User ID to check if they liked current user's profile
+ *         example: 456
+ *     responses:
+ *       '200':
+ *         description: Successfully checked like status
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 is_liked_me:
+ *                   type: boolean
+ *                   description: Whether the specified user has liked the current user's profile
+ *                   example: true
+ *       '400':
+ *         description: Invalid user ID parameter
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "invalid liked me user id"
+ *       '401':
+ *         description: Unauthorized - Missing or invalid authentication token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "Unauthorized"
+ *       '500':
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "internal server error"
+ */
+
+
+/**
+ * @swagger
+ * /api/profile/blocked_user:
+ *   post:
+ *     summary: Block or unblock a user
+ *     description: Block or unblock a specific user. Cannot block your own profile.
+ *     tags:
+ *       - Profile
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - blocked_user_id
+ *               - is_blocked
+ *             properties:
+ *               blocked_user_id:
+ *                 type: integer
+ *                 description: ID of the user to block/unblock
+ *                 example: 456
+ *               is_blocked:
+ *                 type: boolean
+ *                 description: true to block, false to unblock
+ *                 example: true
+ *     responses:
+ *       '201':
+ *         description: Successfully blocked/unblocked the user
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *       '400':
+ *         description: Invalid input data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   examples:
+ *                     invalidBlockedUserId:
+ *                       value: "invalid blocked user id"
+ *                     invalidIsBlocked:
+ *                       value: "invalid is_blocked"
+ *       '409':
+ *         description: Operation failed due to business rules
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   examples:
+ *                     invalidUser:
+ *                       value: "invalid blocked user"
+ *                     cannotBlockOwnself:
+ *                       value: "cannot block ownself"
+ *       '401':
+ *         description: Unauthorized - Missing or invalid authentication token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "Unauthorized"
+ *       '500':
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "internal server error"
+ */
+
+
+/**
+ * @swagger
+ * /api/profile/faked_user:
+ *   post:
+ *     summary: Report or unreport a user as fake
+ *     description: Report or unreport a specific user's profile as fake. Cannot report your own profile.
+ *     tags:
+ *       - Profile
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - faked_user_id
+ *               - is_faked
+ *             properties:
+ *               faked_user_id:
+ *                 type: integer
+ *                 description: ID of the user to report/unreport as fake
+ *                 example: 456
+ *               is_faked:
+ *                 type: boolean
+ *                 description: true to report as fake, false to remove fake report
+ *                 example: true
+ *     responses:
+ *       '201':
+ *         description: Successfully reported/unreported the user as fake
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *       '400':
+ *         description: Invalid input data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   examples:
+ *                     invalidFakedUserId:
+ *                       value: "invalid faked user id"
+ *                     invalidIsFaked:
+ *                       value: "invalid is_faked"
+ *       '409':
+ *         description: Operation failed due to business rules
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   examples:
+ *                     invalidUser:
+ *                       value: "invalid faked user"
+ *                     cannotFakeOwnself:
+ *                       value: "cannot faked ownself"
  *       '401':
  *         description: Unauthorized - Missing or invalid authentication token
  *         content:

@@ -15,6 +15,8 @@ import { addEvent } from './eventService.js';
 
 dotenv.config();
 
+const IMAGE_URL = `${process.env.API_HOST_URL}:${process.env.API_HOST_PORT}${process.env.PUBLIC_IMAGE_DIR}`;
+
 
 export const fakedProfile = async (req, res) =>{
     try{
@@ -317,6 +319,12 @@ export const getProfileUser = async (req, res) => {
             isBlocked = true;
         }
 
+        pictures.forEach(pic =>{
+            if (pic.picture){
+                pic.picture = `${IMAGE_URL}${pic.picture}`;
+            }
+        });
+        
         const data = {
             "id": viewUserId,
             "username": viewedUser.username,
@@ -360,6 +368,12 @@ export const getProfileMe = async (req, res) => {
         }
         const interests = await getUserInterestsByUserId(userId);
         const pictures = await getUserPicturesByUserId(userId);
+
+        pictures.forEach(pic =>{
+            if (pic.picture){
+                pic.picture = `${IMAGE_URL}${pic.picture}`;
+            }
+        });
 
         const data = {
             "id": userId,

@@ -8,7 +8,7 @@ import { getTotalUsers, getStars, getUserBlocked } from '../services/profileServ
 
 dotenv.config();
 
-
+const IMAGE_URL = `${process.env.API_HOST_URL}:${process.env.API_HOST_PORT}${process.env.PUBLIC_IMAGE_DIR}`;
 const suggestedProfileDistKm = Number(process.env.SUGGESTED_PROFILE_DIST_KM);
 
 const intersect = (a, b) => new Set([...a].filter(x => b.has(x)));
@@ -168,6 +168,9 @@ export const searchProfiles = async (req, res) =>{
             profile.interests = profile.interests.split(',');
             const stars = getStars(totalUsers, profile.liked_count);
             profile.fame_rating = {"stars": stars, "liked_count": profile.liked_count};
+            if (profile.profile_picture){
+                profile.profile_picture = `${IMAGE_URL}${profile.profile_picture}`;
+            }
         });
         res.status(200).json({"success": true, "profiles": searchProfiles});
     }catch(err){
@@ -195,6 +198,9 @@ export const getSuggestedProfiles = async (req, res) =>{
             profile.interests = profile.interests.split(',');
             const stars = getStars(totalUsers, profile.liked_count);
             profile.fame_rating = {"stars":stars, "liked_count": profile.liked_count};
+            if (profile.profile_picture){
+                profile.profile_picture = `${IMAGE_URL}${profile.profile_picture}`;
+            }
         });
 
         suggestedProfiles.sort((a, b) => 

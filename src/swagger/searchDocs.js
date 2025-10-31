@@ -154,7 +154,7 @@
  *                 items:
  *                   type: string
  *                 description: Array of interests to filter by
- *                 example: ["hiking", "music", "reading"]
+ *                 example: ["#jog", "#music", "#movie"]
  *               min_stars:
  *                 type: integer
  *                 minimum: 0

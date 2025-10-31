@@ -35,6 +35,7 @@ router.post('/liked_profile', async (req, res) => {
     await likedProfile(req, res);
 });
 
+//--start
 router.get('/fame_rating/:id', async (req, res) => {
     await getFameRating(req, res);
 });
