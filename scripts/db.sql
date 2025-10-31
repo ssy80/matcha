@@ -1,8 +1,6 @@
-
 drop table users;
 drop table user_activations;
 drop table user_resets;
---drop table user_sexual_preferences;
 drop table user_interests;
 drop table user_pictures;
 drop table viewed_histories;
@@ -15,8 +13,6 @@ drop table user_fakeds;
 drop table chat_messages;
 drop table events;
 
-
---email address, username, last name, first name, password
 
 CREATE TABLE users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -62,33 +58,6 @@ CREATE TABLE user_resets (
 );
 
 
--- gender, sexual preferences, biography, list of interests, 5 pictures(1 for profile)
-/*CREATE TABLE user_profiles (
-    user_id INTEGER NOT NULL,
-    gender VARCHAR(20),
-    biography VARCHAR(500),
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (user_id),
-    FOREIGN KEY (user_id) REFERENCES users(id) 
-    ON DELETE CASCADE 
-    ON UPDATE NO ACTION
-);*/
-
-
-/*CREATE TABLE user_sexual_preferences (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    preference VARCHAR(100) NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE (user_id, preference),
-    FOREIGN KEY (user_id) REFERENCES users(id) 
-    ON DELETE CASCADE
-    ON UPDATE NO ACTION
-);*/
-
-
 CREATE TABLE user_interests (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
@@ -115,8 +84,7 @@ CREATE TABLE user_pictures (
     ON UPDATE NO ACTION
 );
 
---  - Users must be able to see who has viewed their profile.  -- view history
---    - Users must also be able to see who has “liked” them.     --like history
+
 CREATE TABLE viewed_histories (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
@@ -130,6 +98,7 @@ CREATE TABLE viewed_histories (
     ON DELETE CASCADE 
     ON UPDATE NO ACTION
 );
+
 
 CREATE TABLE liked_histories (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -157,26 +126,11 @@ CREATE TABLE fame_ratings (
 );
 
 
---event TABLE
-
---location table
-
-/*CREATE TABLE fame_ratings (
-    user_id INTEGER NOT NULL,
-    liked_count INTEGER DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) 
-    ON DELETE CASCADE 
-    ON UPDATE NO ACTION
-);*/
-
-
 CREATE TABLE user_locations (
     user_id INTEGER PRIMARY KEY NOT NULL,
-    latitude REAL,                        -- e.g., 40.712776
-    longitude REAL,                       -- e.g., -74.005974
-    neighborhood VARCHAR(100),            -- Extracted neighborhood name/ suburb 
+    latitude REAL,
+    longitude REAL,
+    neighborhood VARCHAR(100),
     city VARCHAR(100),
     country VARCHAR(100),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -211,6 +165,7 @@ CREATE TABLE user_blockeds (
     ON UPDATE NO ACTION
 );
 
+
 CREATE TABLE user_fakeds (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
@@ -231,7 +186,7 @@ CREATE TABLE chat_messages (
     from_user_id INTEGER NOT NULL,
     to_user_id INTEGER NOT NULL,
     message VARCHAR(500) NOT NULL,
-    message_status varchar(30) NOT NULL,           -- new, sent, 
+    message_status varchar(30) NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (from_user_id) REFERENCES users(id)
@@ -247,8 +202,8 @@ CREATE TABLE events (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
     from_user_id INTEGER NOT NULL,
-    event_type varchar(30) NOT NULL,    -- liked_me, viewed_me, new_message, connected, disconnect
-    event_status varchar(30) NOT NULL,  -- new, notified
+    event_type varchar(30) NOT NULL,
+    event_status varchar(30) NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (from_user_id) REFERENCES users(id)
