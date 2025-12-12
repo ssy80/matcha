@@ -8,11 +8,20 @@ import searchRoutes from './routes/searchRoutes.js';
 import chatRoutes from './routes/chatRoutes.js';
 import eventRoutes from './routes/eventRoutes.js';
 import dotenv from 'dotenv';
+import cors from 'cors';
 
 dotenv.config();
 
 const app = express();
 const port = process.env.API_HOST_PORT;
+
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
+//app.use(cors());
 
 
 // 1. Security middleware (first)
@@ -63,6 +72,10 @@ app.use((req, res) => {
 
 
 // Start the server
-app.listen(port, () => {
+/*app.listen(port, () => {
     console.log(`Express app listening at http://localhost:${port}`);
+});*/
+
+app.listen(port, '0.0.0.0', () => {
+    console.log(`Express app listening at http://0.0.0.0:${port}`);
 });
