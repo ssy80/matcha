@@ -15,13 +15,13 @@ dotenv.config();
 const app = express();
 const port = process.env.API_HOST_PORT;
 
-app.use(
+/*app.use(
   cors({
     origin: "http://localhost:5173",
     credentials: true,
   })
-);
-//app.use(cors());
+);*/
+app.use(cors());
 
 
 // 1. Security middleware (first)
