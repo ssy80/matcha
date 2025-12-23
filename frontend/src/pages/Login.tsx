@@ -17,13 +17,22 @@ const Login = () => {
                 username,
                 password
             });
-            localStorage.setItem('token', response.data.token)
+            const token = response?.data?.token;
+
+            // Checker to see if token exist and valid value
+            if (typeof token !== 'string' || !token){
+                console.error('Invalid token stored');
+                alert('Login failed: Invalid token received');
+                return;
+            }
+
+            localStorage.setItem('token', token);
             console.log('Server says:', response.data);
             alert('Login is successful!');
             navigate('/home');
         } catch (error: any) {
             console.error('Error during login', error);
-            alert('Login failed:' + (error.response?.data?.error || error.message));
+            alert('Login failed: ' + (error.response?.data?.error || error.message));
         }
     };
     return (
@@ -34,7 +43,7 @@ const Login = () => {
             </div>
             <div>
                 <label>Password:</label>
-                <input type='password' value={password} onChange={e => setPassword(e.target.value)} />
+                <input type='password' value={password} onChange={e => setPassword(e.target.value)} required />
             </div>
             <button type='submit'>Login</button>
         </form>
