@@ -2,6 +2,7 @@ import { useState } from 'react';
 import React from 'react';
 import api from '../api/axios';
 import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 const Login = () => {
 
@@ -44,6 +45,11 @@ const Login = () => {
             <div>
                 <label>Password:</label>
                 <input type='password' value={password} onChange={e => setPassword(e.target.value)} required />
+            </div>
+
+            <div className="forget-password-container">
+                <Link to="/forget-password" className="forget-password-link">                    Forget Password?
+                </Link>
             </div>
             <button type='submit'>Login</button>
         </form>
