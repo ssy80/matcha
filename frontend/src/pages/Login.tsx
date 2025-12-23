@@ -19,9 +19,9 @@ const Login = () => {
             });
             const token = response?.data?.token;
 
-            // Checker to see if token exist and valid value
-            if (typeof token !== 'string' || !token){
-                console.error('Invalid token stored');
+            // Checker to see if token exist and has a non-empty string value
+            if (typeof token !== 'string' || token.trim().length === 0){
+                console.error('Invalid token received during validation. Token will not be stored');
                 alert('Login failed: Invalid token received');
                 return;
             }
@@ -39,7 +39,7 @@ const Login = () => {
         <form onSubmit={handleSubmit}>
             <div>
                 <label>Username:</label>
-                <input type='text' value={username} onChange={e => setUsername(e.target.value)} />
+                <input type='text' value={username} onChange={e => setUsername(e.target.value)} required />
             </div>
             <div>
                 <label>Password:</label>
