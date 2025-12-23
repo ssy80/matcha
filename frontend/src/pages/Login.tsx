@@ -48,7 +48,8 @@ const Login = () => {
             </div>
 
             <div className="forget-password-container">
-                <Link to="/forget-password" className="forget-password-link">                    Forget Password?
+                <Link to="/forget-password" className="forget-password-link">
+                Forget Password?
                 </Link>
             </div>
             <button type='submit'>Login</button>
