@@ -8,6 +8,12 @@ const Profile = () => {
     const [biography, setBiography] = useState('');
     const [tags, setTags] = useState<string[]>([]);
     const [currentTag, setCurrentTag] = useState('');
+    const [location, setLocation] = useState({
+        latitude: 0,
+        longitude: 0,
+        city: ''
+    });
+    const [locationStatus, setLocationStatus] = useState('');
 
     // Helper to add a tag
     const handleAddTag = (e: React.KeyboardEvent) => {
@@ -23,10 +29,40 @@ const Profile = () => {
         }
     };
 
+    // Helper to remove a tag
     const removeTag = (tagToRemove: string) => {
         setTags(tags.filter(tag => tag !== tagToRemove));
     }
 
+    // To handle GPS Location
+    const handleGPS = (event: React.MouseEvent) => {
+        event.preventDefault();
+        setLocationStatus('Locating...');
+
+        if ("geolocation" in navigator) {
+            console.log("Browser does support Geolocation");
+            navigator.geolocation.getCurrentPosition((position) => {
+                const {latitude, longitude} = position.coords;
+                console.log(`Latitude: ${latitude}, Longitude: ${longitude}`);
+
+                setLocation(prev => ({
+                    ...prev,
+                    latitude: latitude,
+                    longitude: longitude,
+                }));
+                setLocationStatus('Location has been found');
+                console.log('Updated location state:', {latitude, longitude});
+            }, (error) => {
+                setLocationStatus('Unable to retrieve your location');
+                console.error('Error retrieving location:', error);
+            });
+        }
+        else {
+            setLocationStatus('Geolocation is not supported by the browser');
+        }
+    }
+
+    // Form submission
     const handleSubmit = (event: React.FormEvent) => {
         event.preventDefault();
         console.log({ gender, sexualPreference, biography, tags });
@@ -110,6 +146,32 @@ const Profile = () => {
                             </span>
                         ))}
                     </div>
+                </div>
+
+                {/* LOCATION SECTION */}
+                <div style={{ marginBottom: '15px', border: '1px solid #ddd', padding: '10px', borderRadius: '5px' }}>
+                    <label>Location (Required):</label>
+                    
+                    <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+                        <button onClick={handleGPS} style={{ background: '#4CAF50', color: 'white' }}>
+                            📍 Locate Me
+                        </button>
+                        <span>{locationStatus}</span>
+                    </div>
+
+                    <input 
+                        type="text" 
+                        value={location.city} 
+                        onChange={(e) => setLocation({ ...location, city: e.target.value })}
+                        placeholder="Or type your City/Neighborhood manually"
+                        required
+                        style={{ display: 'block', width: '100%', padding: '8px' }}
+                    />
+                    
+                    {/* Debug View - to see coordinates updating */}
+                    <small style={{ color: '#666' }}>
+                        Lat: {location.latitude.toFixed(4)}, Lng: {location.longitude.toFixed(4)}
+                    </small>
                 </div>
                 <button type="submit">Save Profile</button>
             </form>
