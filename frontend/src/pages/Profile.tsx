@@ -1,12 +1,25 @@
 import { useState } from 'react';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-
+import api from '../api/axios'; // Ensure this path matches your file structure
 
 interface ImageUpload {
     file: File;
     preview: string;
 }
+
+// Helper function to convert to Base64 for Form Submission
+const convertFileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = (error) => reject(error);
+    });
+};
+
+// Defines the allowed tags as per backend validation
+const ALLOWED_TAGS = ['#music', '#movie', '#gym', '#swim', '#jog', '#cycle', '#animal', '#vegan', '#dinner', '#travel', '#dance'];
 
 const Profile = () => {
     // 1. Initialize State for the basic fields
@@ -21,19 +34,22 @@ const Profile = () => {
         city: ''
     });
     const [locationStatus, setLocationStatus] = useState('');
-    const [photos,setPhotos] = useState<ImageUpload[]>([]);
+    const [photos, setPhotos] = useState<ImageUpload[]>([]);
+
+    const navigate = useNavigate();
 
     // Helper to add a tag
-    const handleAddTag = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter' && currentTag.trim()) {
-            e.preventDefault();
-            let newTag = currentTag.trim();
-            if (!newTag.startsWith('#')) newTag = '#' + newTag;
+    const handleAddTag = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const newTag = e.target.value;
+        if (!newTag) return;
 
-            if (!tags.includes(newTag)) {
-                setTags([...tags, newTag]);
-            }
-            setCurrentTag('');
+        if (tags.length >= 5) {
+            alert("You can only select up to 5 interests.");
+            return;
+        }
+
+        if (!tags.includes(newTag)) {
+            setTags([...tags, newTag]);
         }
     };
 
@@ -50,7 +66,7 @@ const Profile = () => {
         if ("geolocation" in navigator) {
             console.log("Browser does support Geolocation");
             navigator.geolocation.getCurrentPosition((position) => {
-                const {latitude, longitude} = position.coords;
+                const { latitude, longitude } = position.coords;
                 console.log(`Latitude: ${latitude}, Longitude: ${longitude}`);
 
                 setLocation(prev => ({
@@ -59,13 +75,12 @@ const Profile = () => {
                     longitude: longitude,
                 }));
                 setLocationStatus('Location has been found');
-                console.log('Updated location state:', {latitude, longitude});
+                console.log('Updated location state:', { latitude, longitude });
             }, (error) => {
                 setLocationStatus('Unable to retrieve your location');
                 console.error('Error retrieving location:', error);
             });
-        }
-        else {
+        } else {
             setLocationStatus('Geolocation is not supported by the browser');
         }
     };
@@ -95,49 +110,74 @@ const Profile = () => {
         setPhotos(photos.filter((_, index) => index !== indexToRemove));
     };
 
-    const navigate = useNavigate();
+    // Helper to map frontend sexual preference to backend expected format
+    const getBackendSexualPreference = (gender: string, sexualPref: string) => {
+        if (sexualPref === 'bisexual') return 'bi-sexual';
+        if (gender === 'male') {
+            return sexualPref === 'heterosexual' ? 'female' : 'male';
+        }
+        if (gender === 'female') {
+            return sexualPref === 'heterosexual' ? 'male' : 'female';
+        }
+        return 'bi-sexual';
+    };
 
     // Form submission
-    const handleSubmit = (event: React.FormEvent) => {
+    const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
-        console.log({ gender, sexualPreference, biography, tags, location, photos });
-        const formData = new FormData();
-        formData.append("gender", gender);
-        formData.append("sexualPreference", sexualPreference);
-        formData.append("biography", biography);
-        formData.append("tags", JSON.stringify(tags));
-        formData.append("latitude", location.latitude.toString());
-        formData.append("longitude", location.longitude.toString());
-        formData.append("city", location.city);
-        photos.forEach((photo, index) => {
-            formData.append(`photo_${index}`, photo.file);
-        });
 
-        // Send to backend
-        fetch('http://localhost:3000/profile', {
-            method: 'POST',
-            body: formData,
-        })
-        .then(response => response.json())
-        .then(result => {
-            console.log('Success:', result);
-            navigate('/home')
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        });
+        // 1. Format photos for Backend
+        const formattedPictures = await Promise.all(
+            photos.map(async (photo, index) => {
+                const base64String = await convertFileToBase64(photo.file);
+                return {
+                    base64_image: base64String,
+                    isProfilePicture: index === 0 ? 1 : 1
+                };
+            })
+        );
+
+        // 2. Prepare the profile data object
+        const profileData = {
+            gender: gender,
+            sexual_preference: getBackendSexualPreference(gender, sexualPreference),
+            biography: biography,
+            interests: tags,
+            pictures: formattedPictures
+        };
+
+        try {
+            // 3. Send Profile Update
+            console.log("Sending Profile Data:", profileData);
+            await api.patch('/profile/update', profileData);
+
+            // 4. Send Location Update
+            if (location.latitude !== 0 && location.longitude !== 0) {
+                 await api.post('/location/update', {
+                    latitude: location.latitude,
+                    longitude: location.longitude
+                });
+            }
+
+            alert('Profile saved successfully!');
+            navigate('/home');
+        } catch (error: any) {
+            console.error('Error saving profile:', error);
+            const errorMessage = error.response?.data?.error || error.message || 'Unknown error';
+            alert('Failed to save profile: ' + errorMessage);
+        }
     };
 
     return (
         <div style={{ maxWidth: '500px', margin: '0 auto' }}>
             <h2>Complete Your Profile</h2>
             <form onSubmit={handleSubmit}>
-                
+
                 {/* GENDER */}
                 <div style={{ marginBottom: '15px' }}>
                     <label>Gender:</label>
-                    <select 
-                        value={gender} 
+                    <select
+                        value={gender}
                         onChange={(e) => setGender(e.target.value)}
                         required
                         style={{ display: 'block', width: '100%', padding: '8px' }}
@@ -152,8 +192,8 @@ const Profile = () => {
                 {/* SEXUAL PREFERENCES */}
                 <div style={{ marginBottom: '15px' }}>
                     <label>Sexual Preferences:</label>
-                    <select 
-                        value={sexualPreference} 
+                    <select
+                        value={sexualPreference}
                         onChange={(e) => setSexualPreference(e.target.value)}
                         required
                         style={{ display: 'block', width: '100%', padding: '8px' }}
@@ -167,8 +207,8 @@ const Profile = () => {
                 {/* BIOGRAPHY */}
                 <div style={{ marginBottom: '15px' }}>
                     <label>Biography:</label>
-                    <textarea 
-                        value={biography} 
+                    <textarea
+                        value={biography}
                         onChange={(e) => setBiography(e.target.value)}
                         placeholder="Tell us about yourself..."
                         rows={4}
@@ -177,43 +217,48 @@ const Profile = () => {
                     />
                 </div>
 
-                {/* INTEREST TAGS */}
+                {/* INTEREST TAGS - CHANGED TO SELECT DROPDOWN */}
                 <div style={{ marginBottom: '15px' }}>
-                    <label>Interests (Press Enter to add):</label>
-                    <input 
-                        type="text" 
-                        value={currentTag} 
-                        onChange={(e) => setCurrentTag(e.target.value)}
-                        onKeyDown={handleAddTag}
-                        placeholder="e.g. #vegan"
+                    <label>Interests (Max 5):</label>
+                    <select 
+                        onChange={handleAddTag} 
+                        value="" // Always reset to default to allow re-selecting different tags
                         style={{ display: 'block', width: '100%', padding: '8px' }}
-                    />
-                    
+                    >
+                        <option value="" disabled>Select an interest...</option>
+                        {ALLOWED_TAGS.map(tag => (
+                            <option key={tag} value={tag} disabled={tags.includes(tag)}>
+                                {tag}
+                            </option>
+                        ))}
+                    </select>
+
                     {/* Display the tags */}
                     <div style={{ marginTop: '10px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
                         {tags.map(tag => (
-                            <span 
-                                key={tag} 
+                            <span
+                                key={tag}
                                 onClick={() => removeTag(tag)}
-                                style={{ 
-                                    background: '#eee', 
-                                    padding: '5px 10px', 
-                                    borderRadius: '15px', 
-                                    cursor: 'pointer' 
+                                style={{
+                                    background: '#eee',
+                                    padding: '5px 10px',
+                                    borderRadius: '15px',
+                                    cursor: 'pointer'
                                 }}
                             >
                                 {tag} ✕
                             </span>
                         ))}
                     </div>
+                    <small style={{ color: '#666' }}>{tags.length}/5 selected</small>
                 </div>
 
                 {/* PHOTOS SECTION */}
                 <div style={{ marginBottom: '15px', border: '1px solid #ddd', padding: '10px', borderRadius: '5px' }}>
                     <label>Photos (Max 5):</label>
-                    <input 
-                        type="file" 
-                        accept="image/*" 
+                    <input
+                        type="file"
+                        accept="image/*"
                         onChange={handleImageUpload}
                         disabled={photos.length >= 5}
                         style={{ display: 'block', marginBottom: '10px' }}
@@ -222,17 +267,17 @@ const Profile = () => {
                     <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                         {photos.map((photo, index) => (
                             <div key={index} style={{ position: 'relative' }}>
-                                <img 
-                                    src={photo.preview} 
-                                    alt="preview" 
-                                    style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '5px' }} 
+                                <img
+                                    src={photo.preview}
+                                    alt="preview"
+                                    style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '5px' }}
                                 />
-                                <button 
-                                    type="button" 
+                                <button
+                                    type="button"
                                     onClick={() => removePhoto(index)}
-                                    style={{ 
-                                        position: 'absolute', top: 0, right: 0, 
-                                        background: 'red', color: 'white', border: 'none', cursor: 'pointer' 
+                                    style={{
+                                        position: 'absolute', top: 0, right: 0,
+                                        background: 'red', color: 'white', border: 'none', cursor: 'pointer'
                                     }}
                                 >
                                     X
@@ -245,7 +290,7 @@ const Profile = () => {
                 {/* LOCATION SECTION */}
                 <div style={{ marginBottom: '15px', border: '1px solid #ddd', padding: '10px', borderRadius: '5px' }}>
                     <label>Location (Required):</label>
-                    
+
                     <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
                         <button onClick={handleGPS} style={{ background: '#4CAF50', color: 'white' }}>
                             📍 Locate Me
@@ -253,15 +298,15 @@ const Profile = () => {
                         <span>{locationStatus}</span>
                     </div>
 
-                    <input 
-                        type="text" 
-                        value={location.city} 
+                    <input
+                        type="text"
+                        value={location.city}
                         onChange={(e) => setLocation({ ...location, city: e.target.value })}
                         placeholder="Or type your City/Neighborhood manually"
                         required={location.latitude === 0 && location.longitude === 0 && !location.city}
                         style={{ display: 'block', width: '100%', padding: '8px' }}
                     />
-                    
+
                     {/* Debug View - to see coordinates updating */}
                     <small style={{ color: '#666' }}>
                         Lat: {location.latitude.toFixed(4)}, Lng: {location.longitude.toFixed(4)}
