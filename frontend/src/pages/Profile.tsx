@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
+
 
 interface ImageUpload {
     file: File;
@@ -93,10 +95,37 @@ const Profile = () => {
         setPhotos(photos.filter((_, index) => index !== indexToRemove));
     };
 
+    const navigate = useNavigate();
+
     // Form submission
     const handleSubmit = (event: React.FormEvent) => {
         event.preventDefault();
         console.log({ gender, sexualPreference, biography, tags, location, photos });
+        const formData = new FormData();
+        formData.append("gender", gender);
+        formData.append("sexualPreference", sexualPreference);
+        formData.append("biography", biography);
+        formData.append("tags", JSON.stringify(tags));
+        formData.append("latitude", location.latitude.toString());
+        formData.append("longitude", location.longitude.toString());
+        formData.append("city", location.city);
+        photos.forEach((photo, index) => {
+            formData.append(`photo_${index}`, photo.file);
+        });
+
+        // Send to backend
+        fetch('http://localhost:3000/profile', {
+            method: 'POST',
+            body: formData,
+        })
+        .then(response => response.json())
+        .then(result => {
+            console.log('Success:', result);
+            navigate('/home')
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
     };
 
     return (
