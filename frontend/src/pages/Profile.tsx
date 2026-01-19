@@ -1,10 +1,15 @@
 import { useState } from 'react';
 import React from 'react';
 
+interface ImageUpload {
+    file: File;
+    preview: string;
+}
+
 const Profile = () => {
     // 1. Initialize State for the basic fields
     const [gender, setGender] = useState('');
-    const [sexualPreference, setSexualPreference] = useState('bisexual'); // Defaulting to bisexual is often safer given the logic rules later 
+    const [sexualPreference, setSexualPreference] = useState('bisexual');
     const [biography, setBiography] = useState('');
     const [tags, setTags] = useState<string[]>([]);
     const [currentTag, setCurrentTag] = useState('');
@@ -14,6 +19,7 @@ const Profile = () => {
         city: ''
     });
     const [locationStatus, setLocationStatus] = useState('');
+    const [photos,setPhotos] = useState<ImageUpload[]>([]);
 
     // Helper to add a tag
     const handleAddTag = (e: React.KeyboardEvent) => {
@@ -32,7 +38,7 @@ const Profile = () => {
     // Helper to remove a tag
     const removeTag = (tagToRemove: string) => {
         setTags(tags.filter(tag => tag !== tagToRemove));
-    }
+    };
 
     // To handle GPS Location
     const handleGPS = (event: React.MouseEvent) => {
@@ -60,12 +66,37 @@ const Profile = () => {
         else {
             setLocationStatus('Geolocation is not supported by the browser');
         }
+    };
+
+    // To handle uploading Images
+    const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (event.target.files && event.target.files[0]) {
+            const file = event.target.files[0];
+
+            if (photos.length >= 5) {
+                alert('You can only upload up to 5 photos.');
+                return;
+            }
+
+            const newPhoto: ImageUpload = {
+                file: file,
+                preview: URL.createObjectURL(file)
+            };
+
+            setPhotos([...photos, newPhoto]);
+        }
     }
+
+    // Remove Photos
+    const removePhoto = (indexToRemove: number) => {
+        URL.revokeObjectURL(photos[indexToRemove].preview);
+        setPhotos(photos.filter((_, index) => index !== indexToRemove));
+    };
 
     // Form submission
     const handleSubmit = (event: React.FormEvent) => {
         event.preventDefault();
-        console.log({ gender, sexualPreference, biography, tags });
+        console.log({ gender, sexualPreference, biography, tags, location, photos });
     };
 
     return (
@@ -148,6 +179,40 @@ const Profile = () => {
                     </div>
                 </div>
 
+                {/* PHOTOS SECTION */}
+                <div style={{ marginBottom: '15px', border: '1px solid #ddd', padding: '10px', borderRadius: '5px' }}>
+                    <label>Photos (Max 5):</label>
+                    <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handleImageUpload}
+                        disabled={photos.length >= 5}
+                        style={{ display: 'block', marginBottom: '10px' }}
+                    />
+
+                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                        {photos.map((photo, index) => (
+                            <div key={index} style={{ position: 'relative' }}>
+                                <img 
+                                    src={photo.preview} 
+                                    alt="preview" 
+                                    style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '5px' }} 
+                                />
+                                <button 
+                                    type="button" 
+                                    onClick={() => removePhoto(index)}
+                                    style={{ 
+                                        position: 'absolute', top: 0, right: 0, 
+                                        background: 'red', color: 'white', border: 'none', cursor: 'pointer' 
+                                    }}
+                                >
+                                    X
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
                 {/* LOCATION SECTION */}
                 <div style={{ marginBottom: '15px', border: '1px solid #ddd', padding: '10px', borderRadius: '5px' }}>
                     <label>Location (Required):</label>
@@ -164,7 +229,7 @@ const Profile = () => {
                         value={location.city} 
                         onChange={(e) => setLocation({ ...location, city: e.target.value })}
                         placeholder="Or type your City/Neighborhood manually"
-                        required
+                        required={location.latitude === 0 && location.longitude === 0 && !location.city}
                         style={{ display: 'block', width: '100%', padding: '8px' }}
                     />
                     
