@@ -132,7 +132,7 @@ const Profile = () => {
                 const base64String = await convertFileToBase64(photo.file);
                 return {
                     base64_image: base64String,
-                    isProfilePicture: index === 0 ? 1 : 1
+                    isProfilePicture: index === 0 ? 1 : 0
                 };
             })
         );
