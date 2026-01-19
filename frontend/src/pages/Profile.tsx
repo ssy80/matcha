@@ -240,7 +240,8 @@ const Profile = () => {
                                 key={tag}
                                 onClick={() => removeTag(tag)}
                                 style={{
-                                    background: '#eee',
+                                    background: 'rgba(0, 255, 0, 1)',
+                                    color: 'rgba(255, 255, 255, 1)',
                                     padding: '5px 10px',
                                     borderRadius: '15px',
                                     cursor: 'pointer'
@@ -250,7 +251,7 @@ const Profile = () => {
                             </span>
                         ))}
                     </div>
-                    <small style={{ color: '#666' }}>{tags.length}/5 selected</small>
+                    <small style={{ color: 'rgba(255, 255, 255, 1)' }}>{tags.length}/5 selected</small>
                 </div>
 
                 {/* PHOTOS SECTION */}

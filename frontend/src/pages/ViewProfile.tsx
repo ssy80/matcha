@@ -42,9 +42,12 @@ const ViewProfile = () => {
         fetchProfile();
     }, []);
 
-    if (loading) return <div>Loading Profile...</div>;
-    if (error) return <div style={{ color: 'red' }}>{error}</div>;
-    if (!profile) return <div>No profile found.</div>;
+    if (loading)
+        return <div>Loading Profile...</div>;
+    if (error)
+        return <div style={{ color: 'red' }}>{error}</div>;
+    if (!profile)
+        return <div>No profile found.</div>;
 
     // Find profile picture (if exists)
     const profilePic = profile.pictures.find(p => p.is_profile_picture === 1)?.picture;
@@ -87,7 +90,10 @@ const ViewProfile = () => {
             {/* Biography */}
             <div style={{ marginBottom: '20px' }}>
                 <h3>Biography</h3>
-                <p style={{ background: '#f9f9f9', padding: '10px', borderRadius: '5px' }}>
+                <p style={{ background: 'rgba(0, 0, 0, 1)',
+                    padding: '10px',
+                    borderRadius: '5px',
+                    color: 'rgba(255, 255, 255, 1)' }}>
                     {profile.biography || "No biography written yet."}
                 </p>
             </div>
@@ -98,7 +104,12 @@ const ViewProfile = () => {
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                     {profile.interests && profile.interests.length > 0 ? (
                         profile.interests.map((interest, index) => (
-                            <span key={index} style={{ background: '#e0f7fa', padding: '5px 10px', borderRadius: '15px' }}>
+                            <span key={index}
+                            style={{
+                                background: 'rgba(0, 255, 0, 1)',
+                                color: 'rgba(255, 255, 255, 1)',
+                                padding: '5px 10px',
+                                borderRadius: '15px' }}>
                                 {interest}
                             </span>
                         ))
