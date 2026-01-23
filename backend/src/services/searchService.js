@@ -189,6 +189,15 @@ export const getSuggestedProfiles = async (req, res) =>{
             res.status(409).json({"success": false, "error": "invalid user location"});
             return;
         }
+
+        // Debug checker
+        console.log("DEBUG VALUES:", {
+            userId: user.id,
+            gender: user.gender,
+            pref: user.sexualPreference,
+            distLimit: suggestedProfileDistKm
+        });
+
         let suggestedProfiles = await getSuggestedProfilesDb(user, userLocation, suggestedProfileDistKm);
 
         const totalUsers = await getTotalUsers();
@@ -484,6 +493,8 @@ async function getSearchProfileUser(user_id, userLocation){
         const profileQuery = `
             SELECT u.id, 
             u.username,
+            u.first_name,
+            u.last_name,
             u.gender, 
             u.sexual_preference,
             (strftime('%Y', 'now') - strftime('%Y', u.date_of_birth)) -
