@@ -1,5 +1,5 @@
 import './App.css'
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import About from './pages/About';
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -9,12 +9,20 @@ import ForgetPassword from './pages/ForgetPassword';
 import ResetPassword from './pages/ResetPassword';
 import Profile from './pages/Profile';
 import ViewProfile from './pages/ViewProfile';
+import Navbar from './components/Navbar';
 
 
 function App() {
+  const location = useLocation();
+
+  const hideNavbarRoutes = ["/login", "/register", "/"];
+  const showNavbar = !hideNavbarRoutes.includes(location.pathname);
 
   return (
     <>
+
+      {showNavbar && <Navbar />}
+      
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/home" element={<Home />} />
