@@ -7,6 +7,8 @@ import Register from './pages/Register';
 import ActivateUser from './pages/ActivateUser';
 import ForgetPassword from './pages/ForgetPassword';
 import ResetPassword from './pages/ResetPassword';
+import Profile from './pages/Profile';
+import ViewProfile from './pages/ViewProfile';
 
 
 function App() {
@@ -22,6 +24,8 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/forget-password" element={<ForgetPassword />} />
         <Route path="/users/reset_password" element={<ResetPassword />} />
+        <Route path="/profile" element={<ViewProfile />} />
+        <Route path="/profile/edit" element={<Profile />} />
       </Routes>
     </>
   )
