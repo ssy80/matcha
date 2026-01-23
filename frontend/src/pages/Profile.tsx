@@ -102,7 +102,7 @@ const Profile = () => {
 
             setPhotos([...photos, newPhoto]);
         }
-    }
+    };
 
     // Remove Photos
     const removePhoto = (indexToRemove: number) => {
@@ -146,26 +146,38 @@ const Profile = () => {
             pictures: formattedPictures
         };
 
+        let locationUpdateErrorMessage: string | null = null;
+        // 3. Send Profile Update
         try {
-            // 3. Send Profile Update
             console.log("Sending Profile Data:", profileData);
             await api.patch('/profile/update', profileData);
+        } catch (error: any) {
+            console.error('Error saving profile:', error);
+            const errorMessage = error?.response?.data?.error || error?.message || 'Unknown error';
 
-            // 4. Send Location Update
-            if (location.latitude !== 0 && location.longitude !== 0) {
-                 await api.post('/location/update', {
+            // If profile save fails, show alert and exit
+            alert('Failed to save profile: ' + errorMessage);
+            return;
+        }
+        // 4. Send Location Update
+        if (location.latitude !== 0 && location.longitude !== 0) {
+            try {
+                await api.post('/location/update', {
                     latitude: location.latitude,
                     longitude: location.longitude
                 });
+            } catch (error: any) {
+                console.error('Error updating location:', error);
+                locationUpdateErrorMessage =
+                    error?.response?.data?.error || error?.message || 'Unknown error';
             }
-
-            alert('Profile saved successfully!');
-            navigate('/home');
-        } catch (error: any) {
-            console.error('Error saving profile:', error);
-            const errorMessage = error.response?.data?.error || error.message || 'Unknown error';
-            alert('Failed to save profile: ' + errorMessage);
         }
+        if (locationUpdateErrorMessage) {
+            alert('Profile saved, but failed to update location: ' + locationUpdateErrorMessage);
+        } else {
+            alert('Profile saved successfully!');
+        }
+        navigate('/home');
     };
 
     return (
@@ -305,6 +317,10 @@ const Profile = () => {
                         onChange={(e) => setLocation({ ...location, city: e.target.value })}
                         placeholder="Or type your City/Neighborhood manually"
                         required={location.latitude === 0 && location.longitude === 0 && !location.city}
+                        onInvalid={(e) =>
+                            e.currentTarget.setCustomValidity('Please provide your location via GPS or by typing your city/neighborhood.')
+                        }
+                        onInput={(e) => e.currentTarget.setCustomValidity('')}
                         style={{ display: 'block', width: '100%', padding: '8px' }}
                     />
 
