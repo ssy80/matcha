@@ -493,6 +493,8 @@ async function getSearchProfileUser(user_id, userLocation){
         const profileQuery = `
             SELECT u.id, 
             u.username,
+            u.first_name,
+            u.last_name,
             u.gender, 
             u.sexual_preference,
             (strftime('%Y', 'now') - strftime('%Y', u.date_of_birth)) -

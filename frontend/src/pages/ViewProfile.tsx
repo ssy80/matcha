@@ -65,7 +65,12 @@ const ViewProfile = () => {
                     if (!res.data.success)
                         throw new Error('Failed to load user profile');
                     // For backend structure
-                    userData = res.data.profile || res.data.user;
+                    const profileData = res.data.profile;
+                    if (!profileData) {
+                        console.error("Unexpected profile response structure for user", id, res.data);
+                        throw new Error('Profile data missing from response');
+                    }
+                    userData = profileData;
                 }
 
                 setProfile(userData);
@@ -79,7 +84,7 @@ const ViewProfile = () => {
         };
 
         fetchProfileData();
-    }, [id, isOwnProfile]); // Re-run when ID changes
+    }, [id]); // Re-run when ID changes
 
     // 2. Geolocation
     useEffect(() => {
@@ -124,7 +129,7 @@ const ViewProfile = () => {
     const profilePic = profile.pictures?.find(p => p.is_profile_picture === 1)?.picture;
 
     return (
-        <div style={{ maxWidth: '600px',margin: '20px auto', padding: '20px', border: '1px solid #444', borderRadius: '8px', color: '#fff', background: '#222' }}>
+        <div style={{ maxWidth: '600px', margin: '20px auto', padding: '20px', border: '1px solid #444', borderRadius: '8px', color: '#fff', background: '#222' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 {/* Dynamic Title */}
                 <h1>{isOwnProfile ? "My Profile" : profile.username}</h1>
@@ -167,7 +172,6 @@ const ViewProfile = () => {
                     <h2 style={{ marginTop: 0 }}>{profile.first_name} {profile.last_name}</h2>
                     {/* Only show Username/Email if it's MY profile, or depending on your privacy rules */}
                     {isOwnProfile && <p style={{ margin: '5px 0' }}><strong style={{ color: '#aaa' }}>Email:</strong> {profile.email}</p>}
-                    
                     <p style={{ margin: '5px 0' }}><strong style={{ color: '#aaa' }}>Age:</strong> {profile.age || 'N/A'}</p>
                     <p style={{ margin: '5px 0' }}><strong style={{ color: '#aaa' }}>Gender:</strong> {profile.gender}</p>
                     <p style={{ margin: '5px 0' }}><strong style={{ color: '#aaa' }}>Sexual Preference:</strong> {profile.sexual_preference}</p>

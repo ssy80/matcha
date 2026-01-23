@@ -30,7 +30,7 @@ export default function Home() {
                 // We use search_profiles to get a wider range of results
                 const searchCriteria = {
                     min_dist_km: 0,
-                    max_dist_km: 5000, 
+                    max_dist_km: 5, 
                     min_age: 18,
                     max_age: 99,
                     min_stars: 0,
@@ -91,7 +91,6 @@ export default function Home() {
                 {Array.isArray(users) && users.length > 0 ? (
                     users.map((user, index) => (
                         <div 
-                            // Fix: Use ID if available, otherwise index to prevent "unique key" warning
                             key={user.id || index} 
                             onClick={() => handleProfileClick(user.id)}
                             style={{ 
@@ -120,8 +119,11 @@ export default function Home() {
 
                             <div style={{ padding: '15px' }}>
                                 <h3 style={{ margin: '0 0 5px 0' }}>
-                                    {user.first_name} {user.last_name}, {user.age || '?'}
+                                    {user.first_name} {user.last_name}
                                 </h3>
+                                <p style={{ margin: 0, color: '#aaa', fontSize: '0.9em' }}>
+                                    Age: {user.age || '?'}
+                                </p>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', fontSize: '0.9em', color: '#aaa' }}>
                                     <span>📍 {Math.round(getDistance(user))} km</span>
                                     <span>⭐ {renderStars(user.fame_rating)}</span>
