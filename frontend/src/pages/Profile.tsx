@@ -154,12 +154,11 @@ const Profile = () => {
         }
 
         // 4. Send Location Update
-        // 🚀 NEW LOGIC: Calculate Coordinates for Manual Entry
         let finalLat = location.latitude;
         let finalLng = location.longitude;
         const finalCity = location.city;
 
-        // If user typed a city but didn't use GPS (coords are 0), fetch coords now!
+        // If user typed a city but didn't use GPS (coords are 0), fetch coords
         if (finalCity && (finalLat === 0 || finalLng === 0)) {
             try {
                 console.log(`🌍 Looking up coordinates for manual entry: "${finalCity}"...`);
@@ -202,8 +201,6 @@ const Profile = () => {
         } else {
             alert('Profile saved successfully!');
         }
-        
-        // 🔄 Redirect to Profile Page to see changes immediately
         navigate('/profile');
     };
 
