@@ -14,6 +14,10 @@ interface UserProfile {
     sexual_preference: string;
     pictures: { picture: string; is_profile_picture: number }[];
     fame_rating?: { stars: number; liked_count: number };
+    is_i_liked?: boolean;
+    is_liked_me?: boolean;
+    is_blocked?: boolean;
+    is_faked?: boolean;
     city?: string;
     latitude?: number;
     longitude?: number;
@@ -25,7 +29,9 @@ const ViewProfile = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [displayLocation, setDisplayLocation] = useState<string>('Unknown');
-    
+    const [isLiked, setIsLiked] = useState(false)  
+    const [isFaked, setIsFaked] = useState(false);
+    const [isBlocked, setIsBlocked] = useState(false);
     const navigate = useNavigate();
     const { id } = useParams<{ id?: string }>();
 
@@ -42,7 +48,8 @@ const ViewProfile = () => {
 
                     console.log("Fetching MY profile...");
                     const res = await api.get('/profile/me');
-                    if (!res.data.success) throw new Error('Failed to load my profile');
+                    if (!res.data.success)
+                        throw new Error('Failed to load my profile');
                     userData = res.data.profile;
 
                     try {
@@ -71,6 +78,9 @@ const ViewProfile = () => {
                         throw new Error('Profile data missing from response');
                     }
                     userData = profileData;
+                    setIsLiked(userData.is_i_liked || false);
+                    setIsBlocked(userData.is_blocked || false)
+                    setIsFaked(userData.is_faked || false);
                 }
 
                 setProfile(userData);
@@ -128,6 +138,107 @@ const ViewProfile = () => {
 
     const profilePic = profile.pictures?.find(p => p.is_profile_picture === 1)?.picture;
 
+    const handleLike = async () => {
+        if (!profile)
+            return;
+
+        try {
+            const newStatus = !isLiked;
+
+            const payload = {
+                liked_user_id: Number(profile.id),
+                is_liked: Boolean(newStatus)
+            };
+
+            const response = await api.post('/profile/liked_profile', payload);
+
+            if (response.data.success) {
+                setIsLiked(newStatus);
+            }
+        } catch (err: any) {
+             if (err.response && err.response.data) {
+                const serverError = err.response.data.error;
+                
+                if (serverError === 'no profile picture') {
+                    alert("⚠️ You cannot like someone without a profile picture! Please upload one first.");
+                } else if (serverError === 'cannot liked ownself') {
+                    alert("⚠️ You cannot like yourself!");
+                } else {
+                    console.error("🔍 Server Error Details:", err.response.data);
+                }
+            } else {
+                console.error("❌ Failed to update like:", err);
+            }
+        }
+    };
+
+    const handleBlock = async () => {
+        if (!profile)
+            return;
+        
+        if (!isBlocked && !window.confirm(`Are you sure you want to block ${profile.username}?`)) {
+            return;
+        }
+
+        try {
+            const newStatus = !isBlocked;
+            const payload = {
+                blocked_user_id: Number(profile.id),
+                is_blocked: Boolean(newStatus)
+            };
+
+            const response = await api.post('/profile/blocked_user', payload);
+            if (response.data.success) {
+                setIsBlocked(newStatus);
+                if (newStatus) {
+                    alert("🚫 User blocked.");
+                    navigate('/');
+                } else {
+                    alert("✅ User unblocked.");
+                }
+            }
+        } catch (err: any) {
+            console.error("❌ Failed to block user:", err);
+            if (err.response && err.response.data) {
+                    console.log("🔍 Server received:", err.response.data);
+            }
+        }
+    };
+
+    const handleReport = async () => {
+        if (!profile)
+            return;
+
+        if (!isFaked && !window.confirm(`Are you sure you want to report ${profile.username} as a fake account?`)) {
+            return;
+        }
+
+        try {
+            const newStatus = !isFaked;
+            const payload = {
+                faked_user_id: Number(profile.id),
+                is_faked: Boolean(newStatus)
+            };
+
+            const response = await api.post('/profile/faked_user', payload);
+
+            if (response.data.success) {
+                setIsFaked(newStatus);
+                if (newStatus) {
+                    alert("🚨 User reported as fake.");
+                    navigate('/');
+                } else {
+                    alert("✅ Report withdrawn.");
+                }
+            }
+        } catch (err: any) {
+            console.error("❌ Failed to report user:", err);
+            if (err.response && err.response.data) {
+                console.log("🔍 Server received:", err.response.data);
+            }
+        }
+    };
+
     return (
         <div style={{ maxWidth: '600px', margin: '20px auto', padding: '20px', border: '1px solid #444', borderRadius: '8px', color: '#fff', background: '#222' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -144,12 +255,46 @@ const ViewProfile = () => {
                     </button>
                 ) : (
                     <div style={{ display: 'flex', gap: '10px' }}>
-                        <button style={{ padding: '8px 16px', cursor: 'pointer', background: '#E91E63', color: 'white', border: 'none', borderRadius: '4px' }}>
-                            Like ❤️
+                        <button 
+                            onClick={handleLike}
+                            style={{ 
+                                padding: '8px 16px', 
+                                cursor: 'pointer', 
+                                background: isLiked ? '#E91E63' : '#555', 
+                                color: 'white', 
+                                border: 'none', 
+                                borderRadius: '4px' 
+                            }}
+                        >
+                            {isLiked ? "Unlike 💔" : "Like ❤️"}
                         </button>
-                        <button style={{ padding: '8px 16px', cursor: 'pointer', background: '#555', color: 'white', border: 'none', borderRadius: '4px' }}>
-                            Block 🚫
+                        <button 
+                            onClick={handleBlock}
+                            style={{ 
+                                padding: '8px 16px', 
+                                cursor: 'pointer', 
+                                background: isBlocked ? '#D32F2F' : '#555', 
+                                color: 'white', 
+                                border: 'none', 
+                                borderRadius: '4px' 
+                            }}
+                        >
+                            {isBlocked ? "Unblock 🔓" : "Block 🚫"}
                         </button>
+
+                        <button 
+                        onClick={handleReport}
+                        style={{ 
+                            padding: '8px 16px', 
+                            cursor: 'pointer', 
+                            background: isFaked ? '#FF9800' : '#555', 
+                            color: 'white', 
+                            border: 'none', 
+                            borderRadius: '4px' 
+                        }}
+                    >
+                        {isFaked ? "Reported ⚠️" : "Report Fake 🚩"}
+                    </button>
                     </div>
                 )}
             </div>
