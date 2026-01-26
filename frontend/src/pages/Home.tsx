@@ -20,40 +20,58 @@ export default function Home() {
     const [users, setUsers] = useState<SuggestedUser[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    
+    // 🔍 Search Filter States
+    const [ageRange, setAgeRange] =  useState({min: 18, max: 99});
+    const [fameRange, setFameRange] =  useState({min: 0, max: 5});
+    // Initialize min distance to 0 so close matches appear by default
+    const [distance, setDistance] =  useState({min: 0, max: 20000});
+    const [searchTags, setSearchTags] =  useState<string[]>([]);
+    
     const navigate = useNavigate();
+    
+    const fetchBroadSearch = async () => {
+        setLoading(true);
+        setError('');
+        try {
+            console.log("🔍 Performing broad search...");
+            
+            // Clean tags to remove empty strings caused by trailing commas
+            const cleanTags = searchTags.filter(tag => tag.trim().length > 0);
 
-    useEffect(() => {
-        const fetchBroadSearch = async () => {
-            try {
-                console.log("🔍 Performing broad search...");
-                
-                // We use search_profiles to get a wider range of results
-                const searchCriteria = {
-                    min_dist_km: 0,
-                    max_dist_km: 5, 
-                    min_age: 18,
-                    max_age: 99,
-                    min_stars: 0,
-                    max_stars: 5
-                };
+            const searchCriteria = {
+                min_dist_km: distance.min,
+                max_dist_km: distance.max, 
+                min_age: ageRange.min,
+                max_age: ageRange.max,
+                min_stars: fameRange.min,
+                max_stars: fameRange.max,
+                interests: cleanTags.length > 0 ? cleanTags : undefined,
+            };
 
-                const response = await api.post('/search/search_profiles', searchCriteria);
-                console.log("✅ Search Response:", response.data);
+            const response = await api.post('/search/search_profiles', searchCriteria);
+            console.log("✅ Search Response:", response.data);
 
-                if (response.data.success && Array.isArray(response.data.profiles)) {
-                    setUsers(response.data.profiles);
-                } else {
-                    console.warn("⚠️ Unexpected response format:", response.data);
-                    setUsers([]);
-                }
-            } catch (err: any) {
-                console.error("❌ Error fetching matches:", err);
-                setError('Could not load matches. Is the backend running?');
-            } finally {
-                setLoading(false);
+            if (response.data.success && Array.isArray(response.data.profiles)) {
+                setUsers(response.data.profiles);
+            } else {
+                console.warn("⚠️ Unexpected response format:", response.data);
+                setUsers([]);
             }
-        };
+        } catch (err: any) {
+            if (err.response && err.response.data) {
+                console.error("🔍 Server Error Details:", err.response.data);
+            } else {
+                console.error("❌ Error fetching matches:", err);
+            }
+            setError('Could not load matches.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    // Initial load
+    useEffect(() => {
         fetchBroadSearch();
     }, []);
 
@@ -74,21 +92,104 @@ export default function Home() {
         return user.distance_km ?? user.distance ?? 0;
     };
 
-    if (loading)
+    if (loading && users.length === 0)
       return <div style={{ padding: '40px', textAlign: 'center', color: '#888' }}>Finding people nearby... 🌏</div>;
     
     return (
         <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
             <h1 style={{ marginBottom: '20px', textAlign: 'center' }}>Discover People</h1>
             
+            {/* Show Red Error only if it's a real error */}
             {error && <div style={{ color: 'red', textAlign: 'center', marginBottom: '20px' }}>{error}</div>}
+
+            {/* Show "No Results" message if list is empty */}
+            {!loading && !error && users.length === 0 && (
+                <div style={{ gridColumn: '1 / -1', textAlign: 'center', marginTop: '40px', marginBottom: '40px' }}>
+                    <h3>No matches found.</h3>
+                    <p style={{ color: '#888' }}>Try adjusting your filters to see more people!</p>
+                </div>
+            )}
+
+            {/* 🔽 FILTER SECTION 🔽 */}
+            <div className="filter-container">
+                <h3 className="filter-title">Filter Results</h3>
+                
+                <div className="filter-row">
+                    {/* 1. Age Filter */}
+                    <div className="filter-group">
+                        <label className="filter-label">Age Range</label>
+                        <div className="filter-input-group">
+                            <input 
+                                type="number" 
+                                className="filter-input"
+                                value={ageRange.min}
+                                onChange={(e) => setAgeRange({ ...ageRange, min: Number(e.target.value) })}
+                                placeholder="Min"
+                            />
+                            <span className="filter-separator">to</span>
+                            <input 
+                                type="number" 
+                                className="filter-input"
+                                value={ageRange.max}
+                                onChange={(e) => setAgeRange({ ...ageRange, max: Number(e.target.value) })}
+                                placeholder="Max"
+                            />
+                        </div>
+                    </div>
+
+                    {/* 2. Fame Rating Filter */}
+                    <div className="filter-group">
+                        <label className="filter-label">Fame Rating (0-5)</label>
+                        <div className="filter-input-group">
+                            <input 
+                                type="number" 
+                                className="filter-input"
+                                min="0" max="5"
+                                value={fameRange.min}
+                                onChange={(e) => setFameRange({ ...fameRange, min: Number(e.target.value) })}
+                                placeholder="0"
+                            />
+                            <span className="filter-separator">to</span>
+                            <input 
+                                type="number" 
+                                className="filter-input"
+                                min="0" max="5"
+                                value={fameRange.max}
+                                onChange={(e) => setFameRange({ ...fameRange, max: Number(e.target.value) })}
+                                placeholder="5"
+                            />
+                        </div>
+                    </div>
+
+                    {/* 3. Tags Filter */}
+                    <div className="filter-group">
+                        <label className="filter-label">Interests</label>
+                        <div className="filter-input-group">
+                            <input 
+                                type="text" 
+                                className="filter-input"
+                                style={{ width: '200px' }}
+                                placeholder="e.g. vegan, geek"
+                                value={searchTags.join(',')}
+                                onChange={(e) => setSearchTags(e.target.value.split(',').map(tag => tag.trim()))}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Apply Button */}
+                    <button onClick={fetchBroadSearch} className="apply-btn">
+                        Apply Filters 🔎
+                    </button>
+                </div>
+            </div>
+            {/* 🔼 END FILTER SECTION 🔼 */}
 
             <div style={{ 
                 display: 'grid', 
                 gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', 
                 gap: '20px' 
             }}>
-                {Array.isArray(users) && users.length > 0 ? (
+                {Array.isArray(users) && users.length > 0 && (
                     users.map((user, index) => (
                         <div 
                             key={user.id || index} 
@@ -145,13 +246,6 @@ export default function Home() {
                             </div>
                         </div>
                     ))
-                ) : (
-                    !error && (
-                        <div style={{ gridColumn: '1 / -1', textAlign: 'center', marginTop: '40px' }}>
-                            <h3>No matches found yet.</h3>
-                            <p style={{ color: '#888' }}>Try updating your profile or waiting for more users to join!</p>
-                        </div>
-                    )
                 )}
             </div>
         </div>

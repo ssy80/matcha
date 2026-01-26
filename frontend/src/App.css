@@ -125,3 +125,85 @@
     margin-left: 0;
   }
 }
+
+/* --- Filter Section Styles --- */
+.filter-container {
+  background-color: #1a1a1a; /* Darker background to stand out */
+  padding: 25px;
+  border-radius: 12px;
+  border: 1px solid #333;
+  margin-bottom: 30px;
+  text-align: left; /* Override the center text alignment */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.filter-title {
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 1.2rem;
+  color: #fff;
+  border-bottom: 1px solid #333;
+  padding-bottom: 10px;
+}
+
+.filter-row {
+  display: flex;
+  gap: 24px; /* Space between different filter groups */
+  align-items: flex-end; /* Aligns inputs and button at the bottom */
+  flex-wrap: wrap; /* Allows wrapping on mobile */
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.filter-label {
+  font-size: 0.9rem;
+  color: #aaa;
+  font-weight: 500;
+}
+
+.filter-input-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.filter-input {
+  width: 80px;
+  padding: 10px;
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 6px;
+  color: white;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.filter-input:focus {
+  outline: none;
+  border-color: #4CAF50;
+}
+
+.filter-separator {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.apply-btn {
+  padding: 10px 24px;
+  background-color: #E91E63;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  height: 42px; /* Matches input height */
+  transition: background-color 0.2s;
+}
+
+.apply-btn:hover {
+  background-color: #c2185b;
+}
