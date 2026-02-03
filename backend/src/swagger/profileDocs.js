@@ -289,7 +289,7 @@
  *                 success:
  *                   type: boolean
  *                   example: true
- *                 viewd_me_list:
+ *                 viewed_me_list:
  *                   type: array
  *                   description: List of users who viewed the profile, ordered by most recent first
  *                   items:

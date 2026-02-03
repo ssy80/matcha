@@ -79,7 +79,8 @@ const Navbar = () => {
             <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
                 <Link to="/home" style={{ color: '#ccc', textDecoration: 'none' }}>Browsing</Link>
                 <Link to="/chat" style={{ color: '#ccc', textDecoration: 'none' }}>Chat</Link>
-                <Link to="/profile/edit" style={{ color: '#ccc', textDecoration: 'none' }}>My Profile</Link>
+                <Link to="/history" style={{ color: '#ccc', textDecoration: 'none' }}>Activity</Link>
+                <Link to="/profile" style={{ color: '#ccc', textDecoration: 'none' }}>My Profile</Link>
 
                 {/* 🔔 Notification Bell */}
                 <div style={{ position: 'relative', cursor: 'pointer' }} onClick={() => setShowDropdown(!showDropdown)}>
