@@ -109,3 +109,27 @@ async function updateMessageStatus(msg, status){
             throw (err);
     }
 }
+
+export const getConversation = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        let otherUserId = req.params.userId;
+
+        if (!otherUserId) {
+            return res.status(400).json({ success: false, error: "Missing user ID" });
+        }
+
+        const query = `
+            SELECT * FROM chat_messages 
+            WHERE (from_user_id = ? AND to_user_id = ?) 
+               OR (from_user_id = ? AND to_user_id = ?)
+            ORDER BY created_at ASC
+        `;
+        
+        const messages = await db.all(query, [userId, otherUserId, otherUserId, userId]);
+        res.status(200).json({ success: true, messages });
+    } catch (err) {
+        console.error("error getConversation: ", err);
+        res.status(500).json({ success: false, error: "internal server error" });
+    }
+};

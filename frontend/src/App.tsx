@@ -1,5 +1,5 @@
 import './App.css'
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import About from './pages/About';
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -10,6 +10,17 @@ import ResetPassword from './pages/ResetPassword';
 import Profile from './pages/Profile';
 import ViewProfile from './pages/ViewProfile';
 import Navbar from './components/Navbar';
+import Chat from './pages/Chat';
+import type { JSX } from 'react/jsx-dev-runtime';
+
+const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+        return <Navigate to="/login" replace />;
+    }
+    return children;
+};
 
 
 function App() {
@@ -35,6 +46,7 @@ function App() {
         <Route path="/profile/edit" element={<Profile />} />
         <Route path="/profile/:id" element={<ViewProfile />} />
         <Route path="/profile" element={<ViewProfile />} />
+        <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
       </Routes>
     </>
   )
