@@ -808,3 +808,27 @@ export async function getUserBlocked(userId, blockdUserId){
         throw (err);
     }
 }
+
+export const getMatches = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const query = `
+            SELECT u.id, u.username, u.first_name, u.last_name, p.picture 
+            FROM users u
+            JOIN liked_histories lh1 ON lh1.liked_user_id = u.id AND lh1.user_id = ? 
+            JOIN liked_histories lh2 ON lh2.user_id = u.id AND lh2.liked_user_id = ?
+            LEFT JOIN user_pictures p ON p.user_id = u.id AND p.is_profile_picture = 1
+        `;
+        const matches = await db.all(query, [userId, userId]);
+        
+        const matchesWithPics = matches.map(user => ({
+            ...user,
+            picture: user.picture ? `${process.env.API_HOST_URL}:${process.env.API_HOST_PORT}${process.env.PUBLIC_IMAGE_DIR}${user.picture}` : null
+        }));
+
+        res.status(200).json({ success: true, matches: matchesWithPics });
+    } catch (err) {
+        console.error("error getMatches: ", err);
+        res.status(500).json({ success: false, error: "internal server error" });
+    }
+};

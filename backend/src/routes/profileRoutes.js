@@ -1,7 +1,6 @@
 import express from 'express';
 import { patchUserProfile, getProfileMe, getProfileUser, likedProfile, getFameRating, getOnlineStatus } from '../services/profileService.js';
-import { isUserViewedMe, isUserLikedMe, blockedProfile, getViewedMeList, getLikedMeList, fakedProfile } from '../services/profileService.js';
-
+import { isUserViewedMe, isUserLikedMe, blockedProfile, getViewedMeList, getLikedMeList, fakedProfile, getMatches } from '../services/profileService.js';
 
 const router = express.Router();
 
@@ -23,6 +22,11 @@ router.get('/viewed_me_list', async (req, res) => {
 
 router.get('/liked_me_list', async (req, res) => {
     await getLikedMeList(req, res);
+});
+
+
+router.get('/matches', async (req, res) => {
+    await getMatches(req, res);
 });
 
 
@@ -65,5 +69,8 @@ router.post('/faked_user', async (req, res) => {
     await fakedProfile(req, res);
 });
 
+router.get('/matches', async (req, res) => {
+    await getMatches(req, res);
+});
 
 export default router;
