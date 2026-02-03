@@ -161,7 +161,8 @@ export const searchProfiles = async (req, res) =>{
             const userBlocked = await getUserBlocked(userId, intersectUserId);  //prevent blocked user from showing in search results
             if (userBlocked)
                 continue;
-            const profile = await getSearchProfileUser(intersectUserId, userLocation); 
+
+            const profile = await getSearchProfileUser(intersectUserId, userLocation, userId); 
             searchProfiles.push(profile);
         }
         
@@ -175,7 +176,18 @@ export const searchProfiles = async (req, res) =>{
             if (profile.profile_picture){
                 profile.profile_picture = `${IMAGE_URL}${profile.profile_picture}`;
             }
+
+            // Logic for calculating Matching Score
+            const distScore = Math.max(0, 100 - profile.distance_km);
+            const tagScore = (profile.num_shared_interests || 0) * 10;
+            const fameScore = stars * 5;
+
+            profile.match_score = distScore + tagScore + fameScore;
         });
+
+        // Sorty by match_score by default before sending response
+        searchProfiles.sort((a, b) => b.match_score - a.match_score);
+
         res.status(200).json({"success": true, "profiles": searchProfiles});
     }catch(err){
         console.error("error searchProfiles: ", err);
@@ -492,8 +504,8 @@ async function getUsersByFameRating(user, userLocation, criteria){
 }
 
 
-async function getSearchProfileUser(user_id, userLocation){
-    try{
+async function getSearchProfileUser(targetUserId, userLocation, viewerId) {
+    try {
         const profileQuery = `
             SELECT u.id, 
             u.username,
@@ -516,6 +528,14 @@ async function getSearchProfileUser(user_id, userLocation){
                 WHERE ui.user_id = u.id
             ) AS interests,
             (
+                SELECT COUNT(*) 
+                FROM user_interests ui
+                WHERE ui.user_id = u.id
+                AND ui.interest IN (
+                    SELECT interest FROM user_interests WHERE user_id = ?
+                )
+            ) AS num_shared_interests,
+            (
                 SELECT picture
                 FROM user_pictures up
                 WHERE up.user_id = u.id AND is_profile_picture = 1
@@ -531,9 +551,15 @@ async function getSearchProfileUser(user_id, userLocation){
             WHERE u.id = ?
         ;`;
 
-        const profile = await db.get(profileQuery, [userLocation.latitude, userLocation.longitude, userLocation.latitude, user_id]);
+        const profile = await db.get(profileQuery, [
+            userLocation.latitude, 
+            userLocation.longitude, 
+            userLocation.latitude, 
+            viewerId, 
+            targetUserId
+        ]);
         return profile;
-    }catch(err){
+    } catch(err) {
         console.error("error getSearchProfileUser: ", err);
         throw err;
     }
