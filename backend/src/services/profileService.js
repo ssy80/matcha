@@ -744,26 +744,68 @@ async function addUserBlocked(userBlocked, isBlocked){
 }
 
 
-async function getViewedMeListDb(userId){
-    try{
-        const rows = await db.all('SELECT v.user_id, v.updated_at, u.username FROM viewed_histories v \
-            INNER JOIN users u ON v.user_id = u.id WHERE v.viewed_user_id = ? ORDER BY v.updated_at DESC;', [userId]);
-        const result = rows.map((row) => ({"user_id":row.user_id, "username": row.username, "updated_at": row.updated_at}));
-        return result;
-    }catch(err){
+async function getViewedMeListDb(userId) {
+    try {
+        const query = `
+            SELECT 
+                v.user_id, 
+                v.updated_at, 
+                u.username, 
+                u.first_name, 
+                u.last_name, 
+                p.picture
+            FROM viewed_histories v 
+            INNER JOIN users u ON v.user_id = u.id 
+            LEFT JOIN user_pictures p ON p.user_id = u.id AND p.is_profile_picture = 1
+            WHERE v.viewed_user_id = ? 
+            ORDER BY v.updated_at DESC;
+        `;
+        
+        const rows = await db.all(query, [userId]);
+        
+        return rows.map((row) => ({
+            user_id: row.user_id,
+            username: row.username,
+            first_name: row.first_name,
+            last_name: row.last_name,
+            updated_at: row.updated_at,
+            picture: row.picture ? `${IMAGE_URL}${row.picture}` : null
+        }));
+    } catch(err) {
         console.error("error getViewedMeListDb: ", err);
         throw (err);
     }
 }
 
 
-async function getLikedMeListDb(userId){
-    try{
-        const rows = await db.all('SELECT v.user_id, v.updated_at, u.username FROM liked_histories v \
-            INNER JOIN users u ON v.user_id = u.id WHERE v.liked_user_id = ? ORDER BY v.updated_at DESC;', [userId]);
-        const result = rows.map((row) => ({"user_id":row.user_id, "username": row.username, "updated_at": row.updated_at}));
-        return result;
-    }catch(err){
+async function getLikedMeListDb(userId) {
+    try {
+        const query = `
+            SELECT 
+                v.user_id, 
+                v.updated_at, 
+                u.username, 
+                u.first_name, 
+                u.last_name, 
+                p.picture
+            FROM liked_histories v 
+            INNER JOIN users u ON v.user_id = u.id 
+            LEFT JOIN user_pictures p ON p.user_id = u.id AND p.is_profile_picture = 1
+            WHERE v.liked_user_id = ? 
+            ORDER BY v.updated_at DESC;
+        `;
+
+        const rows = await db.all(query, [userId]);
+
+        return rows.map((row) => ({
+            user_id: row.user_id,
+            username: row.username,
+            first_name: row.first_name,
+            last_name: row.last_name,
+            updated_at: row.updated_at,
+            picture: row.picture ? `${IMAGE_URL}${row.picture}` : null
+        }));
+    } catch(err) {
         console.error("error getLikedMeListDb: ", err);
         throw (err);
     }
