@@ -71,7 +71,7 @@ export const getViewedMeList = async (req, res) =>{
     try{
         const userId = req.user.id;
         const viewedMeList= await getViewedMeListDb(userId);
-        res.status(200).json({"success": true, "viewd_me_list": viewedMeList});
+        res.status(200).json({"success": true, "viewed_me_list": viewedMeList});
     }catch(err){
         console.error("error getViewedMeList: ", err);
         res.status(500).json({"success": false, "error": "internal server error"});
@@ -267,6 +267,7 @@ export const likedProfile = async(req, res) => {
 }
 
 
+
 export const getProfileUser = async (req, res) => {
     try{
         const userId = req.user.id; 
@@ -349,7 +350,19 @@ export const getProfileUser = async (req, res) => {
         if (userId !== viewUserId){
             const viewedHistory = new ViewedHistory(null, userId, viewUserId, null, null);
             await addViewedHistory(viewedHistory);
+
+            try {
+                await addEvent({
+                    userId: viewUserId,
+                    fromUserId: userId,
+                    eventType: 'viewed_me',
+                    eventStatus: 'new'
+                });
+            } catch (notifyErr) {
+                console.error("Failed to create view notification:", notifyErr);
+            }
         }
+
         res.status(200).json({"success": true, "profile": data});
     }catch(err){
         console.error("error getProfileUser: ", err);

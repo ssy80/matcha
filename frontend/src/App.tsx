@@ -11,6 +11,7 @@ import Profile from './pages/Profile';
 import ViewProfile from './pages/ViewProfile';
 import Navbar from './components/Navbar';
 import Chat from './pages/Chat';
+import History from './pages/History';
 import type { JSX } from 'react/jsx-dev-runtime';
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
@@ -47,6 +48,7 @@ function App() {
         <Route path="/profile/:id" element={<ViewProfile />} />
         <Route path="/profile" element={<ViewProfile />} />
         <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
+        <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
       </Routes>
     </>
   )

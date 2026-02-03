@@ -15,6 +15,17 @@ router.get('/me', async (req, res) => {
 });
 
 
+
+router.get('/liked_me', async (req, res) => {
+    await getLikedMeList(req, res);
+});
+
+
+router.get('/viewed_me', async (req, res) => {
+    await getViewedMeList(req, res);
+});
+
+
 router.get('/viewed_me_list', async (req, res) => {
     await getViewedMeList(req, res);
 });
