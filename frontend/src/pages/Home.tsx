@@ -197,10 +197,8 @@ export default function Home() {
                             <input 
                                 type="number" 
                                 className="filter-input"
-                                min="0"
                                 value={distance.max}
                                 onChange={(e) => setDistance({ ...distance, max: Number(e.target.value) })}
-                                placeholder="e.g. 50"
                             />
                         </div>
                     </div>
