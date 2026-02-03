@@ -25,6 +25,10 @@ export const searchProfiles = async (req, res) =>{
         let min_stars = searchData?.min_stars ?? null;
         let max_stars = searchData?.max_stars ?? null;
         
+        if (!currentUser.profile_picture || currentUser.interests.length === 0) {
+            return res.status(403).json({ error: "Please complete your profile first." });
+        }
+
         if (min_dist_km != null && typeof min_dist_km !== "number") {
             res.status(400).json({"success": false, "error": "invalid min_dist_km"});
             return;
