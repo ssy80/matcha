@@ -13,10 +13,24 @@ const suggestedProfileDistKm = Number(process.env.SUGGESTED_PROFILE_DIST_KM);
 
 const intersect = (a, b) => new Set([...a].filter(x => b.has(x)));
 
-export const searchProfiles = async (req, res) =>{
-    try{
+export const searchProfiles = async (req, res) => {
+    try {
         const userId = req.user.id;
         const searchData = req.body;
+
+        const user = await getUserById(userId);
+        const userLocation = await getUserLocationByUserId(userId);
+
+        if (!userLocation || typeof userLocation.latitude !== "number" || typeof userLocation.longitude !== "number") {
+            return res.status(409).json({ "success": false, "error": "invalid user location" });
+        }
+
+        const myProfile = await getSearchProfileUser(userId, userLocation, userId);
+
+        if (!myProfile.profile_picture || !myProfile.interests) {
+            return res.status(403).json({ "success": false, "error": "Please complete your profile (photo & interests) first." });
+        }
+
         let min_dist_km = searchData?.min_dist_km ?? null;
         let max_dist_km = searchData?.max_dist_km ?? null;
         let min_age = searchData?.min_age ?? null;
@@ -24,128 +38,84 @@ export const searchProfiles = async (req, res) =>{
         let interests = searchData?.interests ?? null;
         let min_stars = searchData?.min_stars ?? null;
         let max_stars = searchData?.max_stars ?? null;
-        
-        if (!currentUser.profile_picture || currentUser.interests.length === 0) {
-            return res.status(403).json({ error: "Please complete your profile first." });
-        }
 
-        if (min_dist_km != null && typeof min_dist_km !== "number") {
-            res.status(400).json({"success": false, "error": "invalid min_dist_km"});
-            return;
-        }
-        if (max_dist_km != null && typeof max_dist_km !== "number") {
-            res.status(400).json({"success": false, "error": "invalid max_dist_km"});
-            return;
-        }
-        if ((min_dist_km != null && max_dist_km === null) || (min_dist_km === null && max_dist_km != null)) {
-            res.status(400).json({"success": false, "error": "invalid min_dist_km or max_dist_km"});
-            return;
-        }
-        if (min_age != null && typeof min_age !== "number") {
-            res.status(400).json({"success": false, "error": "invalid min_age"});
-            return;
-        }
-        if (max_age != null && typeof max_age !== "number") {
-            res.status(400).json({"success": false, "error": "invalid max_age"});
-            return;
-        }
-        if ((min_age != null && max_age === null) || (min_age === null && max_age != null)) {
-            res.status(400).json({"success": false, "error": "invalid min_age or max_age"});
-            return;
-        }        
-        if (interests != null && !Validation.isValidInterests(interests)){
-            res.status(400).json({"success": false, "error": "invalid interests"});
-            return;
-        }
-        if (min_stars != null && (typeof min_stars !== "number" || !Number.isInteger(min_stars))) {
-            res.status(400).json({"success": false, "error": "invalid min_stars"});
-            return;
-        }
-        if (min_stars != null && (min_stars < 0 || min_stars > 5)) {
-            res.status(400).json({"success": false, "error": "min_stars must be between 0 and 5"});
-            return;
-        }
-        if (max_stars != null && (typeof max_stars !== "number" || !Number.isInteger(max_stars))) {
-            res.status(400).json({"success": false, "error": "invalid max_stars"});
-            return;
-        }
-        if (max_stars != null && (max_stars < 0 || max_stars > 5)) {
-            res.status(400).json({"success": false, "error": "max_stars must be between 0 and 5"});
-            return;
-        }
-        if ((min_stars != null && max_stars === null) || (min_stars === null && max_stars != null)) {
-            res.status(400).json({"success": false, "error": "invalid min_stars or max_stars"});
-            return;
-        }
+        if (min_dist_km != null && typeof min_dist_km !== "number") return res.status(400).json({ "success": false, "error": "invalid min_dist_km" });
+        if (max_dist_km != null && typeof max_dist_km !== "number") return res.status(400).json({ "success": false, "error": "invalid max_dist_km" });
+        if ((min_dist_km != null && max_dist_km === null) || (min_dist_km === null && max_dist_km != null)) return res.status(400).json({ "success": false, "error": "invalid min_dist_km or max_dist_km" });
+        
+        if (min_age != null && typeof min_age !== "number") return res.status(400).json({ "success": false, "error": "invalid min_age" });
+        if (max_age != null && typeof max_age !== "number") return res.status(400).json({ "success": false, "error": "invalid max_age" });
+        if ((min_age != null && max_age === null) || (min_age === null && max_age != null)) return res.status(400).json({ "success": false, "error": "invalid min_age or max_age" });
+
+        if (interests != null && !Validation.isValidInterests(interests)) return res.status(400).json({ "success": false, "error": "invalid interests" });
+
+        if (min_stars != null && (typeof min_stars !== "number" || !Number.isInteger(min_stars))) return res.status(400).json({ "success": false, "error": "invalid min_stars" });
+        if (min_stars != null && (min_stars < 0 || min_stars > 5)) return res.status(400).json({ "success": false, "error": "min_stars must be between 0 and 5" });
+        
+        if (max_stars != null && (typeof max_stars !== "number" || !Number.isInteger(max_stars))) return res.status(400).json({ "success": false, "error": "invalid max_stars" });
+        if (max_stars != null && (max_stars < 0 || max_stars > 5)) return res.status(400).json({ "success": false, "error": "max_stars must be between 0 and 5" });
+        if ((min_stars != null && max_stars === null) || (min_stars === null && max_stars != null)) return res.status(400).json({ "success": false, "error": "invalid min_stars or max_stars" });
 
         if ((min_dist_km === null && max_dist_km === null) &&
             (min_age === null && max_age === null) &&
             interests === null &&
             min_stars === null && max_stars === null) {
-            res.status(400).json({"success": false, "error": "at least one search criteria"});
-            return;
-        }
-        
-        const user = await getUserById(userId);
-        const userLocation = await getUserLocationByUserId(userId);
-        if(typeof userLocation.latitude !== "number" || typeof userLocation.longitude !== "number"){
-            res.status(409).json({"success": false, "error": "invalid user location"});
-            return;
+            return res.status(400).json({ "success": false, "error": "at least one search criteria" });
         }
 
         const criteria = {};
-        if (min_dist_km !== null && max_dist_km !== null){
+        if (min_dist_km !== null && max_dist_km !== null) {
             criteria.min_dist_km = min_dist_km;
             criteria.max_dist_km = max_dist_km;
         }
-        if (min_age !== null && max_age !== null){
+        if (min_age !== null && max_age !== null) {
             criteria.min_age = min_age;
             criteria.max_age = max_age;
         }
-        if (interests !== null){
+        if (interests !== null) {
             criteria.interests = interests;
         }
-        if (min_stars !== null){
+        if (min_stars !== null) {
             const totalUsers = await getTotalUsers();
             const fifth = Math.ceil(totalUsers / 5);
-            if (min_stars === 0){
-                criteria.min_liked_count = 0;      
-            }else{
+            if (min_stars === 0) {
+                criteria.min_liked_count = 0;
+            } else {
                 const count = fifth * min_stars;
                 criteria.min_liked_count = count - fifth + 1;
             }
-            if (max_stars === 0){
-                criteria.max_liked_count = 0;         
-            }else{
+            if (max_stars === 0) {
+                criteria.max_liked_count = 0;
+            } else {
                 const count = fifth * max_stars;
                 criteria.max_liked_count = count;
             }
         }
 
+        // ... [Rest of your logic: Intersecting Sets, etc.] ...
         let distSet = null;
         let ageSet = null;
         let interestSet = null;
         let likedSet = null;
 
-        if (criteria.min_dist_km !== undefined){
+        if (criteria.min_dist_km !== undefined) {
             const usersByDist = await getUsersByDist(user, userLocation, criteria);
             distSet = new Set(usersByDist.map(u => u.id));
         }
-        if (criteria.min_age !== undefined){
+        if (criteria.min_age !== undefined) {
             const usersByAge = await getUsersByAge(user, userLocation, criteria);
             ageSet = new Set(usersByAge.map(u => u.id));
         }
-        if (criteria.interests !== undefined){
+        if (criteria.interests !== undefined) {
             const interestUsers = await getUsersByInterests(user, userLocation, criteria);
             interestSet = new Set(interestUsers.map(u => u.user_id));
         }
-        if (criteria.min_liked_count !== undefined){
+        if (criteria.min_liked_count !== undefined) {
             const likedUsers = await getUsersByFameRating(user, userLocation, criteria);
             likedSet = new Set(likedUsers.map(u => u.user_id));
         }
 
         let intersectedSet = null;
-
         for (const set of [distSet, ageSet, interestSet, likedSet]) {
             if (!set) continue;
             if (!intersectedSet) {
@@ -155,43 +125,43 @@ export const searchProfiles = async (req, res) =>{
             }
         }
 
-        //get user details, location, liked,
         let searchProfiles = [];
-        for(const intersectUserId of intersectedSet){
-            const userBlocked = await getUserBlocked(userId, intersectUserId);  //prevent blocked user from showing in search results
-            if (userBlocked)
-                continue;
+        if (intersectedSet) {
+            for (const intersectUserId of intersectedSet) {
+                const userBlocked = await getUserBlocked(userId, intersectUserId);
+                if (userBlocked) continue;
 
-            const profile = await getSearchProfileUser(intersectUserId, userLocation, userId); 
-            searchProfiles.push(profile);
+                const profile = await getSearchProfileUser(intersectUserId, userLocation, userId);
+                searchProfiles.push(profile);
+            }
         }
-        
+
         const totalUsers = await getTotalUsers();
 
         searchProfiles.forEach(profile => {
             profile.distance_km = parseFloat(profile.distance_km.toFixed(2));
-            profile.interests = profile.interests.split(',');
+            profile.interests = profile.interests ? profile.interests.split(',') : [];
             const stars = getStars(totalUsers, profile.liked_count);
-            profile.fame_rating = {"stars": stars, "liked_count": profile.liked_count};
-            if (profile.profile_picture){
+            profile.fame_rating = { "stars": stars, "liked_count": profile.liked_count };
+            
+            if (profile.profile_picture) {
                 profile.profile_picture = `${IMAGE_URL}${profile.profile_picture}`;
             }
 
-            // Logic for calculating Matching Score
+            // Match Score Logic
             const distScore = Math.max(0, 100 - profile.distance_km);
             const tagScore = (profile.num_shared_interests || 0) * 10;
             const fameScore = stars * 5;
-
             profile.match_score = distScore + tagScore + fameScore;
         });
 
-        // Sorty by match_score by default before sending response
         searchProfiles.sort((a, b) => b.match_score - a.match_score);
 
-        res.status(200).json({"success": true, "profiles": searchProfiles});
-    }catch(err){
+        res.status(200).json({ "success": true, "profiles": searchProfiles });
+
+    } catch (err) {
         console.error("error searchProfiles: ", err);
-        res.status(500).json({"success": false, "error": "internal server error"});
+        res.status(500).json({ "success": false, "error": "internal server error" });
     }
 }
 
