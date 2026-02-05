@@ -45,12 +45,17 @@ export const authenticateToken = async (req, res, next) => {
 }
 
 
-async function updateUserOnline(userId){
-    try{
-        await db.run('UPDATE user_onlines SET updated_at = CURRENT_TIMESTAMP WHERE user_id = ?;',[userId]);
-    }
-    catch(err){
+async function updateUserOnline(userId) {
+    try {
+        console.log(`Creating/Updating online status for User ${userId}...`);
+        const row = await db.get('SELECT 1 FROM user_onlines WHERE user_id = ?', [userId]);
+        
+        if (row) {
+            await db.run('UPDATE user_onlines SET is_online = 1, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?', [userId]);
+        } else {
+            await db.run('INSERT INTO user_onlines (user_id, is_online, created_at, updated_at) VALUES (?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)', [userId]);
+        }
+    } catch (err) {
         console.error("error updateUserOnline: ", err);
-        throw err;
     }
 }

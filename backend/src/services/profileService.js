@@ -342,6 +342,7 @@ export const getProfileUser = async (req, res) => {
             "distance_km": distanceKm,
             "fame_rating": fameRating,
             "last_seen": userOnline?.updatedAt ?? null,
+            "is_online": userOnline.is_online === 1,
             "is_liked_me": isLikedMe,
             "is_i_liked": isILiked,
             "is_blocked": isBlocked
@@ -382,6 +383,8 @@ export const getProfileMe = async (req, res) => {
         const interests = await getUserInterestsByUserId(userId);
         const pictures = await getUserPicturesByUserId(userId);
 
+        const userOnline = await getUserOnlineDb(userId);
+
         pictures.forEach(pic =>{
             if (pic.picture){
                 pic.picture = `${IMAGE_URL}${pic.picture}`;
@@ -399,7 +402,9 @@ export const getProfileMe = async (req, res) => {
             "date_of_birth": user.dateOfBirth,
             "interests": interests,
             "sexual_preference": user.sexualPreference,
-            "pictures": pictures
+            "pictures": pictures,
+            "last_seen": userOnline?.updatedAt ?? null,
+            "is_online": userOnline.is_online === 1
         }
         res.status(200).json({"success": true, "profile": data});
     }catch(err){
@@ -683,7 +688,7 @@ async function getUserOnlineDb(userId){
     try{
         const row = await db.get('SELECT * FROM user_onlines WHERE user_id = ?;', [userId]);
         if(row){
-            const userOnline = new UserOnline(row.user_id, row.created_at, row.updated_at);
+            const userOnline = new UserOnline(row.user_id, row.is_online, row.created_at, row.updated_at);
             return userOnline;
         }
         return null;

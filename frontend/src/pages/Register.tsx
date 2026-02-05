@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import React from 'react'
 import api from '../api/axios';
+import { useNavigate } from 'react-router-dom';
 
 const Register = () => {
+
+    const navigate = useNavigate();
 
     const [first_name, setFirstName] = useState('');
     const [last_name, setLastName] = useState('');
@@ -25,6 +28,7 @@ const Register = () => {
             });
             console.log('Server says:', response.data);
             alert('Registration is confirmed! Check email to activate the account');
+            navigate('/login');
         } catch (error: any) {
             console.error('Error during registration', error);
             alert('Registration failed: ' + (error.response?.data?.error || error.message));

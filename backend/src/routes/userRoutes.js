@@ -1,6 +1,6 @@
 import express from 'express';
-import { registerUser, activateUser, userLogin, resetPasswordRequest, resetUserPassword } from '../services/userServices.js';
-
+import { registerUser, activateUser, userLogin, resetPasswordRequest, resetUserPassword, userLogout } from '../services/userServices.js';
+import { authenticateToken } from '../middlewares/authentication.js';
 
 const router = express.Router();
 
@@ -17,6 +17,10 @@ router.post('/activate', async (req, res) => {
 
 router.post('/login', async (req, res) => {
     await userLogin(req, res);
+});
+
+router.post('/logout', authenticateToken,async (req, res) => {
+    await userLogout(req, res);
 });
 
 

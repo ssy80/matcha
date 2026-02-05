@@ -1,6 +1,7 @@
 import express from 'express';
 import { patchUserProfile, getProfileMe, getProfileUser, likedProfile, getFameRating, getOnlineStatus } from '../services/profileService.js';
 import { isUserViewedMe, isUserLikedMe, blockedProfile, getViewedMeList, getLikedMeList, fakedProfile, getMatches } from '../services/profileService.js';
+import { authenticateToken } from '../middlewares/authentication.js';
 
 const router = express.Router();
 
@@ -10,7 +11,7 @@ router.patch('/update', async (req, res) => {
 });
 
 
-router.get('/me', async (req, res) => {
+router.get('/me', authenticateToken, async (req, res) => {
     await getProfileMe(req, res);
 });
 

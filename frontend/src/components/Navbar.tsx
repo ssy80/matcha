@@ -20,9 +20,15 @@ const Navbar = () => {
     // Polling Ref
     const pollInterval = useRef<number | null>(null);
 
-    const handleLogout = () => {
-        localStorage.removeItem('token');
-        navigate('/login');
+    const handleLogout = async () => {
+        try {
+            await api.post('/users/logout');
+        } catch (err) {
+            console.warn("Logout failed on server, clearing local session anyway.");
+        } finally {
+            localStorage.removeItem('token');
+            navigate('/login');
+        }
     };
 
     // Poll for Notifications

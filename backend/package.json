@@ -19,6 +19,9 @@
   "main": "./src/index.js",
   "scripts": {
     "start": "node .",
+    "db:reset": "rm database/matcha.db && sqlite3 database/matcha.db < scripts/db.sql",
+    "db:seed": "sqlite3 database/matcha.db < scripts/users_seed.sql && sqlite3 database/matcha.db < scripts/user_pictures_seed.sql && sqlite3 database/matcha.db < scripts/user_interests_seed.sql && sqlite3 database/matcha.db < scripts/user_locations_seed.sql && sqlite3 database/matcha.db < scripts/fame_ratings_seed.sql && sqlite3 database/matcha.db < scripts/user_onlines_seed.sql",
+    "db:full-reset": "npm run db:reset && npm run db:seed",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
