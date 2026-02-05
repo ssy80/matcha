@@ -119,12 +119,18 @@ export const getConversation = async (req, res) => {
             return res.status(400).json({ success: false, error: "Missing user ID" });
         }
 
+        await db.run(`
+            UPDATE chat_messages 
+            SET message_status = 'read' 
+            WHERE from_user_id = ? AND to_user_id = ?
+        `, [otherUserId, userId]);
+
         const query = `
             SELECT * FROM chat_messages 
             WHERE (from_user_id = ? AND to_user_id = ?) 
                OR (from_user_id = ? AND to_user_id = ?)
             ORDER BY created_at ASC
-        `;
+        `;   
         
         const messages = await db.all(query, [userId, otherUserId, otherUserId, userId]);
         res.status(200).json({ success: true, messages });

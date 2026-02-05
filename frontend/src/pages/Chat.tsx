@@ -16,6 +16,7 @@ interface Message {
     to_user_id: number;
     message: string;
     created_at: string;
+    message_status: 'new';
 }
 
 export default function Chat() {
@@ -107,7 +108,20 @@ export default function Chat() {
         }
     };
 
-    // 4. Send Message
+    // 4. Format Message Time
+    const formatMessageTime = (dateString: string) => {
+        if (!dateString) return '';
+        
+        // Fix: Append 'Z' to force UTC interpretation
+        let utcString = dateString;
+        if (!dateString.endsWith('Z')) {
+            utcString += 'Z';
+        }
+        
+        return new Date(utcString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    };
+
+    // 5. Send Message
     const handleSend = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newMessage.trim() || !activeUser || !myUserId)
@@ -136,7 +150,7 @@ export default function Chat() {
         }
     }
 
-    // 5. Scroll to Bottom
+    // 6. Scroll to Bottom
     const scrollToBottom = () => {
         if (messagesEndRef.current) {
             messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
@@ -200,7 +214,16 @@ export default function Chat() {
                                             {msg.message}
                                         </div>
                                         <div style={{ fontSize: '0.7em', color: '#666', marginTop: '4px', textAlign: isMe ? 'right' : 'left' }}>
-                                            {new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                            {formatMessageTime(msg.created_at)}
+                                            {isMe && (
+                                                <span style={{ marginLeft: '5px', fontWeight: 'bold' }}>
+                                                    {msg.message_status === 'read' ? (
+                                                        <span style={{ color: '#4CAF50' }}>✓✓ Read</span>
+                                                    ) : (
+                                                        <span style={{ color: '#aaa' }}>✓ Delivered</span>
+                                                    )}
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
                                 );

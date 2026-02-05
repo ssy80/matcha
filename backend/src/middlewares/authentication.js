@@ -47,7 +47,6 @@ export const authenticateToken = async (req, res, next) => {
 
 async function updateUserOnline(userId) {
     try {
-        console.log(`Creating/Updating online status for User ${userId}...`);
         const row = await db.get('SELECT 1 FROM user_onlines WHERE user_id = ?', [userId]);
         
         if (row) {
