@@ -143,6 +143,22 @@ export const userLogin = async (req, res) => {
     }
 }
 
+export const userLogout = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        await db.run(`
+            UPDATE user_onlines 
+            SET is_online = 0, updated_at = CURRENT_TIMESTAMP
+            WHERE user_id = ?
+        `, [userId]);
+        
+        res.status(200).json({ success: true, message: "Logged out successfully" });
+    } catch (err) {
+        console.error("Logout error:", err);
+        res.status(500).json({ success: false, error: "Internal server error" });
+    }
+};
+
 
 export const activateUser = async (req, res) => {
     try{

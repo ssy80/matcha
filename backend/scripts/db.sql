@@ -1,17 +1,17 @@
-drop table users;
-drop table user_activations;
-drop table user_resets;
-drop table user_interests;
-drop table user_pictures;
-drop table viewed_histories;
-drop table liked_histories;
-drop table fame_ratings;
-drop table user_locations;
-drop table user_onlines;
-drop table user_blockeds;
-drop table user_fakeds;
-drop table chat_messages;
-drop table events;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS user_activations;
+DROP TABLE IF EXISTS user_resets;
+DROP TABLE IF EXISTS user_interests;
+DROP TABLE IF EXISTS user_pictures;
+DROP TABLE IF EXISTS viewed_histories;
+DROP TABLE IF EXISTS liked_histories;
+DROP TABLE IF EXISTS fame_ratings;
+DROP TABLE IF EXISTS user_locations;
+DROP TABLE IF EXISTS user_onlines;
+DROP TABLE IF EXISTS user_blockeds;
+DROP TABLE IF EXISTS user_fakeds;
+DROP TABLE IF EXISTS chat_messages;
+DROP TABLE IF EXISTS events;
 
 
 CREATE TABLE users (
@@ -143,6 +143,7 @@ CREATE TABLE user_locations (
 
 CREATE TABLE user_onlines (
     user_id INTEGER PRIMARY KEY NOT NULL,
+    is_online BOOLEAN DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) 

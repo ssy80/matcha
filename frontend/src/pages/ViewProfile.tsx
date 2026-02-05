@@ -22,6 +22,8 @@ interface UserProfile {
     latitude?: number;
     longitude?: number;
     age?: number;
+    last_seen?: string;
+    is_online?: boolean;
 }
 
 const ViewProfile = () => {
@@ -82,6 +84,8 @@ const ViewProfile = () => {
                     setIsBlocked(userData.is_blocked || false)
                     setIsFaked(userData.is_faked || false);
                 }
+                console.log("Profile Data from API:", userData);
+                console.log("Last Seen Value:", userData.last_seen);
 
                 setProfile(userData);
 
@@ -239,6 +243,32 @@ const ViewProfile = () => {
         }
     };
 
+    const getOnlineStatus = (profile: UserProfile) => {
+        if (!profile.last_seen)
+            return <span style={{ color: 'gray' }}>Offline</span>;
+
+        // Timezone Fix
+        let utcDateString = profile.last_seen;
+        if (!profile.last_seen.endsWith('Z')) utcDateString += 'Z';
+        const lastSeen = new Date(utcDateString);
+
+        // Calculate difference
+        const now = new Date();
+        const diffMinutes = (now.getTime() - lastSeen.getTime()) / (1000 * 60);
+
+        // Consider online if last seen within 5 minutes and is_online flag is true
+        const isActuallyOnline = profile.is_online && diffMinutes < 5;
+
+        if (isActuallyOnline) {
+            return <span style={{ color: '#4CAF50', fontWeight: 'bold' }}>● Online</span>;
+        } else {
+            return <span style={{ color: '#aaa' }}>Last seen: {lastSeen.toLocaleString()}</span>;
+        }
+    };
+
+    if (loading)
+        return <div>Loading...</div>;
+
     return (
         <div style={{ maxWidth: '600px', margin: '20px auto', padding: '20px', border: '1px solid #444', borderRadius: '8px', color: '#fff', background: '#222' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -315,6 +345,11 @@ const ViewProfile = () => {
 
                 <div style={{ flexGrow: 1 }}>
                     <h2 style={{ marginTop: 0 }}>{profile.first_name} {profile.last_name}</h2>
+                    
+                    <div style={{ marginBottom: '10px', fontSize: '0.9em' }}>
+                        {getOnlineStatus(profile)}
+                    </div>
+
                     {/* Only show Username/Email if it's MY profile, or depending on your privacy rules */}
                     {isOwnProfile && <p style={{ margin: '5px 0' }}><strong style={{ color: '#aaa' }}>Email:</strong> {profile.email}</p>}
                     <p style={{ margin: '5px 0' }}><strong style={{ color: '#aaa' }}>Age:</strong> {profile.age || 'N/A'}</p>

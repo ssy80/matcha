@@ -1,8 +1,9 @@
 export class UserOnline {
 
-    constructor(user_id, createdAt, updatedAt)
+    constructor(user_id, is_online,createdAt, updatedAt)
     {
         this._user_id = user_id;
+        this._is_online = is_online;
         this._createdAt = createdAt;
         this._updatedAt = updatedAt;
     }
@@ -13,6 +14,14 @@ export class UserOnline {
 
     set userId(value) {
         this._user_id = value;
+    }
+
+    get is_online() {
+        return this._is_online;
+    }
+
+    set is_online(value) {
+        this._is_online = value;
     }
 
     get createdAt() {
