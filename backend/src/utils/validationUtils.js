@@ -61,7 +61,13 @@ export class Validation{
         {
             return false;
         }
-
+        const commonWords = ['password', '123456', 'qwerty', 'admin', 'welcome', 'matcha', 'login', 'user'];
+        const lowerValue = value.toLowerCase();
+        for (const word of commonWords) {
+            if (lowerValue.includes(word)) {
+                return false;
+            }
+        }
         return true;
     }
 

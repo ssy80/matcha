@@ -32,115 +32,96 @@ export const updateUserLocation = async(req, res) => {
     try{
         const userId = req.user.id;
         const locationData = req.body;
+        
         let ip = locationData?.ip ?? null;
         let latitude = locationData?.latitude ?? null;
         let longitude = locationData?.longitude ?? null;
-        let neighborhood = "unknown";
-        let city = "unknown";
-        let country = "unknown";
+        let neighborhood = locationData?.neighborhood ?? "unknown";
+        let city = locationData?.city ?? "unknown";
+        let country = locationData?.country ?? "unknown";
 
         if (latitude !== null && (typeof latitude !== "number")) {
-            res.status(400).json({"success": false, "error": "invalid latitude"});
-            return;
+            return res.status(400).json({"success": false, "error": "invalid latitude"});
         }
         if (longitude !== null && (typeof longitude !== "number")) {
-            res.status(400).json({"success": false, "error": "invalid longitude"});
-            return;
+            return res.status(400).json({"success": false, "error": "invalid longitude"});
         }
         if (ip !== null && (typeof ip !== "string")){
-            res.status(400).json({"success": false, "error": "invalid ip"});
-            return;
+            return res.status(400).json({"success": false, "error": "invalid ip"});
         }
         if (ip){
             ip = ip.trim();
         }
+
         if (latitude !== null && longitude !== null && Validation.isValidCoordinates(latitude, longitude)){
-            const coordinates = `${latitude}, ${longitude}`;
-            const encodedCoordinates = encodeURIComponent(coordinates);
-            const geolocateUrl = `https://api.opencagedata.com/geocode/v1/json?q=${encodedCoordinates}&key=${OPENCAGE_API_KEY}`;
-
-            let response;
+            
             try {
-                response = await axios.get(geolocateUrl);
-            } catch (err) {
-                console.error("error get OpenCage api: ", err);
-                res.status(502).json({"success": false, "error": "failed to fetch geolocation data"});
-                return;
-            }
-            const data = response?.data;
-            if (!data){
-                res.status(409).json({"success": false, "error": "invalid geolocation data"});
-                return;
-            }
-            neighborhood = data?.results?.[0]?.components?.suburb || data?.result?.[0].components?.neighbourhood || "unknown";
-            city = data?.results?.[0]?.components?.city || "unknown";
-            country = data?.results?.[0]?.components?.country || "unknown";
-            if (city === "unknown"){
-                city = country;
-            }
-            if (neighborhood === "unknown"){
-                neighborhood = city;
-            }
-        }else if(ip && Validation.isValidIPv4(ip)){
-            const iplocateUrl = `https://ipapi.co/${ip}/json/`;
+                const coordinates = `${latitude}, ${longitude}`;
+                const encodedCoordinates = encodeURIComponent(coordinates);
+                const geolocateUrl = `https://api.opencagedata.com/geocode/v1/json?q=${encodedCoordinates}&key=${OPENCAGE_API_KEY}`;
 
-            let response;
-            try {
-                response = await axios.get(iplocateUrl);
+                const response = await axios.get(geolocateUrl);
+                const data = response?.data;
+                
+                if (data && data.results && data.results.length > 0) {
+                    const result = data.results[0];
+                    neighborhood = result.components?.suburb || result.components?.neighbourhood || neighborhood;
+                    city = result.components?.city || result.components?.town || result.components?.village || city;
+                    country = result.components?.country || country;
+                }
             } catch (err) {
-                console.error("error get ipapi api: ", err);
-                res.status(502).json({"success": false, "error": "failed to fetch ip geolocation data"});
-                return;
+                console.warn("⚠️ OpenCage Geocoding failed. Using manual/fallback location data:", err.message);
             }
-            const ipData = response?.data;
-            if (!ipData){
-                res.status(409).json({"success": false, "error": "invalid ip geolocation data"});
-                return;
-            }
-            const ipCity = ipData?.city || "unknown";
-            const ipCountry = ipData?.country_name || "unknown";
-            const reason = ipData?.reason || "unknown";
-            if (reason === "Reserved IP Address"){
-                res.status(409).json({"success": false, "error": "invalid ip"});
-                return;
-            }
-            const ipLocation = ipCity + ", " + ipCountry;
-            const encodedLocation = encodeURIComponent(ipLocation);
-            const geolocateUrl = "https://api.opencagedata.com/geocode/v1/json?q=" + encodedLocation + "&key=" + OPENCAGE_API_KEY;
 
-            let geoResponse;
+        } else if(ip && Validation.isValidIPv4(ip)){
             try {
-                geoResponse = await axios.get(geolocateUrl);
+                const iplocateUrl = `https://ipapi.co/${ip}/json/`;
+                const response = await axios.get(iplocateUrl);
+                const ipData = response?.data;
+
+                if (!ipData || ipData.error || ipData.reason === "Reserved IP Address"){
+                    throw new Error("Invalid IP data");
+                }
+
+                const ipCity = ipData.city || "unknown";
+                const ipCountry = ipData.country_name || "unknown";
+                
+                const ipLocation = `${ipCity}, ${ipCountry}`;
+                const geolocateUrl = `https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(ipLocation)}&key=${OPENCAGE_API_KEY}`;
+                
+                const geoResponse = await axios.get(geolocateUrl);
+                const geoData = geoResponse?.data;
+
+                if (geoData && geoData.results && geoData.results.length > 0) {
+                    const result = geoData.results[0];
+                    latitude = result.geometry?.lat ?? latitude;
+                    longitude = result.geometry?.lng ?? longitude;
+                    neighborhood = result.components?.suburb || result.components?.neighbourhood || neighborhood;
+                    city = result.components?.city || result.components?.town || city;
+                    country = result.components?.country || country;
+                } else {
+                    city = ipCity;
+                    country = ipCountry;
+                }
+
             } catch (err) {
-                console.error("error get OpenCage api: ", err);
-                res.status(502).json({"success": false, "error": "failed to fetch geolocation data"});
-                return;
+                console.error("error during IP geolocation: ", err.message);
+                return res.status(502).json({"success": false, "error": "failed to fetch geolocation data"});
             }
-            const geoData = geoResponse?.data;
-            if (!geoData){
-                res.status(409).json({"success": false, "error": "invalid geolocation data"});
-                return;
-            }
-            latitude = geoData?.results?.[0]?.geometry?.lat ?? null;
-            longitude = geoData?.results?.[0]?.geometry?.lng ?? null;
-            neighborhood = geoData?.results?.[0]?.components?.suburb || geoData?.results?.[0]?.components?.neighbourhood|| "unknown";
-            city = geoData?.results?.[0]?.components?.city || "unknown";
-            country = geoData?.results?.[0]?.components?.country || "unknown";
-            if (city === "unknown"){
-                city = country;
-            }
-            if (neighborhood === "unknown"){
-                neighborhood = city;
-            }
+        } 
+        else {
+             return res.status(400).json({"success": false, "error": "invalid location data"});
         }
-        else{
-            res.status(409).json({"success": false, "error": "invalid location data"});
-            return;
-        }
+
+        if (city === "unknown")
+            city = country;
+        if (neighborhood === "unknown")
+            neighborhood = city;
 
         const userLocation = new UserLocation(userId, latitude, longitude, neighborhood, city, country, null, null);
         await updateUserLocationDb(userLocation);
         res.status(201).json({"success": true});
+
     }catch(err){
         console.error("error updateUserLocation: ", err);
         res.status(500).json({"success": false, "error": "internal server error"});

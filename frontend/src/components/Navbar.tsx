@@ -77,12 +77,26 @@ const Navbar = () => {
     const unreadCount = notifications.length;
 
     return (
-        <nav style={{ padding: '10px 20px', background: '#333', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <nav style={{
+            padding: '10px 20px',
+            background: '#333',
+            color: '#fff',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '10px'}}>
             <div style={{ fontWeight: 'bold', fontSize: '1.2em' }}>
                 <Link to="/home" style={{ color: '#fff', textDecoration: 'none' }}>🍵 Matcha</Link>
             </div>
             
-            <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+            <div style={{
+                display: 'flex',
+                gap: '20px', 
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                justifyContent: 'center',
+                width: 'auto'}}>
                 <Link to="/home" style={{ color: '#ccc', textDecoration: 'none' }}>Browsing</Link>
                 <Link to="/chat" style={{ color: '#ccc', textDecoration: 'none' }}>Chat</Link>
                 <Link to="/history" style={{ color: '#ccc', textDecoration: 'none' }}>Activity</Link>

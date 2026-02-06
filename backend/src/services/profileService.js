@@ -380,9 +380,9 @@ export const getProfileMe = async (req, res) => {
             res.status(409).json({"success": false, "error": "no such user"});
             return;
         }
+        const age = calculateAge(user.dateOfBirth);
         const interests = await getUserInterestsByUserId(userId);
         const pictures = await getUserPicturesByUserId(userId);
-
         const userOnline = await getUserOnlineDb(userId);
 
         pictures.forEach(pic =>{
@@ -400,6 +400,7 @@ export const getProfileMe = async (req, res) => {
             "gender": user.gender,
             "biography": user.biography,
             "date_of_birth": user.dateOfBirth,
+            "age": age,
             "interests": interests,
             "sexual_preference": user.sexualPreference,
             "pictures": pictures,
