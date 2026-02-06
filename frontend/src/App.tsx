@@ -12,7 +12,9 @@ import ViewProfile from './pages/ViewProfile';
 import Navbar from './components/Navbar';
 import Chat from './pages/Chat';
 import History from './pages/History';
+import Welcome from './pages/Welcome';
 import type { JSX } from 'react/jsx-dev-runtime';
+
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
     const token = localStorage.getItem('token');
@@ -27,7 +29,7 @@ const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
 function App() {
   const location = useLocation();
 
-  const hideNavbarRoutes = ["/login", "/register", "/forget-password", "/users/activate", "/users/reset_password"];
+  const hideNavbarRoutes = ["/", "/login", "/register", "/forget-password", "/users/activate", "/users/reset_password"];
   const showNavbar = !hideNavbarRoutes.includes(location.pathname);
 
   return (
@@ -36,19 +38,24 @@ function App() {
       {showNavbar && <Navbar />}
       
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/home" element={<Home />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/users/activate" element={<ActivateUser />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forget-password" element={<ForgetPassword />} />
-        <Route path="/users/reset_password" element={<ResetPassword />} />
-        <Route path="/profile/edit" element={<Profile />} />
-        <Route path="/profile/:id" element={<ViewProfile />} />
-        <Route path="/profile" element={<ViewProfile />} />
-        <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
-        <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
+          {/* Public Landing Page */}
+          <Route path="/" element={<Welcome />} />
+
+          {/* Protected App Routes */}
+          <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+          <Route path="/profile/edit" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/profile/:id" element={<ProtectedRoute><ViewProfile /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><ViewProfile /></ProtectedRoute>} />
+          <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
+          <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
+
+          {/* Public Auth Routes */}
+          <Route path="/about" element={<About />} />
+          <Route path="/users/activate" element={<ActivateUser />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forget-password" element={<ForgetPassword />} />
+          <Route path="/users/reset_password" element={<ResetPassword />} />
       </Routes>
     </>
   )

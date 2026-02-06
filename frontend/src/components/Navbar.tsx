@@ -27,7 +27,7 @@ const Navbar = () => {
             console.warn("Logout failed on server, clearing local session anyway.");
         } finally {
             localStorage.removeItem('token');
-            navigate('/login');
+            navigate('/');
         }
     };
 
