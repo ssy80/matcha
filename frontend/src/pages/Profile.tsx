@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 
@@ -108,8 +107,6 @@ const Profile = () => {
         setPhotos(photos.filter((_, index) => index !== indexToRemove));
     };
 
-
-
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
 
@@ -195,8 +192,28 @@ const Profile = () => {
         navigate('/profile');
     };
 
+    // Bonus: GDPR Export Logic
+    const handleExportData = async () => {
+        try {
+            const response = await api.get('/profile/export', {
+                responseType: 'blob'
+            });
+            
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'my_matcha_data.json');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (error) {
+            console.error("Export failed", error);
+            alert("Failed to download data. Ensure you are logged in.");
+        }
+    };
+
     return (
-        <div style={{ maxWidth: '500px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '500px', margin: '0 auto', paddingBottom: '50px' }}>
             <h2>Complete Your Profile</h2>
             <form onSubmit={handleSubmit}>
                 <div style={{ marginBottom: '15px' }}>
@@ -215,7 +232,7 @@ const Profile = () => {
                 </div>
 
                 <div style={{ marginBottom: '15px' }}>
-                    <label>Sexual Preferences:</label>
+                    <label>I am interested in:</label>
                     <select
                         value={sexualPreference}
                         onChange={(e) => setSexualPreference(e.target.value)}
@@ -297,7 +314,21 @@ const Profile = () => {
                     />
                     <small style={{ color: '#666' }}>Lat: {location.latitude.toFixed(4)}, Lng: {location.longitude.toFixed(4)}</small>
                 </div>
-                <button type="submit">Save Profile</button>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    <button type="submit" style={{ padding: '10px', background: '#E91E63', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '1.1em' }}>
+                        Save Profile
+                    </button>
+
+                    {/* Bonus: Data Export Button */}
+                    <button 
+                        type="button" 
+                        onClick={handleExportData} 
+                        style={{ padding: '10px', background: '#555', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                    >
+                        📥 Download My Data (GDPR)
+                    </button>
+                </div>
             </form>
         </div>
     );
