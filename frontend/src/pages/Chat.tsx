@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef} from "react";
+import { useEffect, useState, useRef } from "react";
 import api from '../api/axios';
 import { useNavigate } from "react-router-dom";
 
@@ -16,7 +16,7 @@ interface Message {
     to_user_id: number;
     message: string;
     created_at: string;
-    message_status: 'new';
+    message_status?: 'new' | 'read' | 'delivered';
 }
 
 export default function Chat() {
@@ -26,11 +26,19 @@ export default function Chat() {
     const [newMessage, setNewMessage] = useState<string>("");
     const [myUserId, setMyUserId] = useState<number | null>(null);
 
-    // Reference for polling interval
+    // Responsive State
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
     const pollInterval = useRef<number | null>(null);
     const messagesEndRef = useRef<HTMLDivElement | null>(null);
-
     const navigate = useNavigate();
+
+    // 0. Handle Resize for Mobile
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth < 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     // 1. Initial Load
     useEffect(() => {
@@ -38,66 +46,55 @@ export default function Chat() {
             try {
                 const userResponse = await api.get("/profile/me");
                 if (userResponse.data.success) {
-                    console.log("✅ Set My ID:", userResponse.data.profile.id);
                     setMyUserId(userResponse.data.profile.id);
                 }
-                else {
-                    console.error("❌ Failed to fetch my profile:", userResponse.data.error);
-                }
-
                 const matchesResponse = await api.get("/profile/matches");
                 if (matchesResponse.data.success) {
                     setMatches(matchesResponse.data.matches);
                 }
             } catch (error) {
-                console.error("Failed to load the chat initialization data", error);
+                console.error("Failed to load chat init data", error);
             }
         };
-
         fetchInitialData();
     }, []);
 
-    // 2. Load History when clicking a user
+    // 2. Load History & Start Polling
     useEffect(() => {
-        if (!activeUser)
-            return;
+        if (!activeUser) return;
 
         const loadHistory = async () => {
             try {
                 const historyResponse = await api.get(`/chat/history/${activeUser.id}`);
                 if (historyResponse.data.success) {
                     setMessages(historyResponse.data.messages);
-                    scrollToBottom();
+                    setTimeout(scrollToBottom, 100);
                 }
             } catch (error) {
-                console.error("Failed to load message history", error);
+                console.error("Failed to load history", error);
             }
         };
+
         loadHistory();
         startPolling();
         
-        return () => {
-            stopPolling();
-        };
+        return () => stopPolling();
     }, [activeUser]);
 
     // 3. Polling Logic
     const startPolling = () => {
-        if (pollInterval.current)
-            clearInterval(pollInterval.current);
+        if (pollInterval.current) clearInterval(pollInterval.current);
 
         pollInterval.current = window.setInterval(async () => {
-            if (!activeUser)
-                return;
-        try {
-            const response = await api.get(`/chat/history/${activeUser.id}`);
-            if (response.data.success) {
-                setMessages(response.data.messages);
-                scrollToBottom();
+            if (!activeUser) return;
+            try {
+                const response = await api.get(`/chat/history/${activeUser.id}`);
+                if (response.data.success) {
+                    setMessages(response.data.messages);
+                }
+            } catch (error) {
+                console.error("Polling error", error);
             }
-        } catch (error) {
-            console.error("Failed to poll message history", error);
-        }
         }, 3000);
     };
 
@@ -108,24 +105,18 @@ export default function Chat() {
         }
     };
 
-    // 4. Format Message Time
+    // 4. Timezone Fix Helper
     const formatMessageTime = (dateString: string) => {
         if (!dateString) return '';
-        
-        // Fix: Append 'Z' to force UTC interpretation
         let utcString = dateString;
-        if (!dateString.endsWith('Z')) {
-            utcString += 'Z';
-        }
-        
+        if (!dateString.endsWith('Z')) utcString += 'Z';
         return new Date(utcString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     };
 
     // 5. Send Message
     const handleSend = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newMessage.trim() || !activeUser || !myUserId)
-            return;
+        if (!newMessage.trim() || !activeUser || !myUserId) return;
 
         const tempMessage: Message = {
             id: Date.now(),
@@ -133,24 +124,24 @@ export default function Chat() {
             to_user_id: activeUser.id,
             message: newMessage.trim(),
             created_at: new Date().toISOString(),
-        }
+            message_status: 'new'
+        };
 
-        setMessages((prevMessages) => [...prevMessages, tempMessage]);
+        setMessages((prev) => [...prev, tempMessage]);
         setNewMessage("");
-        scrollToBottom();
+        setTimeout(scrollToBottom, 50);
 
-        try{
+        try {
             await api.post("/chat/send", {
                 to_user_id: activeUser.id,
                 message: tempMessage.message,
             });
         } catch (error) {
-            console.error("Failed to send message", error);
+            console.error("Send failed", error);
             alert("Failed to send message");
         }
-    }
+    };
 
-    // 6. Scroll to Bottom
     const scrollToBottom = () => {
         if (messagesEndRef.current) {
             messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
@@ -158,98 +149,134 @@ export default function Chat() {
     };
 
     return (
-        <div style={{ display: 'flex', height: 'calc(100vh - 80px)', maxWidth: '1000px', margin: '20px auto', border: '1px solid #444', borderRadius: '8px', overflow: 'hidden', background: '#222', color: '#fff' }}>
+        <div style={{ 
+            display: 'flex', 
+            height: 'calc(100vh - 80px)', 
+            maxWidth: '1000px', 
+            margin: '20px auto', 
+            border: '1px solid #444', 
+            borderRadius: '8px', 
+            overflow: 'hidden', 
+            background: '#222', 
+            color: '#fff',
+            width: isMobile ? '95%' : '100%' 
+        }}>
             
-            {/* LEFT: Matches List */}
-            <div style={{ width: '30%', borderRight: '1px solid #444', overflowY: 'auto', background: '#1a1a1a' }}>
-                <h3 style={{ padding: '15px', margin: 0, borderBottom: '1px solid #444' }}>Matches</h3>
-                {matches.length === 0 && <p style={{ padding: '15px', color: '#777' }}>No matches yet.</p>}
-                
-                {matches.map(user => (
-                    <div 
-                        key={user.id} 
-                        onClick={() => setActiveUser(user)}
-                        style={{ 
-                            padding: '15px', 
-                            cursor: 'pointer', 
-                            background: activeUser?.id === user.id ? '#333' : 'transparent',
-                            borderBottom: '1px solid #333',
-                            display: 'flex', alignItems: 'center', gap: '10px'
-                        }}
-                    >
-                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#555', overflow: 'hidden' }}>
-                            {user.picture ? <img src={user.picture} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : null}
+            {/* LEFT COLUMN: Matches List if not Mobile Mode or (is Mobile AND no active user)*/}
+            {(!isMobile || !activeUser) && (
+                <div style={{ 
+                    width: isMobile ? '100%' : '30%', 
+                    borderRight: isMobile ? 'none' : '1px solid #444', 
+                    overflowY: 'auto', 
+                    background: '#1a1a1a' 
+                }}>
+                    <h3 style={{ padding: '15px', margin: 0, borderBottom: '1px solid #444' }}>Matches</h3>
+                    {matches.length === 0 && <p style={{ padding: '15px', color: '#777' }}>No matches yet.</p>}
+                    
+                    {matches.map(user => (
+                        <div 
+                            key={user.id} 
+                            onClick={() => setActiveUser(user)}
+                            style={{ 
+                                padding: '15px', 
+                                cursor: 'pointer', 
+                                background: activeUser?.id === user.id ? '#333' : 'transparent',
+                                borderBottom: '1px solid #333',
+                                display: 'flex', alignItems: 'center', gap: '10px'
+                            }}
+                        >
+                            <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#555', overflow: 'hidden', flexShrink: 0 }}>
+                                {user.picture ? <img src={user.picture} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : null}
+                            </div>
+                            <div>
+                                <div style={{ fontWeight: 'bold' }}>{user.first_name}</div>
+                                <div style={{ fontSize: '0.8em', color: '#888' }}>@{user.username}</div>
+                            </div>
                         </div>
-                        <div>
-                            <div style={{ fontWeight: 'bold' }}>{user.first_name}</div>
-                            <div style={{ fontSize: '0.8em', color: '#888' }}>@{user.username}</div>
-                        </div>
-                    </div>
-                ))}
-            </div>
+                    ))}
+                </div>
+            )}
 
-            {/* RIGHT: Chat Window */}
-            <div style={{ width: '70%', display: 'flex', flexDirection: 'column' }}>
-                {activeUser ? (
-                    <>
-                        {/* Header */}
-                        <div style={{ padding: '15px', borderBottom: '1px solid #444', background: '#2a2a2a', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <h3 style={{ margin: 0 }}>{activeUser.first_name} {activeUser.last_name}</h3>
-                            <button onClick={() => navigate(`/profile/${activeUser.id}`)} style={{ background: 'transparent', border: '1px solid #666', color: '#ccc', borderRadius: '4px', cursor: 'pointer' }}>View Profile</button>
-                        </div>
+            {/* RIGHT COLUMN: Chat Area if not Mobile Mode OR (is Mobile AND active user)*/}
+            {(!isMobile || activeUser) && (
+                <div style={{ 
+                    width: isMobile ? '100%' : '70%', 
+                    display: 'flex', 
+                    flexDirection: 'column' 
+                }}>
+                    {activeUser ? (
+                        <>
+                            {/* Header */}
+                            <div style={{ padding: '15px', borderBottom: '1px solid #444', background: '#2a2a2a', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    {/* Mobile Back Button */}
+                                    {isMobile && (
+                                        <button 
+                                            onClick={() => setActiveUser(null)}
+                                            style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: '1.5em', cursor: 'pointer', padding: '0 5px' }}
+                                        >
+                                            ⬅️
+                                        </button>
+                                    )}
+                                    <h3 style={{ margin: 0 }}>{activeUser.first_name} {activeUser.last_name}</h3>
+                                </div>
+                                <button onClick={() => navigate(`/profile/${activeUser.id}`)} style={{ background: 'transparent', border: '1px solid #666', color: '#ccc', borderRadius: '4px', cursor: 'pointer', padding: '5px 10px' }}>View Profile</button>
+                            </div>
 
-                        {/* Messages Area */}
-                        <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            {messages.map((msg, idx) => {
-                                const isMe = msg.from_user_id === myUserId;
-                                return (
-                                    <div key={idx} style={{ alignSelf: isMe ? 'flex-end' : 'flex-start', maxWidth: '70%' }}>
-                                        <div style={{ 
-                                            background: isMe ? '#E91E63' : '#444', 
-                                            padding: '10px 15px', 
-                                            borderRadius: '15px', 
-                                            borderBottomRightRadius: isMe ? '2px' : '15px',
-                                            borderBottomLeftRadius: isMe ? '15px' : '2px',
-                                        }}>
-                                            {msg.message}
+                            {/* Messages Area */}
+                            <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                {messages.map((msg, idx) => {
+                                    const isMe = msg.from_user_id === myUserId;
+                                    return (
+                                        <div key={idx} style={{ alignSelf: isMe ? 'flex-end' : 'flex-start', maxWidth: '85%' }}>
+                                            <div style={{ 
+                                                background: isMe ? '#E91E63' : '#444', 
+                                                padding: '10px 15px', 
+                                                borderRadius: '15px', 
+                                                borderBottomRightRadius: isMe ? '2px' : '15px',
+                                                borderBottomLeftRadius: isMe ? '15px' : '2px',
+                                                wordWrap: 'break-word'
+                                            }}>
+                                                {msg.message}
+                                            </div>
+                                            <div style={{ fontSize: '0.7em', color: '#666', marginTop: '4px', textAlign: isMe ? 'right' : 'left' }}>
+                                                {formatMessageTime(msg.created_at)}
+                                                {isMe && (
+                                                    <span style={{ marginLeft: '5px', fontWeight: 'bold' }}>
+                                                        {msg.message_status === 'read' ? (
+                                                            <span style={{ color: '#4CAF50' }}>✓✓ Read</span>
+                                                        ) : (
+                                                            <span style={{ color: '#aaa' }}>✓ Delivered</span>
+                                                        )}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
-                                        <div style={{ fontSize: '0.7em', color: '#666', marginTop: '4px', textAlign: isMe ? 'right' : 'left' }}>
-                                            {formatMessageTime(msg.created_at)}
-                                            {isMe && (
-                                                <span style={{ marginLeft: '5px', fontWeight: 'bold' }}>
-                                                    {msg.message_status === 'read' ? (
-                                                        <span style={{ color: '#4CAF50' }}>✓✓ Read</span>
-                                                    ) : (
-                                                        <span style={{ color: '#aaa' }}>✓ Delivered</span>
-                                                    )}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                            <div ref={messagesEndRef} />
-                        </div>
+                                    );
+                                })}
+                                <div ref={messagesEndRef} />
+                            </div>
 
-                        {/* Input Area */}
-                        <form onSubmit={handleSend} style={{ padding: '15px', borderTop: '1px solid #444', display: 'flex', gap: '10px' }}>
-                            <input 
-                                value={newMessage}
-                                onChange={e => setNewMessage(e.target.value)}
-                                placeholder="Type a message..."
-                                style={{ flex: 1, padding: '10px', borderRadius: '20px', border: 'none', outline: 'none', background: '#333', color: '#fff' }}
-                            />
-                            <button type="submit" style={{ background: '#E91E63', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '20px', cursor: 'pointer', fontWeight: 'bold' }}>
-                                Send
-                            </button>
-                        </form>
-                    </>
-                ) : (
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#666' }}>
-                        Select a match to start chatting
-                    </div>
-                )}
-            </div>
+                            {/* Input Area */}
+                            <form onSubmit={handleSend} style={{ padding: '15px', borderTop: '1px solid #444', display: 'flex', gap: '10px' }}>
+                                <input 
+                                    value={newMessage}
+                                    onChange={e => setNewMessage(e.target.value)}
+                                    placeholder="Type a message..."
+                                    style={{ flex: 1, padding: '10px', borderRadius: '20px', border: 'none', outline: 'none', background: '#333', color: '#fff' }}
+                                />
+                                <button type="submit" style={{ background: '#E91E63', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '20px', cursor: 'pointer', fontWeight: 'bold' }}>
+                                    Send
+                                </button>
+                            </form>
+                        </>
+                    ) : (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#666', textAlign: 'center', padding: '20px' }}>
+                            Select a match from the list to start chatting
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 }
