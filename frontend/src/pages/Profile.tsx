@@ -21,7 +21,7 @@ const ALLOWED_TAGS = ['#music', '#movie', '#gym', '#swim', '#jog', '#cycle', '#a
 
 const Profile = () => {
     const [gender, setGender] = useState('');
-    const [sexualPreference, setSexualPreference] = useState('bisexual');
+    const [sexualPreference, setSexualPreference] = useState('bi-sexual');
     const [biography, setBiography] = useState('');
     const [tags, setTags] = useState<string[]>([]);
     const [location, setLocation] = useState({
@@ -108,16 +108,7 @@ const Profile = () => {
         setPhotos(photos.filter((_, index) => index !== indexToRemove));
     };
 
-    const getBackendSexualPreference = (gender: string, sexualPref: string) => {
-        if (sexualPref === 'bisexual') return 'bi-sexual';
-        if (gender === 'male') {
-            return sexualPref === 'heterosexual' ? 'female' : 'male';
-        }
-        if (gender === 'female') {
-            return sexualPref === 'heterosexual' ? 'male' : 'female';
-        }
-        return 'bi-sexual';
-    };
+
 
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
@@ -136,7 +127,7 @@ const Profile = () => {
         // 2. Prepare Profile Data
         const profileData = {
             gender: gender,
-            sexual_preference: getBackendSexualPreference(gender, sexualPreference),
+            sexual_preference: sexualPreference,
             biography: biography,
             interests: tags,
             pictures: formattedPictures
@@ -219,7 +210,7 @@ const Profile = () => {
                         <option value="" disabled>Select Gender</option>
                         <option value="male">Male</option>
                         <option value="female">Female</option>
-                        <option value="other">Other</option>
+                        <option value="other">Non-Binary / Other</option>
                     </select>
                 </div>
 
@@ -231,9 +222,9 @@ const Profile = () => {
                         required
                         style={{ display: 'block', width: '100%', padding: '8px' }}
                     >
-                        <option value="heterosexual">Heterosexual</option>
-                        <option value="homosexual">Homosexual</option>
-                        <option value="bisexual">Bisexual</option>
+                        <option value="male">Men</option>
+                        <option value="female">Women</option>
+                        <option value="bi-sexual">Everyone (Both)</option>
                     </select>
                 </div>
 

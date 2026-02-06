@@ -72,9 +72,10 @@ export class Validation{
     }
 
     static isValidGender(gender){
-        if (typeof gender !== 'string') return false;
+        if (typeof gender !== 'string')
+            return false;
 
-        const validValues = ['male', 'female'];
+        const validValues = ['male', 'female', 'other'];
 
         return validValues.includes(gender);
     }
