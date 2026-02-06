@@ -893,3 +893,52 @@ export const getMatches = async (req, res) => {
         res.status(500).json({ success: false, error: "internal server error" });
     }
 };
+
+
+export const exportUserData = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        
+        const user = await getUserById(userId);
+        const interests = await getUserInterestsByUserId(userId);
+        const pictures = await getUserPicturesByUserId(userId);
+        const location = await getUserLocationByUserId(userId);
+        const likedBy = await getLikedMeListDb(userId);
+        const viewedBy = await getViewedMeListDb(userId);
+        
+        const messages = await db.all(
+            "SELECT * FROM chat_messages WHERE from_user_id = ? OR to_user_id = ?", 
+            [userId, userId]
+        );
+
+        const fullData = {
+            profile: {
+                username: user.username,
+                email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                biography: user.biography,
+                gender: user.gender,
+                sexualPreference: user.sexualPreference,
+                birthDate: user.dateOfBirth
+            },
+            interests: interests,
+            location: location,
+            pictures: pictures,
+            activity: {
+                liked_by_users: likedBy,
+                viewed_by_users: viewedBy,
+                chat_history: messages
+            },
+            exported_at: new Date().toISOString()
+        };
+
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Content-Disposition', `attachment; filename=matcha_data_${user.username}.json`);
+        res.status(200).json(fullData);
+
+    } catch (err) {
+        console.error("Export Data Error:", err);
+        res.status(500).json({ success: false, error: "Failed to export data" });
+    }
+};
