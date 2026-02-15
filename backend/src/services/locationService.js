@@ -9,6 +9,43 @@ dotenv.config();
 const OPENCAGE_API_KEY = process.env.OPENCAGE_API_KEY;
 
 
+export async function manualUpdateUserLocation(req, res){
+    try{
+        const userId = req.user.id;
+        const manualLocationData = req.body;
+
+        let ip = manualLocationData?.ip ?? null;
+        let neighborhood = manualLocationData?.neighborhood ?? "unknown";
+        if (ip !== null && (typeof ip !== "string")){
+            return res.status(400).json({"success": false, "error": "invalid ip"});
+        }
+        if(ip === null || !Validation.isValidIPv4(ip.trim())){
+            return res.status(400).json({"success": false, "error": "invalid ip"});
+        }
+        ip = ip.trim();
+
+        if (neighborhood !== null && (typeof neighborhood !== "string") && !Validation.isLengthBetween(neighborhood.trim(), 3, 50)){
+            return res.status(400).json({"success": false, "error": "invalid neighborhood"});
+        }
+        if (neighborhood === "unknown"){
+            return res.status(400).json({"success": false, "error": "invalid neighborhood"});
+        }
+        const ipLocation = await ipToLatLon(ip);
+        if (ipLocation === null){
+            return res.status(502).json({"success": false, "error": "failed to fetch geolocation data"});
+        }
+        const { latitude, longitude } = ipLocation;
+
+        const userLocation = new UserLocation(userId, latitude, longitude, neighborhood, "unknown", "unknown", null, null);
+        await updateUserLocationDb(userLocation);
+        res.status(201).json({"success": true});
+
+    }catch(err){
+        console.error("error manualUpdateUserLocation: ", err);
+        res.status(500).json({"success": false, "error": "internal server error"});
+    }
+}
+
 export async function getMyLocation(req, res){
     try{
         const userId = req.user.id;
@@ -183,5 +220,35 @@ export function getDistanceKm(lat1, lon1, lat2, lon2) {
     }catch(err){
         console.error("error getDistanceKm: ", err);
         throw err;
+    }
+}
+
+async function ipToLatLon(ip){
+    try {
+        const iplocateUrl = `https://ipapi.co/${ip}/json/`;
+        const response = await axios.get(iplocateUrl);
+        const ipData = response?.data;
+
+        if (!ipData || ipData.error || ipData.reason === "Reserved IP Address"){
+            throw new Error("Invalid IP data");
+        }
+
+        let latitude = null;
+        let longitude = null;
+
+        console.log("IP data:", ipData);
+
+        if (ipData.latitude && ipData.longitude) {
+            latitude = parseFloat(ipData.latitude);
+            longitude = parseFloat(ipData.longitude);
+            return { latitude, longitude };
+        } else{
+            return null;
+        }
+        
+
+    } catch (err) {
+        console.error("error during IP geolocation: ", err.message);
+        return null;
     }
 }

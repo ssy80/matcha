@@ -101,8 +101,8 @@ export class Validation{
     static isValidInterests(interests){
         if (Array.isArray(interests) === false) 
             return false;
-        if (interests.length < 1) 
-            return false;
+        if (interests.length === 0) 
+            return true;
 
         // Check for duplicates using Set
         const uniqueInterests = new Set(interests);

@@ -1,321 +1,466 @@
-import { useEffect, useState } from 'react';
-import api from '../api/axios';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from "react";
+import api from "../api/axios";
+import { useNavigate } from "react-router-dom";
+import {
+    Card,
+    CardContent,
+    CardFooter,
+} from "@/components/ui/card";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import {
+    Combobox,
+    ComboboxChip,
+    ComboboxChips,
+    ComboboxChipsInput,
+    ComboboxContent,
+    ComboboxEmpty,
+    ComboboxItem,
+    ComboboxList,
+    ComboboxValue,
+    useComboboxAnchor,
+} from "@/components/ui/combobox";
+import { 
+    FormControl, 
+    FormItem, 
+    FormMessage,
+    FormLabel,
+} from "@/components/ui/form";
+import { Form, FormField } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { searchProfileSchema, type SearchProfileFormValues } from "@/validations/zodSearchProfileSchema";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { validInterestValues } from "@/validations/zodProfileUpdateSchema";
+import { ClipLoader } from "react-spinners";
+import { formToSearchParams, searchParamsToForm } from "../utils/homeHelper";
+import { useSearchParams } from "react-router-dom";
+import { type UserProfile } from "./ViewProfile";
 
-interface SuggestedUser {
+
+interface SearchUser {
     id: number;
     username: string;
     first_name: string;
     last_name: string;
     age: number;
-    fame_rating: { stars: number; liked_count: number } | number; 
-    distance_km?: number;
-    distance?: number;
+    fame_rating: { stars: number; liked_count: number };
+    distance_km: number;
     tags: string[];
     profile_picture: string | null;
-    num_shared_interests?: number;
-    match_score?: number;
+    num_shared_interest: number;
 }
 
+export type SortOption = "age" | "distance" | "fame" | "tags";
+export type SortOrder = "asc" | "desc";
+
 export default function Home() {
-    const [users, setUsers] = useState<SuggestedUser[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
-    
-    // 🔍 Search Filter States
-    const [ageRange, setAgeRange] =  useState({min: 18, max: 99});
-    const [fameRange, setFameRange] =  useState({min: 0, max: 5});
-    const [distance, setDistance] =  useState({min: 0, max: 20000});
-    const [searchTags, setSearchTags] =  useState<string[]>([]);
 
-    // 🔃 Sorting State
-    const [sortOption, setSortOption] = useState('match_score');
-    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-    
+    const [profile, setProfile] = useState<UserProfile | null>(null);
+    const [users, setUsers] = useState<SearchUser[]>([]);
+    const [error, setError] = useState("");
+
     const navigate = useNavigate();
-    
-    const fetchBroadSearch = async () => {
-        setLoading(true);
-        setError('');
-        try {
-            console.log("🔍 Performing broad search...");
-            
-            // Clean tags to remove empty strings caused by trailing commas
-            const cleanTags = searchTags.filter(tag => tag.trim().length > 0);
 
-            const searchCriteria = {
-                min_dist_km: distance.min,
-                max_dist_km: distance.max, 
-                min_age: ageRange.min,
-                max_age: ageRange.max,
-                min_stars: fameRange.min,
-                max_stars: fameRange.max,
-                interests: cleanTags.length > 0 ? cleanTags : undefined,
-            };
+    const [searchParams, setSearchParams] = useSearchParams();
+    const sortOption = (searchParams.get("sort") ?? undefined) as SortOption | undefined;
+    const sortOrder  = (searchParams.get("order") ?? undefined) as SortOrder | undefined;
 
-            const response = await api.post('/search/search_profiles', searchCriteria);
-            
-            if (response.data.success && Array.isArray(response.data.profiles)) {
-                setUsers(response.data.profiles);
-            } else {
-                console.warn("⚠️ Unexpected response format:", response.data);
-                setUsers([]);
-            }
-        } catch (err: any) {
-            console.error("❌ Error fetching matches:", err);
-            setError('Could not load matches.');
-        } finally {
-            setLoading(false);
-        }
-    };
+    const form = useForm({
+        resolver: zodResolver(searchProfileSchema),
+        defaultValues: {
+            min_dist_km: 0,
+            max_dist_km: 10000,
+            min_age: 18,
+            max_age: 120,
+            min_stars: 0,
+            max_stars: 5,
+            interests: [],
+        },
+    })
 
-    // Initial load
+    const { isSubmitting } = form.formState;
+
     useEffect(() => {
-        fetchBroadSearch();
-    }, []);
+
+        const fetchLoginProfile = async () => {
+            try{
+                const res = await api.get('/profile/me');
+                setProfile(res.data.success ? res.data.profile : null);
+            }catch(err: any){
+                const message = err?.response?.data?.error || "Unknown error";
+                console.error("Error fetching login profile: ", message);
+                setError(`Error fetching login profile: ${message}`);
+            }
+        }
+
+        fetchLoginProfile();
+    },[])
+
+    const onSubmit = async (data: SearchProfileFormValues) => {
+
+        const params = formToSearchParams(data);
+
+        if (sortOption) params.set("sort", sortOption);
+        if (sortOrder) params.set("order", sortOrder);
+
+        navigate({ pathname: "/home", search: params.toString() });
+    }
+
+    useEffect(() => {
+        if (!searchParams.toString()) 
+            return;
+
+        const criteria = searchParamsToForm(searchParams);
+
+        form.reset(criteria);
+
+        const fetchSearch = async () => {
+            try {
+                const res = await api.post("/search/search_profiles", criteria);
+                setUsers(res.data.success ? res.data.profiles : []);
+            } catch (err: any) {
+                const message = err?.response?.data?.error || "Unknown error";
+                console.error("Error fetching matches: ", message);
+                setError(`Error fetching matches: ${message}`);
+            }
+        };
+
+        fetchSearch();
+    }, [searchParams]);
 
     const handleProfileClick = (userId: number) => {
         navigate(`/profile/${userId}`);
     };
 
-    // Helper to extract stars safely
-    const renderStars = (rating: any) => (typeof rating === 'object' ? rating.stars : rating || 0);
+    const hasUserSorted = (sortOption !== undefined && sortOrder !== undefined);
 
-    // Helper to get distance safely
-    const getDistance = (user: SuggestedUser) => user.distance_km ?? user.distance ?? 0;
-
-    // Sorting Logic
     const getSortedUsers = () => {
+        if (!hasUserSorted) 
+            return users;
+
         const sorted = [...users];
-        
+
         sorted.sort((a, b) => {
-            let valA, valB;
+            let valA = 0;
+            let valB = 0;
 
             switch (sortOption) {
-                case 'age':
-                    valA = a.age; valB = b.age;
-                    break;
-                case 'distance':
-                    valA = getDistance(a); valB = getDistance(b);
-                    break;
-                case 'fame':
-                    valA = renderStars(a.fame_rating); valB = renderStars(b.fame_rating);
-                    break;
-                case 'tags':
-                    valA = a.num_shared_interests || 0; valB = b.num_shared_interests || 0;
-                    break;
-                case 'match_score':
-                default:
-                    valA = a.match_score || 0; valB = b.match_score || 0;
+            case "age":
+                valA = a.age;
+                valB = b.age;
+                break
+            case "distance":
+                valA = a.distance_km;
+                valB = b.distance_km;
+                break
+            case "fame":
+                valA = a.fame_rating.stars;
+                valB = b.fame_rating.stars;
+                break
+            case "tags":
+                valA = a.num_shared_interest;
+                valB = b.num_shared_interest;
+                break
             }
 
-            if (valA < valB)
-                return sortOrder === 'asc' ? -1 : 1;
-            if (valA > valB)
-                return sortOrder === 'asc' ? 1 : -1;
-            return 0;
-        });
+            return sortOrder === "asc" ? valA - valB : valB - valA;
+        })
 
         return sorted;
-    };
+    }
 
-    if (loading && users.length === 0)
-      return <div style={{ padding: '40px', textAlign: 'center', color: '#888' }}>Finding people nearby... 🌏</div>;
+    if (error) {
+        return <div className="mt-4 text-red-500">Error: {error}</div>;
+    }
+
+    if (profile?.gender === null){
+        return (
+            <>
+            <div className="mt-4 text-red-500">Please complete your Profile by clicking My Profile and Edit Profile.</div>
+            </>
+        );
+    }
     
     return (
-        <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
-            <h1 style={{ marginBottom: '20px', textAlign: 'center' }}>Discover People</h1>
-            
-            {error && <div style={{ color: 'red', textAlign: 'center', marginBottom: '20px' }}>{error}</div>}
+        <div className="mx-auto max-w-7xl px-4 py-6">
+        <h1 className="mb-6 text-center text-3xl font-bold">
+            Browse Profile
+        </h1>
 
-            {!loading && !error && users.length === 0 && (
-                <div style={{ gridColumn: '1 / -1', textAlign: 'center', marginTop: '40px', marginBottom: '40px' }}>
-                    <h3>No matches found.</h3>
-                    <p style={{ color: '#888' }}>Try adjusting your filters to see more people!</p>
-                </div>
-            )}
+        <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+            <Card className="mb-6">
+            <CardContent className="grid gap-4 grid-cols-1 sm:grid-cols-2">
 
-            {/* Filter & Sort Section */}
-            <div className="filter-container">
-                <h3 className="filter-title">Filter & Sort</h3>
-                
-                <div className="filter-row" style={{ borderBottom: '1px solid #444', paddingBottom: '15px', marginBottom: '15px' }}>
-                    <div className="filter-group">
-                        <label className="filter-label">Sort By:</label>
-                        <select 
-                            value={sortOption} 
-                            onChange={(e) => setSortOption(e.target.value)}
-                            className="filter-input"
-                            style={{ padding: '8px', minWidth : '200px' }}
-                        >
-                            <option value="match_score">✨ Smart Match</option>
-                            <option value="distance">📍 Distance</option>
-                            <option value="age">🎂 Age</option>
-                            <option value="fame">⭐ Fame Rating</option>
-                            <option value="tags">🏷️ Common Interests</option>
-                        </select>
-                    </div>
-                    <div className="filter-group">
-                        <label className="filter-label">Order:</label>
-                        <select 
-                            value={sortOrder} 
-                            onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}
-                            className="filter-input"
-                            style={{ padding: '8px', minWidth : '240px' }}
-                        >
-                            <option value="asc">⬆ Ascending (Low to High)</option>
-                            <option value="desc">⬇ Descending (High to Low)</option>
-                        </select>
-                    </div>
-                </div>
+                {/* Age range */}
+                <div className="space-y-1">
+                <Label>Age</Label>
 
-                <div className="filter-row">
-                    <div className="filter-group">
-                        <label className="filter-label">Age Range</label>
-                        <div className="filter-input-group">
-                            <input 
-                                type="number" 
-                                className="filter-input"
-                                value={ageRange.min}
-                                onChange={(e) => setAgeRange({ ...ageRange, min: Number(e.target.value) })}
-                                placeholder="Min"
+                <div className="flex gap-2">
+                    {/* Min age */}
+                    <FormField
+                    control={form.control}
+                    name="min_age"
+                    render={({ field }) => (
+                        <FormItem className="flex-1">
+                        <FormControl>
+                            <Input
+                            type="number"
+                            placeholder="Min"
+                            {...field}
+                            onChange={(e) => field.onChange(Number(e.target.value))}
                             />
-                            <span className="filter-separator">to</span>
-                            <input 
-                                type="number" 
-                                className="filter-input"
-                                value={ageRange.max}
-                                onChange={(e) => setAgeRange({ ...ageRange, max: Number(e.target.value) })}
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+
+                    {/* Max age */}
+                    <FormField
+                    control={form.control}
+                    name="max_age"
+                    render={({ field }) => (
+                        <FormItem className="flex-1">
+                        <FormControl>
+                            <Input
+                            type="number"
+                            placeholder="Max"
+                            {...field}
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                </div>
+                </div>
+
+                {/* Distance */}
+                <FormField
+                control={form.control}
+                name="max_dist_km"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Distance (km)</FormLabel>
+                    <FormControl>
+                        <Input
+                        type="number"
+                        placeholder="Max distance"
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+
+                {/* Fame rating */}
+                <FormField
+                control={form.control}
+                name="min_stars"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Fame Rating ⭐</FormLabel>
+                    <FormControl>
+                        <div className="flex gap-2">
+                        <Input
+                            type="number"
+                            min={0}
+                            max={5}
+                            placeholder="Min"
+                            {...field}
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="max_stars"
+                            render={({ field }) => (
+                            <Input
+                                type="number"
+                                min={0}
+                                max={5}
                                 placeholder="Max"
+                                {...field}
+                                onChange={(e) => field.onChange(Number(e.target.value))}
                             />
+                            )}
+                        />
                         </div>
-                    </div>
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
 
-                    <div className="filter-group">
-                        <label className="filter-label">Max Distance (km)</label>
-                        <div className="filter-input-group">
-                            <input 
-                                type="number" 
-                                className="filter-input"
-                                value={distance.max}
-                                onChange={(e) => setDistance({ ...distance, max: Number(e.target.value) })}
-                            />
-                        </div>
-                    </div>
+                {/* Interests (multi-select) */}
+                <FormField
+                control={form.control}
+                name="interests"
+                render={({ field }) => {
+                    const anchor = useComboboxAnchor()
 
-                    <div className="filter-group">
-                        <label className="filter-label">Fame Rating (0-5)</label>
-                        <div className="filter-input-group">
-                            <input 
-                                type="number" 
-                                className="filter-input"
-                                min="0" max="5"
-                                value={fameRange.min}
-                                onChange={(e) => setFameRange({ ...fameRange, min: Number(e.target.value) })}
-                                placeholder="0"
-                            />
-                            <span className="filter-separator">to</span>
-                            <input 
-                                type="number" 
-                                className="filter-input"
-                                min="0" max="5"
-                                value={fameRange.max}
-                                onChange={(e) => setFameRange({ ...fameRange, max: Number(e.target.value) })}
-                                placeholder="5"
-                            />
-                        </div>
-                    </div>
+                    return (
+                    <FormItem className="sm:col-span-2 lg:col-span-4">
+                        <FormLabel>Interests</FormLabel>
+                        <FormControl>
+                        <Combobox
+                            multiple
+                            items={validInterestValues}
+                            value={field.value}
+                            onValueChange={field.onChange}
+                        >
+                            <ComboboxChips ref={anchor} className="w-full">
+                            <ComboboxValue>
+                                {(values) => (
+                                <>
+                                    {values.map((value: string) => (
+                                    <ComboboxChip key={value}>
+                                        {value}
+                                    </ComboboxChip>
+                                    ))}
+                                    <ComboboxChipsInput placeholder="Select interests…" />
+                                </>
+                                )}
+                            </ComboboxValue>
+                            </ComboboxChips>
 
-                    <div className="filter-group">
-                        <label className="filter-label">Interests</label>
-                        <div className="filter-input-group">
-                            <input 
-                                type="text" 
-                                className="filter-input"
-                                style={{ width: '200px' }}
-                                placeholder="e.g. vegan, geek"
-                                value={searchTags.join(',')}
-                                onChange={(e) => setSearchTags(e.target.value.split(',').map(tag => tag.trim()))}
-                            />
-                        </div>
-                    </div>
+                            <ComboboxContent anchor={anchor}>
+                            <ComboboxEmpty>No interests found.</ComboboxEmpty>
+                            <ComboboxList>
+                                {(item) => (
+                                <ComboboxItem key={item} value={item}>
+                                    {item}
+                                </ComboboxItem>
+                                )}
+                            </ComboboxList>
+                            </ComboboxContent>
+                        </Combobox>
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )
+                }}
+                />
 
-                    <button onClick={fetchBroadSearch} className="apply-btn">
-                        Apply Filters 🔎
-                    </button>
+            </CardContent>
+
+            <CardFooter className="flex justify-end">
+                <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting && <ClipLoader size={16} color="black" className="mr-2" />}
+                    Search
+                </Button>
+            </CardFooter>
+           
+            </Card>
+
+        </form>
+        </Form>
+
+        {/* FILTERS */}
+        <Card className="mb-6 justify-center items-center">
+
+            <CardContent className="flex flex-row items-center gap-4">
+                {/* Filter By */}
+                <Label htmlFor="filter">Filter</Label>
+                <Select
+                value={sortOption}
+                onValueChange={(value) => {
+                    const params = new URLSearchParams(searchParams);
+                    params.set("sort", value);
+                    setSearchParams(params, { replace: true });
+                }}
+            >
+                    <SelectTrigger className="w-full max-w-48 text-white data-[placeholder-shown]:text-muted-foreground">
+                    <SelectValue placeholder="By" />
+                    </SelectTrigger>
+                    <SelectContent>
+                    <SelectItem value="distance">📍 Distance</SelectItem>
+                    <SelectItem value="age">🎂 Age</SelectItem>
+                    <SelectItem value="fame">⭐ Fame</SelectItem>
+                    <SelectItem value="tags">🏷️ Shared Interests</SelectItem>
+                    </SelectContent>
+                </Select>
+
+                {/* Sort by Order */}
+                <Label htmlFor="sort">Sort</Label>
+
+                <Select
+                    value={sortOrder}
+                    onValueChange={(value) => {
+                        const params = new URLSearchParams(searchParams);
+                        params.set("order", value);
+                        setSearchParams(params, { replace: true });
+                    }}
+                > 
+                    <SelectTrigger className="text-white data-[placeholder-shown]:text-muted-foreground">
+                    <SelectValue placeholder="Order" />
+                    </SelectTrigger>
+                    <SelectContent>
+                    <SelectItem value="desc">⬇ High → Low</SelectItem>
+                    <SelectItem value="asc">⬆ Low → High</SelectItem>
+                    </SelectContent>
+                </Select>
+            </CardContent>
+        </Card>
+
+
+        {/* USER GRID */}
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {getSortedUsers().map((user) => (
+            <Card
+                key={user.id}
+                className="cursor-pointer transition hover:shadow-lg"
+                onClick={() => handleProfileClick(user.id)}
+            >
+                <div className="relative h-56 w-full overflow-hidden">
+                {user.profile_picture ? (
+                    <img
+                    src={user.profile_picture}
+                    alt={user.username}
+                    className="h-full w-full object-cover"
+                    />
+                ) : (
+                    <div className="flex h-full items-center justify-center text-muted-foreground">
+                    No photo
+                    </div>
+                )}
                 </div>
-            </div>
 
-            {/* List */}
-            <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', 
-                gap: '20px' 
-            }}>
-                {getSortedUsers().map((user) => (
-                    <div 
-                        key={user.id} 
-                        onClick={() => handleProfileClick(user.id)}
-                        style={{ 
-                            border: '1px solid #444', 
-                            borderRadius: '10px', 
-                            overflow: 'hidden', 
-                            cursor: 'pointer',
-                            background: '#222',
-                            transition: 'transform 0.2s',
-                            color: '#fff'
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
-                        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                    >
-                        <div style={{ height: '250px', background: '#333', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            {user.profile_picture ? (
-                                <img 
-                                    src={user.profile_picture} 
-                                    alt={user.username} 
-                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                                />
-                            ) : (
-                                <span style={{ color: '#888' }}>No Photo</span>
-                            )}
-                        </div>
+                <CardContent className="space-y-2 p-4">
+                <h3 className="font-semibold">
+                    {user.first_name} {user.last_name}
+                </h3>
 
-                        <div style={{ padding: '15px' }}>
-                            <h3 style={{ margin: '0 0 5px 0' }}>
-                                {user.first_name} {user.last_name}
-                            </h3>
-                            <p style={{ margin: 0, color: '#aaa', fontSize: '0.9em' }}>
-                                Age: {user.age || '?'}
-                            </p>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', fontSize: '0.9em', color: '#aaa' }}>
-                                <span>📍 {Math.round(getDistance(user))} km</span>
-                                <span>⭐ {renderStars(user.fame_rating)}</span>
-                            </div>
+                <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>🎂 {user.age ?? "?"}</span>
+                    <span>📍 {user.distance_km.toFixed(2)} km</span>
 
-                            {/* Show shared interest count if available */}
-                            {user.num_shared_interests !== undefined && (
-                                <div style={{fontSize: '0.8em', color: '#4CAF50', marginBottom: '5px'}}>
-                                    {user.num_shared_interests} Shared Interests
-                                </div>
-                            )}
+                </div>
 
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                                {(user.tags || []).slice(0, 3).map((tag, idx) => (
-                                    <span key={idx} style={{ 
-                                        background: '#4CAF50', 
-                                        color: 'white', 
-                                        padding: '2px 8px', 
-                                        borderRadius: '10px', 
-                                        fontSize: '0.8em' 
-                                    }}>
-                                        {tag}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                ))}
-            </div>
+                <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>⭐ {user.fame_rating.stars}</span>
+                   {user.num_shared_interest !== undefined && (
+                    <span className="text-green-500">
+                        {user.num_shared_interest} shared interest
+                    </span>
+                    )}
+                </div>
+
+                </CardContent>
+            </Card>
+            ))}
         </div>
-    );
+        </div>
+    )
 }

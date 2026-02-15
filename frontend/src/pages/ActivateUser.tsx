@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
-import axios from "axios";
-import { AxiosError } from "axios";
+import { useEffect, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import api from "../api/axios";
 
 
 export default function ActivateUser() {
@@ -12,47 +11,47 @@ export default function ActivateUser() {
     const params = new URLSearchParams(location.search);
     const activationUUID = params.get("activation_uuid");
 
-    //async function activateUser() {
-    const activateUser = useCallback(async () => {
-        try {    
-            const response = await axios.post(
-                "http://localhost:3000/api/users/activate",
-                {
-                    activation_uuid: activationUUID            
-                },
-                {
-                    headers: { 
-                        "Content-Type": "application/json"
-                    }
-                }
-            );
+    useEffect(() => {
 
-            setMessage("Your account has been successfully activated!");
-            console.log("response: ", response);
-            console.log("response.data: ", response.data);
-            console.log("response.data.success: ", response.data.success);            
-            
-        } catch (error: unknown) {
-            const err = error as AxiosError;
-            setMessage("Activation failed.");
-            console.error(err);
-            console.error("http status: ", err.status);
-     
-            if (err.response){
-                console.log("Backend response: ", err.response.data);
+        const activateUser = async () => {
+            try{
+                const payload = {
+                    activation_uuid: activationUUID
+                };
+
+                await api.post('/users/activate', payload);
+                setMessage("Your account has been successfully activated!");
+
+            }catch(err: any){
+                const message = err?.response?.data?.error || "Unknown error";
+                console.error("Error activate user: ", message);
+                setMessage(`Error activate user: ${message}`);
             }
         }
-    }, [activationUUID]);
 
-    useEffect(() => {
-        if (activationUUID) {
-            activateUser();
-        }
-    }, [activationUUID]);
+        activateUser();
+    },[activationUUID])
 
     return (
-        <div>
-            <h1>{message}</h1>
+        <div className="flex min-h-screen items-start justify-center bg-background px-4">
+            <div className="flex max-w-md flex-col items-center text-center gap-4">
+            
+                {/* Title */}
+                <h1 className="mb-2 text-xl font-semibold">
+                🍵 Matcha - Account Activation
+                </h1>
+
+                {/* Message */} 
+                <p className="mb-6 text-lg text-muted-foreground">
+                    {message}
+                </p>
+
+                {/* Back to Landing page */}
+                <Link to="/home" className="text-sm text-primary hover:underline">
+                    Back to Home
+                </Link>
+
+            </div>
         </div>
     );
 }

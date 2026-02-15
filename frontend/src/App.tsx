@@ -14,6 +14,8 @@ import Chat from './pages/Chat';
 import History from './pages/History';
 import Welcome from './pages/Welcome';
 import type { JSX } from 'react/jsx-dev-runtime';
+import Location from './pages/Location';
+import SuggestedProfile from './pages/SuggestedProfile';
 
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
@@ -49,6 +51,10 @@ function App() {
           <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
           <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
 
+          <Route path="/location/edit" element={<ProtectedRoute><Location /></ProtectedRoute>} />
+          <Route path="/search/suggested" element={<ProtectedRoute><SuggestedProfile /></ProtectedRoute>} />
+          
+          
           {/* Public Auth Routes */}
           <Route path="/about" element={<About />} />
           <Route path="/users/activate" element={<ActivateUser />} />

@@ -105,6 +105,9 @@ export const blockedProfile = async (req, res) =>{
             return;
         }
 
+        const likedHistory = new LikedHistory(null, userId, blockedUserId, null, null);
+        await addLikedHistory(likedHistory, false);
+
         const userBlocked = new UserBlocked(null, userId, blockedUserId, null, null);
         await addUserBlocked(userBlocked, isBlocked);
         res.status(201).json({"success": true});
@@ -176,7 +179,6 @@ export const getOnlineStatus = async (req, res) => {
             res.status(409).json({"success": false, "error": "invalid user id"});
             return;
         }
-        //const data = {"user_id": userId, "updated_at": userOnline.updatedAt};
         res.status(200).json({"success": true, "last_seen": userOnline.updatedAt});
     }catch(err){
         console.error("error getOnlineStatus: ", err);
@@ -341,8 +343,7 @@ export const getProfileUser = async (req, res) => {
             "location": location,
             "distance_km": distanceKm,
             "fame_rating": fameRating,
-            "last_seen": userOnline?.updatedAt ?? null,
-            "is_online": userOnline.is_online === 1,
+            "last_seen": userOnline.updatedAt,
             "is_liked_me": isLikedMe,
             "is_i_liked": isILiked,
             "is_blocked": isBlocked
@@ -384,6 +385,16 @@ export const getProfileMe = async (req, res) => {
         const interests = await getUserInterestsByUserId(userId);
         const pictures = await getUserPicturesByUserId(userId);
         const userOnline = await getUserOnlineDb(userId);
+        const fameRating = await fameRatingByUserId(userId);
+        const userLocation = await getUserLocationByUserId(userId);
+
+        const location = {
+            "latitude": userLocation.latitude,
+            "longitude": userLocation.longitude,
+            "neighborhood": userLocation.neighborhood,
+            "city": userLocation.city,
+            "country": userLocation.country
+        };
 
         pictures.forEach(pic =>{
             if (pic.picture){
@@ -405,7 +416,9 @@ export const getProfileMe = async (req, res) => {
             "sexual_preference": user.sexualPreference,
             "pictures": pictures,
             "last_seen": userOnline?.updatedAt ?? null,
-            "is_online": userOnline.is_online === 1
+            "is_online": userOnline.is_online === 1,
+            "fame_rating": fameRating,
+            "location": location
         }
         res.status(200).json({"success": true, "profile": data});
     }catch(err){

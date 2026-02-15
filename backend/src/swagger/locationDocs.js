@@ -1,5 +1,106 @@
 /**
  * @swagger
+ * /api/location/manual_update:
+ *   post:
+ *     summary: Manually update user location using IP address
+ *     description: |
+ *       Manually update the user's location by providing an IPv4 address and a neighborhood name.
+ *       The IP address is converted to latitude and longitude using an internal IP geolocation service.
+ *     tags:
+ *       - Location
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - ip
+ *               - neighborhood
+ *             properties:
+ *               ip:
+ *                 type: string
+ *                 description: Valid IPv4 address used for geolocation lookup
+ *                 example: "42.61.211.133"
+ *               neighborhood:
+ *                 type: string
+ *                 description: Neighborhood name (3–50 characters")
+ *                 example: "Jurong West"
+ *     responses:
+ *       '201':
+ *         description: Successfully updated user location
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *       '400':
+ *         description: Invalid input data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   examples:
+ *                     invalidIp:
+ *                       value: "invalid ip"
+ *                     invalidNeighborhood:
+ *                       value: "invalid neighborhood"
+ *       '502':
+ *         description: IP geolocation service unavailable or failed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "failed to fetch geolocation data"
+ *       '401':
+ *         description: Unauthorized - Missing or invalid authentication token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "Unauthorized"
+ *       '500':
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "internal server error"
+ */
+
+
+
+/**
+ * @swagger
  * /api/location/update:
  *   post:
  *     summary: Update user location

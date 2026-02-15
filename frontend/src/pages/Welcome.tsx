@@ -1,6 +1,7 @@
 import { Link, Navigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import api from '../api/axios';
+import { Button } from "@/components/ui/button";
 
 const Welcome = () => {
     const [isLoading, setIsLoading] = useState(true);
@@ -21,58 +22,47 @@ const Welcome = () => {
     }, []);
 
     if (isLoading)
-        return <div style={{ color: 'white', textAlign: 'center', marginTop: '50px' }}>Loading...</div>;
+        return <div className="mt-4">Loading...</div>;
 
     if (isAuthenticated) {
         return <Navigate to="/home" replace />;
     }
 
     return (
-        <div style={{ 
-            height: '100vh', 
-            display: 'flex', 
-            flexDirection: 'column', 
-            justifyContent: 'center', 
-            alignItems: 'center', 
-            background: 'linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%)',
-            color: 'white',
-            textAlign: 'center'
-        }}>
-            <h1 style={{ fontSize: '4rem', marginBottom: '20px', color: '#E91E63' }}>Matcha</h1>
-            <p style={{ fontSize: '1.5rem', marginBottom: '40px', color: '#ccc' }}>
-                Soon-Yee and Axel's Matchmaking Service.
+        <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-neutral-900 to-black px-4">
+        <div className="text-center">
+
+            {/* Title */}
+            <h1 className="mb-4 text-5xl font-bold text-primary sm:text-6xl text-white">
+            🍵 Matcha
+            </h1>
+
+            {/* Subtitle */}
+            <p className="mb-10 max-w-md text-base text-muted-foreground sm:text-lg text-[#E91E63]">
+            Soon-Yee and Axel&apos;s matchmaking service.
             </p>
-            
-            <div style={{ display: 'flex', gap: '20px' }}>
-                <Link to="/login">
-                    <button style={{ 
-                        padding: '15px 40px', 
-                        fontSize: '1.2rem', 
-                        background: '#E91E63', 
-                        color: 'white', 
-                        border: 'none', 
-                        borderRadius: '30px', 
-                        cursor: 'pointer' 
-                    }}>
-                        Login
-                    </button>
-                </Link>
-                <Link to="/register">
-                    <button style={{ 
-                        padding: '15px 40px', 
-                        fontSize: '1.2rem', 
-                        background: 'transparent', 
-                        border: '2px solid #E91E63', 
-                        color: '#E91E63', 
-                        borderRadius: '30px', 
-                        cursor: 'pointer' 
-                    }}>
-                        Register
-                    </button>
-                </Link>
+
+            {/* Actions */}
+            <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
+            <Link to="/login">
+                <Button size="lg" className="w-full sm:w-auto bg-[#E91E63] text-white">
+                Login
+                </Button>
+            </Link>
+
+            <Link to="/register">
+                <Button
+                size="lg"
+                variant="outline"
+                className="w-full sm:w-auto border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+                >
+                Register
+                </Button>
+            </Link>
             </div>
         </div>
-    );
+        </div>
+    )
 };
 
 export default Welcome;

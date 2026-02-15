@@ -1,8 +1,12 @@
 import express from 'express';
-import { updateUserLocation, getMyLocation } from '../services/locationService.js';
+import { updateUserLocation, getMyLocation, manualUpdateUserLocation } from '../services/locationService.js';
 
 
 const router = express.Router();
+
+router.post('/manual_update', async (req, res) => {
+    await manualUpdateUserLocation(req, res);
+});
 
 
 router.post('/update', async (req, res) => {

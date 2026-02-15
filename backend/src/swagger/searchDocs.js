@@ -167,6 +167,7 @@
  *                 maximum: 5
  *                 description: Maximum fame rating stars (0-5, must be used with min_stars)
  *                 example: 5
+ * 
  *     responses:
  *       '200':
  *         description: Successfully retrieved search results
@@ -219,6 +220,11 @@
  *                             type: integer
  *                             example: 150
  *                             description: Number of likes received
+ *                       num_shared_interest:
+ *                         type: integer
+ *                         example: 3
+ *                         description: Number of shared interests with the user
+ * 
  *       '400':
  *         description: Invalid search criteria
  *         content:

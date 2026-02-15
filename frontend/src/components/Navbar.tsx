@@ -1,7 +1,26 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState, useRef } from 'react';
 import api from '../api/axios';
-import '../App.css';
+//import '../App.css';
+import { requestLocationPermission } from '../utils/gpsHelper';
+//import { getPublicIP } from '../utils/gpsHelper';
+
+import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu"
+import {
+  Sheet,
+  SheetTrigger,
+  SheetContent,
+} from "@/components/ui/sheet"
+
+
 
 // Interface matching the Backend "Event" model + "from_username"
 interface AppEvent {
@@ -15,7 +34,37 @@ interface AppEvent {
 const Navbar = () => {
     const navigate = useNavigate();
     const [notifications, setNotifications] = useState<AppEvent[]>([]);
-    const [showDropdown, setShowDropdown] = useState(false);
+    //const [showDropdown, setShowDropdown] = useState(false);
+
+
+    useEffect(() => {
+        const initLocation = async () => {
+            const location = await requestLocationPermission();
+
+            if (location) {
+                console.log("Location:", location.latitude, location.longitude);
+                try{
+                    await api.post("/location/update", location);
+                } catch (err) {
+                    console.error("Failed to update location:", err);
+                }
+            } else{
+                navigate('/location/edit');
+            } /*else{
+                console.log("Location permission not granted or unavailable. use ip-based location.");
+                const ip = await getPublicIP();
+                if (ip) {
+                    console.log("🌐 IP:", ip);
+                    try{
+                        await api.post("/location/update", { ip });
+                    } catch (err) {
+                        console.error("Failed to update IP location:", err);
+                    }
+                }
+            }*/
+        };
+        initLocation();
+    }, []);
 
     // Polling Ref
     const pollInterval = useRef<number | null>(null);
@@ -36,11 +85,13 @@ const Navbar = () => {
         const fetchEvents = async () => {
             try {
                 const res = await api.get('/event/get');
+
                 if (res.data.success && res.data.events.length > 0) {
                     const newEvents = res.data.events;
                     console.log("🔔 New Notification:", newEvents);
-                    setNotifications(prev => [...newEvents, ...prev]);
+                    setNotifications(prev => [...newEvents, ...prev]);    
                 }
+
             } catch (err) {
                 console.error("Error fetching events:", err);
             }
@@ -66,7 +117,7 @@ const Navbar = () => {
     };
 
     const handleNotificationClick = (evt: AppEvent) => {
-        setShowDropdown(false);
+        //setShowDropdown(false);
         if (evt.event_type === 'new_message') {
             navigate('/chat');
         } else {
@@ -76,90 +127,123 @@ const Navbar = () => {
 
     const unreadCount = notifications.length;
 
+
     return (
-        <nav style={{
-            padding: '10px 20px',
-            background: '#333',
-            color: '#fff',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: '10px'}}>
-            <div style={{ fontWeight: 'bold', fontSize: '1.2em' }}>
-                <Link to="/home" style={{ color: '#fff', textDecoration: 'none' }}>🍵 Matcha</Link>
-            </div>
-            
-            <div style={{
-                display: 'flex',
-                gap: '20px', 
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                justifyContent: 'center',
-                width: 'auto'}}>
-                <Link to="/home" style={{ color: '#ccc', textDecoration: 'none' }}>Browsing</Link>
-                <Link to="/chat" style={{ color: '#ccc', textDecoration: 'none' }}>Chat</Link>
-                <Link to="/history" style={{ color: '#ccc', textDecoration: 'none' }}>Activity</Link>
-                <Link to="/profile" style={{ color: '#ccc', textDecoration: 'none' }}>My Profile</Link>
+        <header className="border-b bg-background">
+            <div className="mx-auto flex h-14 max-w-7xl items-center px-4 sm:px-6 lg:px-8">
 
-                {/* 🔔 Notification Bell */}
-                <div style={{ position: 'relative', cursor: 'pointer' }} onClick={() => setShowDropdown(!showDropdown)}>
-                    <span style={{ fontSize: '1.2em' }}>🔔</span>
+            {/* Logo */}
+            <Link to="/home" className="text-lg font-semibold">
+                🍵 Matcha
+            </Link>
+
+            {/* Desktop Nav */}
+            <nav className="ml-8 hidden items-center gap-6 md:flex">
+                <Link to="/home" className="text-sm text-muted-foreground hover:text-foreground">
+                Browsing
+                </Link>
+                <Link to="/search/suggested" className="text-sm text-muted-foreground hover:text-foreground">
+                Suggested Profiles
+                </Link>
+                <Link to="/chat" className="text-sm text-muted-foreground hover:text-foreground">
+                Chat
+                </Link>
+                <Link to="/history" className="text-sm text-muted-foreground hover:text-foreground">
+                Activity
+                </Link>
+                <Link to="/profile" className="text-sm text-muted-foreground hover:text-foreground">
+                My Profile
+                </Link>
+            </nav>
+
+            {/* Right side */}
+            <div className="ml-auto flex items-center gap-2">
+
+                {/* Notifications */}
+                <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="relative">
+                    🔔
                     {unreadCount > 0 && (
-                        <div style={{ 
-                            position: 'absolute', top: '-5px', right: '-5px', 
-                            background: 'red', color: 'white', borderRadius: '50%', 
-                            width: '18px', height: '18px', fontSize: '12px', 
-                            display: 'flex', alignItems: 'center', justifyContent: 'center' 
-                        }}>
-                            {unreadCount}
-                        </div>
+                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">
+                        {unreadCount}
+                        </span>
                     )}
+                    </Button>
+                </DropdownMenuTrigger>
 
-                    {/* Dropdown Menu */}
-                    {showDropdown && (
-                        <div style={{
-                            position: 'absolute', top: '30px', right: '0', width: '250px',
-                            background: '#222', border: '1px solid #444', borderRadius: '5px',
-                            zIndex: 1000, boxShadow: '0 4px 10px rgba(0,0,0,0.5)',
-                            maxHeight: '300px', overflowY: 'auto'
-                        }}>
-                            <div style={{ padding: '10px', borderBottom: '1px solid #444', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between' }}>
-                                <span>Notifications</span>
-                                <span onClick={(e) => { e.stopPropagation(); setNotifications([]); }} style={{ fontSize: '0.8em', color: '#E91E63', cursor: 'pointer' }}>Clear</span>
-                            </div>
-                            
-                            {notifications.length === 0 ? (
-                                <div style={{ padding: '15px', color: '#777', textAlign: 'center' }}>No new alerts</div>
-                            ) : (
-                                notifications.map((notif, idx) => (
-                                    <div 
-                                        key={idx}
-                                        onClick={() => handleNotificationClick(notif)}
-                                        style={{ 
-                                            padding: '10px', borderBottom: '1px solid #333', fontSize: '0.9em',
-                                            cursor: 'pointer', transition: 'background 0.2s'
-                                        }}
-                                        onMouseEnter={(e) => e.currentTarget.style.background = '#333'}
-                                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                                    >
-                                        {getNotificationText(notif)}
-                                        <div style={{ fontSize: '0.7em', color: '#666', marginTop: '3px' }}>
-                                            {new Date(notif.created_at).toLocaleTimeString()}
-                                        </div>
-                                    </div>
-                                ))
-                            )}
-                        </div>
+                <DropdownMenuContent className="w-64">
+                    <DropdownMenuLabel className="flex items-center justify-between">
+                    Notifications
+                    <button
+                        onClick={(e) => {
+                        e.stopPropagation()
+                        setNotifications([])
+                        }}
+                        className="text-xs text-destructive"
+                    >
+                        Clear
+                    </button>
+                    </DropdownMenuLabel>
+
+                    <DropdownMenuSeparator />
+
+                    {notifications.length === 0 ? (
+                    <div className="px-4 py-6 text-center text-sm text-muted-foreground">
+                        No new alerts
+                    </div>
+                    ) : (
+                    notifications.map((notif) => (
+                        <DropdownMenuItem
+                        key={notif.id}
+                        className="flex cursor-pointer flex-col items-start gap-1"
+                        onClick={() => handleNotificationClick(notif)}
+                        >
+                        <span className="text-sm">
+                            {getNotificationText(notif)}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                            {new Date(notif.created_at).toLocaleTimeString()}
+                        </span>
+                        </DropdownMenuItem>
+                    ))
                     )}
-                </div>
+                </DropdownMenuContent>
+                </DropdownMenu>
 
-                <button onClick={handleLogout} style={{ background: '#555', color: 'white', border: 'none', padding: '5px 10px', cursor: 'pointer', borderRadius: '4px' }}>
+                {/* Logout (desktop) */}
+                <Button
+                onClick={handleLogout}
+                variant="secondary"
+                className="hidden md:inline-flex cursor-pointer"
+                >
+                Logout
+                </Button>
+
+                {/* Mobile menu */}
+                <Sheet>
+                <SheetTrigger asChild>
+                    <Button size="icon" variant="ghost" className="md:hidden">
+                    ☰
+                    </Button>
+                </SheetTrigger>
+
+                <SheetContent side="right" className="flex flex-col gap-4 pt-10">
+                    <Link to="/home">Browsing</Link>
+                    <Link to="/chat">Chat</Link>
+                    <Link to="/history">Activity</Link>
+                    <Link to="/profile">My Profile</Link>
+
+                    <Button onClick={handleLogout} variant="destructive" className="cursor-pointer">
                     Logout
-                </button>
+                    </Button>
+                </SheetContent>
+                </Sheet>
             </div>
-        </nav>
-    );
+            </div>
+        </header>
+        )
 };
+
 
 export default Navbar;

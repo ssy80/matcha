@@ -1,0 +1,232 @@
+import { Link, useNavigate } from "react-router-dom"
+import { useEffect, useRef, useState } from "react"
+import api from "../api/axios"
+
+import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet"
+
+import { Bell, Menu } from "lucide-react"
+
+/* ---------- Types ---------- */
+
+interface AppEvent {
+  id: number
+  event_type:
+    | "liked_me"
+    | "viewed_me"
+    | "connected"
+    | "disconnected"
+    | "new_message"
+    | "unliked_me"
+  from_user_id: number
+  from_username: string
+  created_at: string
+}
+
+/* ---------- Component ---------- */
+
+export default function Navbar() {
+  const navigate = useNavigate()
+  const [notifications, setNotifications] = useState<AppEvent[]>([])
+  const pollInterval = useRef<number | null>(null)
+
+  /* ---------- Logout ---------- */
+
+  const handleLogout = async () => {
+    try {
+      await api.post("/users/logout")
+    } catch {
+      console.warn("Logout failed on server, clearing local session anyway.")
+    } finally {
+      localStorage.removeItem("token")
+      navigate("/")
+    }
+  }
+
+  /* ---------- Poll Notifications ---------- */
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const res = await api.get("/event/get")
+        if (res.data.success && res.data.events.length > 0) {
+          setNotifications((prev) => [...res.data.events, ...prev])
+        }
+      } catch (err) {
+        console.error("Error fetching events:", err)
+      }
+    }
+
+    pollInterval.current = window.setInterval(fetchEvents, 3000)
+    return () => pollInterval.current && clearInterval(pollInterval.current)
+  }, [])
+
+  /* ---------- Helpers ---------- */
+
+  const getNotificationText = (evt: AppEvent) => {
+    switch (evt.event_type) {
+      case "liked_me":
+        return `❤️ ${evt.from_username} liked you`
+      case "viewed_me":
+        return `👀 ${evt.from_username} viewed your profile`
+      case "connected":
+        return `💞 You matched with ${evt.from_username}`
+      case "disconnected":
+        return `💔 Connection lost with ${evt.from_username}`
+      case "new_message":
+        return `💌 Message from ${evt.from_username}`
+      default:
+        return `New interaction from ${evt.from_username}`
+    }
+  }
+
+  const handleNotificationClick = (evt: AppEvent) => {
+    if (evt.event_type === "new_message") {
+      navigate("/chat")
+    } else {
+      navigate(`/profile/${evt.from_user_id}`)
+    }
+  }
+
+  const unreadCount = notifications.length
+
+  /* ---------- Render ---------- */
+
+  return (
+    <header className="border-b bg-background">
+      <div className="mx-auto flex h-14 max-w-7xl items-center px-4 sm:px-6 lg:px-8">
+
+        {/* Logo */}
+        <Link to="/home" className="text-lg font-semibold">
+          🍵 Matcha
+        </Link>
+
+        {/* Desktop Links */}
+        <nav className="ml-8 hidden items-center gap-6 md:flex">
+          <NavLink to="/home" label="Browsing" />
+          <NavLink to="/chat" label="Chat" />
+          <NavLink to="/history" label="Activity" />
+          <NavLink to="/profile" label="My Profile" />
+        </nav>
+
+        {/* Right side */}
+        <div className="ml-auto flex items-center gap-2">
+
+          {/* Notifications */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="relative">
+                <Bell className="h-5 w-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">
+                    {unreadCount}
+                  </span>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent className="w-64">
+              <DropdownMenuLabel className="flex items-center justify-between">
+                Notifications
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setNotifications([])
+                  }}
+                  className="text-xs text-destructive"
+                >
+                  Clear
+                </button>
+              </DropdownMenuLabel>
+
+              <DropdownMenuSeparator />
+
+              {notifications.length === 0 ? (
+                <div className="px-4 py-6 text-center text-sm text-muted-foreground">
+                  No new alerts
+                </div>
+              ) : (
+                notifications.map((notif) => (
+                  <DropdownMenuItem
+                    key={notif.id}
+                    className="flex cursor-pointer flex-col items-start gap-1"
+                    onClick={() => handleNotificationClick(notif)}
+                  >
+                    <span className="text-sm">
+                      {getNotificationText(notif)}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(notif.created_at).toLocaleTimeString()}
+                    </span>
+                  </DropdownMenuItem>
+                ))
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Logout (desktop) */}
+          <Button
+            onClick={handleLogout}
+            variant="secondary"
+            className="hidden md:inline-flex"
+          >
+            Logout
+          </Button>
+
+          {/* Mobile Menu */}
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button size="icon" variant="ghost" className="md:hidden">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+
+            <SheetContent side="right" className="flex flex-col gap-4 pt-10">
+              <MobileLink to="/home" label="Browsing" />
+              <MobileLink to="/chat" label="Chat" />
+              <MobileLink to="/history" label="Activity" />
+              <MobileLink to="/profile" label="My Profile" />
+
+              <Button onClick={handleLogout} variant="destructive">
+                Logout
+              </Button>
+            </SheetContent>
+          </Sheet>
+        </div>
+      </div>
+    </header>
+  )
+}
+
+/* ---------- Helpers ---------- */
+
+function NavLink({ to, label }: { to: string; label: string }) {
+  return (
+    <Link
+      to={to}
+      className="text-sm text-muted-foreground transition hover:text-foreground"
+    >
+      {label}
+    </Link>
+  )
+}
+
+function MobileLink({ to, label }: { to: string; label: string }) {
+  return (
+    <Link to={to} className="text-lg font-medium">
+      {label}
+    </Link>
+  )
+}

@@ -1,337 +1,466 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ClipLoader } from "react-spinners";
+import { updateProfileSchema } from '@/validations/zodProfileUpdateSchema';
+import type { UpdateProfileFormValues }  from '../validations/zodProfileUpdateSchema';
+import { validInterestValues } from '@/validations/zodProfileUpdateSchema';
+import {
+  Combobox,
+  ComboboxChip,
+  ComboboxChips,
+  ComboboxChipsInput,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxItem,
+  ComboboxList,
+  ComboboxValue,
+  useComboboxAnchor,
+} from "@/components/ui/combobox";
+import type { ProfileInterface } from '../interface/profileInterface';
+import { imageUrlToBase64, fileToBase64 } from '@/utils/imageHelper';
+import { Textarea } from "@/components/ui/textarea";
 
-interface ImageUpload {
-    file: File;
-    preview: string;
-}
 
-const convertFileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = (error) => reject(error);
-    });
+type Picture = {
+  base64_image: string;
+  isProfilePicture: 0 | 1;
 };
-
-const ALLOWED_TAGS = ['#music', '#movie', '#gym', '#swim', '#jog', '#cycle', '#animal', '#vegan', '#dinner', '#travel', '#dance'];
 
 const Profile = () => {
-    const [gender, setGender] = useState('');
-    const [sexualPreference, setSexualPreference] = useState('bi-sexual');
-    const [biography, setBiography] = useState('');
-    const [tags, setTags] = useState<string[]>([]);
-    const [location, setLocation] = useState({
-        latitude: 0,
-        longitude: 0,
-        city: ''
-    });
-    const [locationStatus, setLocationStatus] = useState('');
-    const [photos, setPhotos] = useState<ImageUpload[]>([]);
 
+    const [profile, setProfile] = useState<ProfileInterface | null>(null);
+    const [error, setError] = useState("");
     const navigate = useNavigate();
 
-    const handleAddTag = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const newTag = e.target.value;
-        if (!newTag) return;
-        if (tags.length >= 5) {
-            alert("You can only select up to 5 interests.");
-            return;
-        }
-        if (!tags.includes(newTag)) {
-            setTags([...tags, newTag]);
-        }
-    };
+    const form = useForm<UpdateProfileFormValues>({
+        resolver: zodResolver(updateProfileSchema),
+        defaultValues: {
+            first_name: "",
+            last_name: "",
+            email: "",
+            biography: "",
+            gender: undefined,
+            sexual_preference: undefined,
+            interests: [],
+            pictures: [],
+        },
+    });
 
-    const removeTag = (tagToRemove: string) => {
-        setTags(tags.filter(tag => tag !== tagToRemove));
-    };
+    useEffect(() => {
+        if (!profile) return;
 
-    const handleGPS = (event: React.MouseEvent) => {
-        event.preventDefault();
-        setLocationStatus('Locating...');
-
-        if ("geolocation" in navigator) {
-            navigator.geolocation.getCurrentPosition(async (position) => {
-                const { latitude, longitude } = position.coords;
-                
-                setLocation(prev => ({
-                    ...prev,
-                    latitude: latitude,
-                    longitude: longitude,
-                }));
-                
-                try {
-                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
-                    if (!response.ok) throw new Error("Map service failed");
-                    
-                    const data = await response.json();
-                    const cityName = data.address.city || data.address.town || data.address.village || data.address.state || '';
-                    
-                    setLocation(prev => ({ ...prev, city: cityName }));
-                    setLocationStatus(`Location found: ${cityName}`);
-                    
-                } catch (error) {
-                    console.error("Could not fetch city name", error);
-                    setLocationStatus('Location coordinates found');
-                }
-
-            }, (error) => {
-                setLocationStatus('Unable to retrieve your location');
-                console.error('Error retrieving location:', error);
-            });
-        } else {
-            setLocationStatus('Geolocation is not supported by the browser');
-        }
-    };
-
-    const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-        if (event.target.files && event.target.files[0]) {
-            const file = event.target.files[0];
-            if (photos.length >= 5) {
-                alert('You can only upload up to 5 photos.');
-                return;
-            }
-            const newPhoto: ImageUpload = {
-                file: file,
-                preview: URL.createObjectURL(file)
-            };
-            setPhotos([...photos, newPhoto]);
-        }
-    };
-
-    const removePhoto = (indexToRemove: number) => {
-        URL.revokeObjectURL(photos[indexToRemove].preview);
-        setPhotos(photos.filter((_, index) => index !== indexToRemove));
-    };
-
-    const handleSubmit = async (event: React.FormEvent) => {
-        event.preventDefault();
-
-        // 1. Format photos
-        const formattedPictures = await Promise.all(
-            photos.map(async (photo, index) => {
-                const base64String = await convertFileToBase64(photo.file);
-                return {
-                    base64_image: base64String,
-                    isProfilePicture: index === 0 ? 1 : 0
-                };
-            })
-        );
-
-        // 2. Prepare Profile Data
-        const profileData = {
-            gender: gender,
-            sexual_preference: sexualPreference,
-            biography: biography,
-            interests: tags,
-            pictures: formattedPictures
-        };
-
-        // 3. Send Profile Update
-        try {
-            console.log("Sending Profile Data...", profileData);
-            await api.patch('/profile/update', profileData);
-        } catch (error: any) {
-            console.error('Error saving profile:', error);
-            const errorMessage = error?.response?.data?.error || error?.message || 'Unknown error';
-            alert('Failed to save profile: ' + errorMessage);
-            return;
-        }
-
-        // 4. Send Location Update
-        let finalLat = location.latitude;
-        let finalLng = location.longitude;
-        const finalCity = location.city;
-
-        // If user typed a city but didn't use GPS (coords are 0), fetch coords
-        if (finalCity && (finalLat === 0 || finalLng === 0)) {
+        const loadProfile = async () => {
             try {
-                console.log(`🌍 Looking up coordinates for manual entry: "${finalCity}"...`);
-                const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(finalCity)}`);
-                const geoData = await geoRes.json();
+                const pictures = profile.pictures ? await convertPicturesForForm(profile.pictures) : [];
 
-                if (geoData && geoData.length > 0) {
-                    finalLat = parseFloat(geoData[0].lat);
-                    finalLng = parseFloat(geoData[0].lon);
-                    console.log(`✅ Resolved "${finalCity}" to Lat: ${finalLat}, Lng: ${finalLng}`);
-                }
+                form.reset({
+                    first_name: profile.first_name ?? "",
+                    last_name: profile.last_name ?? "",
+                    email: profile.email ?? "",
+                    biography: profile.biography ?? "",
+                    gender: profile.gender ?? undefined,
+                    sexual_preference: profile.sexual_preference ?? undefined,
+                    interests: profile.interests ?? [],
+                    pictures,
+                })
             } catch (err) {
-                console.warn("Could not resolve coordinates for manual city input:", err);
+                console.error("Failed to load profile images", err);
             }
         }
+        loadProfile();
+    }, [profile, form])
 
-        let locationUpdateErrorMessage: string | null = null;
-        
-        // Only send if we have valid data
-        if (finalLat !== 0 && finalLng !== 0) {
+    useEffect(() => {
+        const fetchProfile = async () => {
             try {
-                console.log("Sending Location Update:", { latitude: finalLat, longitude: finalLng, city: finalCity });
-                
-                await api.post('/location/update', {
-                    latitude: finalLat,
-                    longitude: finalLng,
-                    city: finalCity
-                });
-                console.log("Location update sent successfully.");
-            } catch (error: any) {
-                console.error('Error updating location:', error);
-                locationUpdateErrorMessage = error?.response?.data?.error || error?.message || 'Unknown error';
+                const res = await api.get('/profile/me');
+                setProfile(res.data.profile);
+            } catch (err: any) {
+                const message = err?.response?.data?.error || "Unknown error";
+                console.error(`Error fetching profile: ${message}`);
+                setError(`Error fetching profile: ${message}`);
             }
-        } else {
-            console.warn("Skipping location update: No valid coordinates found.");
         }
+        fetchProfile();
+    }, []);
 
-        if (locationUpdateErrorMessage) {
-            alert('Profile saved, but failed to update location: ' + locationUpdateErrorMessage);
-        } else {
-            alert('Profile saved successfully!');
-        }
-        navigate('/profile');
-    };
+    const { isSubmitting } = form.formState;
 
-    // Bonus: GDPR Export Logic
-    const handleExportData = async () => {
+    const onSubmit = async (data: UpdateProfileFormValues) => {
         try {
-            const response = await api.get('/profile/export', {
-                responseType: 'blob'
-            });
-            
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', 'my_matcha_data.json');
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-        } catch (error) {
-            console.error("Export failed", error);
-            alert("Failed to download data. Ensure you are logged in.");
+            await api.patch("/profile/update", data);
+            alert("Profile updated successfully.");
+            navigate("/profile");
+        } catch (err: any) {
+            const message = err?.response?.data?.error || "Unknown error";
+            console.error(`Profile update failed: ${message}`);
+            alert(`Profile update failed: ${message}`);
         }
-    };
+    }
+
+    if (error)
+        return <div className="mt-4 text-red-500">Error: {error}</div>;
 
     return (
-        <div style={{ maxWidth: '500px', margin: '0 auto', paddingBottom: '50px' }}>
-            <h2>Complete Your Profile</h2>
-            <form onSubmit={handleSubmit}>
-                <div style={{ marginBottom: '15px' }}>
-                    <label>Gender:</label>
-                    <select
-                        value={gender}
-                        onChange={(e) => setGender(e.target.value)}
-                        required
-                        style={{ display: 'block', width: '100%', padding: '8px' }}
-                    >
-                        <option value="" disabled>Select Gender</option>
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                        <option value="other">Non-Binary / Other</option>
-                    </select>
-                </div>
+        <div className="flex min-h-screen items-center justify-center bg-background px-4 mt-4">
 
-                <div style={{ marginBottom: '15px' }}>
-                    <label>I am interested in:</label>
-                    <select
-                        value={sexualPreference}
-                        onChange={(e) => setSexualPreference(e.target.value)}
-                        required
-                        style={{ display: 'block', width: '100%', padding: '8px' }}
-                    >
-                        <option value="male">Men</option>
-                        <option value="female">Women</option>
-                        <option value="bi-sexual">Everyone (Both)</option>
-                    </select>
-                </div>
+        <Card className="w-full max-w-md">
+            <CardHeader>
+            <CardTitle>Profile update</CardTitle>
+            <CardDescription>
+                Fill in your details to update your profile
+            </CardDescription>
+            </CardHeader>
 
-                <div style={{ marginBottom: '15px' }}>
-                    <label>Biography:</label>
-                    <textarea
-                        value={biography}
-                        onChange={(e) => setBiography(e.target.value)}
-                        placeholder="Tell us about yourself..."
+            <CardContent>
+            <Form {...form}>
+                <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-4"
+                >
+
+                {/* First Name */}
+                <FormField
+                    control={form.control}
+                    name="first_name"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>First Name</FormLabel>
+                        <FormControl>
+                        <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+
+                {/* Last Name */}
+                <FormField
+                    control={form.control}
+                    name="last_name"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Last Name</FormLabel>
+                        <FormControl>
+                        <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+
+                {/* Email */}
+                <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                        <Input type="email" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+
+                {/* Biography */}
+                <FormField
+                    control={form.control}
+                    name="biography"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Biography</FormLabel>
+                        <FormControl>
+                        <Textarea
+                        {...field}
                         rows={4}
-                        required
-                        style={{ display: 'block', width: '100%', padding: '8px' }}
-                    />
-                </div>
+                        placeholder="Tell us about yourself..."
+                        />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
 
-                <div style={{ marginBottom: '15px' }}>
-                    <label>Interests (Max 5):</label>
-                    <select 
-                        onChange={handleAddTag} 
-                        value="" 
-                        style={{ display: 'block', width: '100%', padding: '8px' }}
-                    >
-                        <option value="" disabled>Select an interest...</option>
-                        {ALLOWED_TAGS.map(tag => (
-                            <option key={tag} value={tag} disabled={tags.includes(tag)}>
-                                {tag}
-                            </option>
-                        ))}
-                    </select>
-                    <div style={{ marginTop: '10px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                        {tags.map(tag => (
-                            <span
-                                key={tag}
-                                onClick={() => removeTag(tag)}
-                                style={{ background: 'rgba(0, 255, 0, 1)', color: 'rgba(255, 255, 255, 1)', padding: '5px 10px', borderRadius: '15px', cursor: 'pointer' }}
+                <FormField
+                    control={form.control}
+                    name="gender"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Gender</FormLabel>
+                        <FormControl>
+                            <Select
+                            value={field.value}
+                            onValueChange={field.onChange}
                             >
-                                {tag} X
-                            </span>
-                        ))}
-                    </div>
-                    <small style={{ color: 'rgba(255, 255, 255, 1)' }}>{tags.length}/5 selected</small>
-                </div>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select gender" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="male">Male</SelectItem>
+                                <SelectItem value="female">Female</SelectItem>
+                                <SelectItem value="other">Other</SelectItem>
+                            </SelectContent>
+                            </Select>
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
 
-                <div style={{ marginBottom: '15px', border: '1px solid #ddd', padding: '10px', borderRadius: '5px' }}>
-                    <label>Photos (Max 5):</label>
-                    <input type="file" accept="image/*" onChange={handleImageUpload} disabled={photos.length >= 5} style={{ display: 'block', marginBottom: '10px' }} />
-                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                        {photos.map((photo, index) => (
-                            <div key={index} style={{ position: 'relative' }}>
-                                <img src={photo.preview} alt="preview" style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '5px' }} />
-                                <button type="button" onClick={() => removePhoto(index)} style={{ position: 'absolute', top: 0, right: 0, background: 'red', color: 'white', border: 'none', cursor: 'pointer' }}>X</button>
+                {/* Sexual_preference */}
+                <FormField
+                    control={form.control}
+                    name="sexual_preference"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Sexual Preference</FormLabel>
+                        <FormControl>
+                            <Select
+                            value={field.value}
+                            onValueChange={field.onChange}
+                            >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select sexual preference" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="male">Male</SelectItem>
+                                <SelectItem value="female">Female</SelectItem>
+                                <SelectItem value="bi-sexual">Bi-Sexual</SelectItem>
+                            </SelectContent>
+                            </Select>
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
+                {/* Interests */}
+                <FormField
+                    control={form.control}
+                    name="interests"
+                    render={({ field }) => {
+                        const anchor = useComboboxAnchor()
+
+                        return (
+                        <FormItem>
+                            <FormLabel>Interests</FormLabel>
+                            <FormControl>
+                            <Combobox
+                                multiple
+                                items={validInterestValues}
+                                value={field.value}
+                                onValueChange={field.onChange}
+                            >
+                                {/* Chips + input */}
+                                <ComboboxChips ref={anchor} className="w-full">
+                                <ComboboxValue>
+                                    {(values) => (
+                                    <>
+                                        {values.map((value: string) => (
+                                        <ComboboxChip key={value}>
+                                            {value}
+                                        </ComboboxChip>
+                                        ))}
+                                        <ComboboxChipsInput placeholder="Select interests..." />
+                                    </>
+                                    )}
+                                </ComboboxValue>
+                                </ComboboxChips>
+
+                                {/* Dropdown */}
+                                <ComboboxContent anchor={anchor}>
+                                <ComboboxEmpty>No interests found.</ComboboxEmpty>
+                                <ComboboxList>
+                                    {(item) => (
+                                    <ComboboxItem key={item} value={item}>
+                                        {item}
+                                    </ComboboxItem>
+                                    )}
+                                </ComboboxList>
+                                </ComboboxContent>
+                            </Combobox>
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )
+                    }}
+                />
+
+                <FormField
+                    control={form.control}
+                    name="pictures"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Pictures</FormLabel>
+
+                        {/* Image previews */}
+                        <div className="grid grid-cols-3 gap-3">
+                            {field.value.map((pic, index) => (
+                            <div
+                                key={index}
+                                className={`relative rounded-md border p-1 ${
+                                pic.isProfilePicture === 1 ? "border-primary" : "border-muted"}`}
+                            >
+                                <img
+                                src={pic.base64_image}
+                                alt="profile"
+                                className="h-32 w-full rounded-md object-cover"
+                                />
+
+                                {/* Profile selector */}
+                                <label className="mt-1 flex cursor-pointer items-center gap-1 text-xs">
+                                <input
+                                    type="radio"
+                                    checked={pic.isProfilePicture === 1}
+                                    onChange={() => {
+                                        form.setValue(
+                                            "pictures",
+                                            field.value.map((p, i) => ({
+                                            ...p,
+                                            isProfilePicture: i === index ? 1 : 0,
+                                            })),
+                                            { shouldValidate: true }
+                                        )
+                                    }}
+                                />
+                                Profile picture
+                                </label>
+
+                                {/* Remove */}
+                                <button
+                                type="button"
+                                onClick={() =>
+                                    form.setValue(
+                                    "pictures",
+                                    field.value.filter((_, i) => i !== index),
+                                    { shouldValidate: true }
+                                    )
+                                }
+                                className="absolute right-1 top-1 rounded bg-black/60 px-1 text-xs text-white"
+                                >
+                                ✕
+                                </button>
                             </div>
-                        ))}
-                    </div>
-                </div>
+                            ))}
+                        </div>
 
-                <div style={{ marginBottom: '15px', border: '1px solid #ddd', padding: '10px', borderRadius: '5px' }}>
-                    <label>Location (Required):</label>
-                    <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-                        <button onClick={handleGPS} style={{ background: '#4CAF50', color: 'white' }}>Locate Me</button>
-                        <span>{locationStatus}</span>
-                    </div>
-                    <input
-                        type="text"
-                        value={location.city}
-                        onChange={(e) => setLocation({ ...location, city: e.target.value })}
-                        placeholder="Or type your City/Neighborhood manually"
-                        required={location.latitude === 0 && location.longitude === 0 && !location.city}
-                        style={{ display: 'block', width: '100%', padding: '8px' }}
+                        {/* Upload controls */}
+                        <FormControl>
+                            <div className="mt-3 flex items-center gap-3">
+                            <input
+                                id="image-upload"
+                                type="file"
+                                accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                                multiple
+                                hidden
+                                onChange={async (e) => {
+                                    const files = Array.from(e.target.files ?? []);
+                                    if (!files.length) return;
+
+                                    const remainingSlots = 5 - field.value.length;
+                                    const filesToAdd = files.slice(0, remainingSlots);
+
+                                    const newImages: Picture[] = await Promise.all(
+                                        filesToAdd.map(async (file, index): Promise<Picture> => ({
+                                            base64_image: await fileToBase64(file),
+                                            isProfilePicture:
+                                            field.value.length === 0 && index === 0 ? 1 : 0,
+                                        }))
+                                    )
+
+                                    form.setValue(
+                                        "pictures",
+                                        [...field.value, ...newImages],
+                                        {
+                                            shouldValidate: true,
+                                            shouldDirty: true,
+                                            shouldTouch: true,
+                                        }
+                                    );
+
+                                    e.target.value = "";
+                                }}
+                            />
+
+                            <Button
+                                type="button"
+                                variant="outline"
+                                disabled={field.value.length >= 5}
+                                onClick={() =>
+                                document.getElementById("image-upload")?.click()
+                                }
+                            >
+                                Browse images
+                            </Button>
+
+                            <span className="text-xs text-muted-foreground">
+                                {field.value.length}/5 images
+                            </span>
+                            </div>
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
                     />
-                    <small style={{ color: '#666' }}>Lat: {location.latitude.toFixed(4)}, Lng: {location.longitude.toFixed(4)}</small>
-                </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                    <button type="submit" style={{ padding: '10px', background: '#E91E63', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '1.1em' }}>
-                        Save Profile
-                    </button>
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                    {isSubmitting && <ClipLoader size={16} color="black" className="mr-2" />}
+                    Update Profile
+                </Button>
+                </form>
+            </Form>
 
-                    {/* Bonus: Data Export Button */}
-                    <button 
-                        type="button" 
-                        onClick={handleExportData} 
-                        style={{ padding: '10px', background: '#555', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-                    >
-                        📥 Download My Data (GDPR)
-                    </button>
-                </div>
-            </form>
+            </CardContent>
+        </Card>
         </div>
-    );
-};
+    )
+}
+
+
+const convertPicturesForForm = async (
+    
+    pictures: {
+        picture: string
+        is_profile_picture: number
+    }[]
+
+): Promise<UpdateProfileFormValues["pictures"]> => {
+
+    return await Promise.all(
+        pictures.map(async (pic) => ({
+            base64_image: await imageUrlToBase64(pic.picture),
+            isProfilePicture: pic.is_profile_picture as 0 | 1,
+        }))
+    )
+}
 
 export default Profile;

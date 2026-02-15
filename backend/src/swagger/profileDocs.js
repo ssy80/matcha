@@ -225,7 +225,22 @@
  *                       items:
  *                         type: string
  *                       description: Array of user pictures (URLs or base64 encoded)
- *                       example: ["https://example.com/pic1.jpg", "https://example.com/pic2.jpg"]
+ *                       example: [
+ *                          {"picture":"http://localhost:3000/images/2d9f1228febe150178f255115348f5f6.png",
+ *                           "is_profile_picture":1},
+ *                          {"picture":"http://localhost:3000/images/2fcfcaa2519ee1251692867be19cecb8.png",
+ *                          "is_profile_picture":0}]
+ *                     fame_rating:
+ *                       type: object
+ *                       description: Fame rating information
+ *                       properties:
+ *                         stars:
+ *                           type: integer
+ *                           example: 4
+ *                         liked_count:
+ *                           type: integer
+ *                           example: 150
+ * 
  *       '401':
  *         description: Unauthorized - Missing or invalid authentication token
  *         content:
@@ -486,7 +501,11 @@
  *                       items:
  *                         type: string
  *                       description: Array of pictures
- *                       example: ["https://example.com/pic1.jpg", "https://example.com/pic2.jpg"]
+ *                       example: [
+ *                          {"picture":"http://localhost:3000/images/2d9f1228febe150178f255115348f5f6.png",
+ *                           "is_profile_picture":1},
+ *                          {"picture":"http://localhost:3000/images/2fcfcaa2519ee1251692867be19cecb8.png",
+ *                          "is_profile_picture":0}]
  *                     location:
  *                       type: object
  *                       properties:
