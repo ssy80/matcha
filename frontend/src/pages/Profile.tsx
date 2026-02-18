@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import api from '../api/axios';
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import api from "@/api/axios";
 import {
   Card,
   CardContent,
@@ -28,9 +28,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ClipLoader } from "react-spinners";
-import { updateProfileSchema } from '@/validations/zodProfileUpdateSchema';
-import type { UpdateProfileFormValues }  from '../validations/zodProfileUpdateSchema';
-import { validInterestValues } from '@/validations/zodProfileUpdateSchema';
+import { MAX_IMAGE_SIZE, updateProfileSchema, validInterestValues} from "@/validations/zodProfileUpdateSchema";
+import type { UpdateProfileFormValues }  from "@/validations/zodProfileUpdateSchema";
 import {
   Combobox,
   ComboboxChip,
@@ -43,8 +42,8 @@ import {
   ComboboxValue,
   useComboboxAnchor,
 } from "@/components/ui/combobox";
-import type { ProfileInterface } from '../interface/profileInterface';
-import { imageUrlToBase64, fileToBase64 } from '@/utils/imageHelper';
+import type { ProfileInterface } from "@/interface/profileInterface";
+import { imageUrlToBase64, fileToBase64 } from "@/utils/imageHelper";
 import { Textarea } from "@/components/ui/textarea";
 
 
@@ -90,8 +89,8 @@ const Profile = () => {
                     interests: profile.interests ?? [],
                     pictures,
                 })
-            } catch (err) {
-                console.error("Failed to load profile images", err);
+            } catch (err: any) {
+                console.error(`Error failed to load profile images: ${err}`);
             }
         }
         loadProfile();
@@ -100,7 +99,7 @@ const Profile = () => {
     useEffect(() => {
         const fetchProfile = async () => {
             try {
-                const res = await api.get('/profile/me');
+                const res = await api.get("/profile/me");
                 setProfile(res.data.profile);
             } catch (err: any) {
                 const message = err?.response?.data?.error || "Unknown error";
@@ -386,6 +385,16 @@ const Profile = () => {
                                     const files = Array.from(e.target.files ?? []);
                                     if (!files.length) return;
 
+                                    const oversizedFile = files.find(file => file.size > MAX_IMAGE_SIZE);
+                                    if (oversizedFile) {
+                                        form.setError("pictures", {
+                                        type: "manual",
+                                        message: "Each image must be smaller than 2MB",
+                                        });
+                                        return;
+                                    }
+                                    form.clearErrors("pictures");
+
                                     const remainingSlots = 5 - field.value.length;
                                     const filesToAdd = files.slice(0, remainingSlots);
 
@@ -410,7 +419,7 @@ const Profile = () => {
                                     e.target.value = "";
                                 }}
                             />
-
+                            
                             <Button
                                 type="button"
                                 variant="outline"

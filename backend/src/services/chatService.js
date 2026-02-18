@@ -1,10 +1,10 @@
-import { db } from '../db/database.js';
-import dotenv from 'dotenv';
-import { Validation } from '../utils/validationUtils.js';
-import { getLikedHistoryDb, getUserBlocked } from './profileService.js';
-import { ChatMessage } from '../models/chat_message.js';
-import { Event } from '../models/event.js';
-import { addEvent } from './eventService.js';
+import { db } from "../db/database.js";
+import dotenv from "dotenv";
+import { Validation } from "../utils/validationUtils.js";
+import { getLikedHistoryDb, getUserBlocked } from "./profileService.js";
+import { ChatMessage } from "../models/chat_message.js";
+import { Event } from "../models/event.js";
+import { addEvent } from "./eventService.js";
 
 
 dotenv.config();

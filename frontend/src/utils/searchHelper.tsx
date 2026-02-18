@@ -1,6 +1,6 @@
-import {type SearchProfileFormValues } from '@/validations/zodSearchProfileSchema';
-import {type  SortOption, type SortOrder} from "../pages/Home.tsx";
-import {type ValidInterestValues,  validInterestValues } from '@/validations/zodProfileUpdateSchema';
+import {type SearchProfileFormValues } from "@/validations/zodSearchProfileSchema";
+import {type  SortOption, type SortOrder} from "@/pages/Search.tsx";
+import {type ValidInterestValues,  validInterestValues } from "@/validations/zodProfileUpdateSchema";
 
 
 export function formToSearchParams(

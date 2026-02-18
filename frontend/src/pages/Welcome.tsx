@@ -1,16 +1,17 @@
-import { Link, Navigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
-import api from '../api/axios';
+import { Link, Navigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import api from "@/api/axios";
 import { Button } from "@/components/ui/button";
 
 const Welcome = () => {
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
 
     useEffect(() => {
         const checkAuth = async () => {
+            setIsLoading(true);
             try {
-                await api.get('/profile/me');
+                await api.get("/profile/me");
                 setIsAuthenticated(true);
             } catch (error) {
                 setIsAuthenticated(false);
@@ -22,7 +23,7 @@ const Welcome = () => {
     }, []);
 
     if (isLoading)
-        return <div className="mt-4">Loading...</div>;
+        return <div className="mt-4 text-center">Loading...</div>
 
     if (isAuthenticated) {
         return <Navigate to="/home" replace />;

@@ -1,17 +1,17 @@
-import { db } from '../db/database.js';
-import { User } from '../models/user.js';
-import { Validation } from '../utils/validationUtils.js';
-import bcrypt from 'bcrypt';
-import dotenv from 'dotenv';
+import { db } from "../db/database.js";
+import { User } from "../models/user.js";
+import { Validation } from "../utils/validationUtils.js";
+import bcrypt from "bcrypt";
+import dotenv from "dotenv";
 import crypto from "crypto";
-import jwt from 'jsonwebtoken';
-import { UserActivation } from '../models/user_activation.js';
-import { UserReset } from '../models/user_reset.js';
-import { sendActivationEmail, sendResetEmail } from '../services/emailService.js';
-import { getUserById, getUserByEmail, getUserByUsername } from './userDbService.js';
-import { FameRating } from '../models/fame_rating.js';
-import { UserLocation } from '../models/user_location.js'
-import { UserOnline } from '../models/user_online.js';
+import jwt from "jsonwebtoken";
+import { UserActivation } from "../models/user_activation.js";
+import { UserReset } from "../models/user_reset.js";
+import { sendActivationEmail, sendResetEmail } from "../services/emailService.js";
+import { getUserById, getUserByEmail, getUserByUsername } from "./userDbService.js";
+import { FameRating } from "../models/fame_rating.js";
+import { UserLocation } from "../models/user_location.js"
+import { UserOnline } from "../models/user_online.js";
 
 
 dotenv.config();
@@ -275,7 +275,7 @@ export const registerUser = async (req, res) => {
 async function isValidUserEmailDb(user)
 {
     try{
-        const row = await db.get('SELECT * FROM users WHERE email = ?', [user.email]);
+        const row = await db.get("SELECT * FROM users WHERE email = ?", [user.email]);
         if (row)
             return false;
         else
@@ -291,7 +291,7 @@ async function isValidUserEmailDb(user)
 async function isValidUsernameDb(user)
 {
     try{
-        const row = await db.get('SELECT * FROM users WHERE username = ?', [user.username])
+        const row = await db.get("SELECT * FROM users WHERE username = ?", [user.username])
 
         if (row)
             return false;
@@ -309,26 +309,26 @@ async function addUser(user, fameRating, userLocation, userActivation, userOnlin
 {
   try{
         await db.run("BEGIN TRANSACTION");
-        const result = await db.run('INSERT INTO users(email, username, first_name, last_name, gender, biography, date_of_birth, sexual_preference, user_password, user_status, created_at, updated_at) \
-                                values(?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)',
+        const result = await db.run("INSERT INTO users(email, username, first_name, last_name, gender, biography, date_of_birth, sexual_preference, user_password, user_status, created_at, updated_at) \
+                                values(?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)",
                                 [user.email, user.username, user.firstName, user.lastName, user.gender, user.biography, user.dateOfBirth, user.sexualPreference, user.userPassword, user.userStatus]);
         const userId = result.lastID;
         fameRating.userId = userId;
         userLocation.userId = userId;
         userActivation.userId = userId;
         userOnline.userId = userId;
-        await db.run('INSERT INTO fame_ratings(user_id, liked_count, created_at, updated_at) \
-                            values(?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)',
+        await db.run("INSERT INTO fame_ratings(user_id, liked_count, created_at, updated_at) \
+                            values(?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)",
                             [fameRating.userId, fameRating.likedCount]);
-        await db.run('INSERT INTO user_locations(user_id, latitude, longitude, neighborhood, city, country, created_at, updated_at) \
-                            values(?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)',
+        await db.run("INSERT INTO user_locations(user_id, latitude, longitude, neighborhood, city, country, created_at, updated_at) \
+                            values(?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)",
                             [userLocation.userId, userLocation.latitude, userLocation.longitude, userLocation.neighborhood,
                                 userLocation.city, userLocation.country]);
-        await db.run('INSERT INTO user_activations(activation_uuid, activation_status, user_id, created_at, updated_at) \
-                            values(?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)',
+        await db.run("INSERT INTO user_activations(activation_uuid, activation_status, user_id, created_at, updated_at) \
+                            values(?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)",
                             [userActivation.activationUuid, userActivation.activationStatus, userActivation.userId]);
-        await db.run('INSERT INTO user_onlines(user_id, created_at, updated_at) \
-                            values(?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)',
+        await db.run("INSERT INTO user_onlines(user_id, created_at, updated_at) \
+                            values(?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)",
                             [userOnline.userId]);
         
         await db.run("COMMIT");
@@ -345,7 +345,7 @@ async function addUser(user, fameRating, userLocation, userActivation, userOnlin
 async function getUserActivation(activationUuid)
 {
     try{
-        const row = await db.get('SELECT * FROM user_activations WHERE activation_uuid = ?', [activationUuid])
+        const row = await db.get("SELECT * FROM user_activations WHERE activation_uuid = ?", [activationUuid])
 
         if (row){
             const userActivation = new UserActivation(row.id, row.activation_uuid, row.activation_status, row.user_id, row.created_at, row.updated_at);
@@ -365,8 +365,8 @@ async function updateUserActivationStatus(user, userActivation)
 {
   try{
         await db.run("BEGIN TRANSACTION");
-        await db.run('UPDATE users SET user_status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?;', [user.userStatus, user.id]);
-        await db.run('UPDATE user_activations SET activation_status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?;', [userActivation.activationStatus, userActivation.id]);
+        await db.run("UPDATE users SET user_status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?;", [user.userStatus, user.id]);
+        await db.run("UPDATE user_activations SET activation_status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?;", [userActivation.activationStatus, userActivation.id]);
         await db.run("COMMIT");
     }
     catch(err){
@@ -391,7 +391,7 @@ async function matchPasswords(password, hashedPassword){
 async function deleteUserResets(userId)
 {
   try{
-        await db.run('DELETE FROM user_resets WHERE user_id = ?;', [userId]);
+        await db.run("DELETE FROM user_resets WHERE user_id = ?;", [userId]);
     }
     catch(err){
         console.error("error deleteUserResets: ", err);
@@ -403,8 +403,8 @@ async function deleteUserResets(userId)
 async function addUserResets(userReset)
 {
   try{
-        await db.run('INSERT INTO user_resets(reset_uuid, reset_status, expired_at, user_id, created_at, updated_at) \
-                            values(?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)',
+        await db.run("INSERT INTO user_resets(reset_uuid, reset_status, expired_at, user_id, created_at, updated_at) \
+                            values(?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)",
                             [userReset.resetUuid, userReset.resetStatus, userReset.expiredAt, userReset.userId])
     }
     catch(err){
@@ -416,7 +416,7 @@ async function addUserResets(userReset)
 
 async function getUserResetByUuid(resetUuid){
     try{
-        const row = await db.get('SELECT * FROM user_resets WHERE reset_uuid = ?', [resetUuid]);
+        const row = await db.get("SELECT * FROM user_resets WHERE reset_uuid = ?", [resetUuid]);
 
         if (row){
             const userReset = new UserReset(row.id, row.reset_uuid, row.reset_status, row.expired_at, row.user_id, row.created_at, row.updated_at);
@@ -433,7 +433,7 @@ async function getUserResetByUuid(resetUuid){
 
 async function updateUserPassword(user){
     try{
-        await db.run('UPDATE users SET user_password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?;', [user.userPassword, user.id]);
+        await db.run("UPDATE users SET user_password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?;", [user.userPassword, user.id]);
     }
     catch(err){
         console.error("error updateUserPassword: ", err);
@@ -444,7 +444,7 @@ async function updateUserPassword(user){
 
 async function updateUserResetStatus(userReset){
     try{
-        await db.run('UPDATE user_resets SET reset_status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?;', [userReset.resetStatus, userReset.id]);
+        await db.run("UPDATE user_resets SET reset_status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?;", [userReset.resetStatus, userReset.id]);
     }
     catch(err){
         console.error("error updateUserResetStatus: ", err);

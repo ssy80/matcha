@@ -1,5 +1,5 @@
-import api from '../api/axios';
-import { Link, useNavigate } from 'react-router-dom';
+import api from "@/api/axios";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -11,8 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { registerSchema } from "../validations/zodRegisterSchema";
-import type { RegisterFormValues}  from '../validations/zodRegisterSchema';
+import { registerSchema } from "@/validations/zodRegisterSchema";
+import type { RegisterFormValues}  from "@/validations/zodRegisterSchema";
 import {
   Form,
   FormControl,

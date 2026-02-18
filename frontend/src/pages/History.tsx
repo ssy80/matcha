@@ -1,6 +1,19 @@
-import { useEffect, useState } from 'react';
-import api from '../api/axios';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from "react";
+import api from "@/api/axios";
+import { useNavigate } from "react-router-dom";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
 
 interface HistoryUser {
     id?: number;
@@ -14,24 +27,33 @@ interface HistoryUser {
 }
 
 export default function History() {
-    const [activeTab, setActiveTab] = useState<'likes' | 'views'>('likes');
+    const [activeTab, setActiveTab] = useState<"likes" | "views">("likes");
     const [data, setData] = useState<HistoryUser[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
     const navigate = useNavigate();
 
     useEffect(() => {
+
         const fetchData = async () => {
             setLoading(true);
             try {
-                const endpoint = activeTab === 'likes' ? '/profile/liked_me' : '/profile/viewed_me';
+                const endpoint = activeTab === "likes" ? "/profile/liked_me_list" : "/profile/viewed_me_list";
                 const res = await api.get(endpoint);
 
                 if (res.data.success) {
-                    const list = res.data.liked_me_list || res.data.viewed_me_list || [];
+                    const list =
+                        activeTab === "likes"
+                        ? res.data.liked_me_list ?? []
+                        : res.data.viewed_me_list ?? [];
+
                     setData(list);
                 }
-            } catch (err) {
-                console.error("Failed to fetch history", err);
+
+            } catch (err: any) {
+                const message = err?.response?.data?.error || "Unknown error";
+                console.error(`Error failed to fetch history: ${message}`);
+                setError(`Error failed to fetch history: ${message}`);
             } finally {
                 setLoading(false);
             }
@@ -40,76 +62,82 @@ export default function History() {
         fetchData();
     }, [activeTab]);
 
+    
+    if (error) {
+        return <div className="mt-4 text-center text-red-500">Error: {error}</div>
+    }
+
     return (
-        <div style={{ maxWidth: '800px', margin: '40px auto', padding: '20px', background: '#222', color: '#fff', borderRadius: '8px', border: '1px solid #444' }}>
-            <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>Activity History</h2>
+        <div className="mx-auto max-w-3xl px-4 py-8">
+        <Card>
+            <CardHeader className="pb-4">
+            <CardTitle className="text-center text-xl">
+                Activity History
+            </CardTitle>
 
-            <div style={{ display: 'flex', borderBottom: '1px solid #444', marginBottom: '20px' }}>
-                <button 
-                    onClick={() => setActiveTab('likes')}
-                    style={{ flex: 1, padding: '15px', background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer', borderBottom: activeTab === 'likes' ? '3px solid #E91E63' : 'none', fontWeight: activeTab === 'likes' ? 'bold' : 'normal' }}
-                >
-                    ❤️ Who Liked Me
-                </button>
-                <button 
-                    onClick={() => setActiveTab('views')}
-                    style={{ flex: 1, padding: '15px', background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer', borderBottom: activeTab === 'views' ? '3px solid #2196F3' : 'none', fontWeight: activeTab === 'views' ? 'bold' : 'normal' }}
-                >
-                    👀 Who Viewed Me
-                </button>
-            </div>
+            <Tabs
+                value={activeTab}
+                onValueChange={(v) => setActiveTab(v as "likes" | "views")}
+                className="mt-4"
+            >
+                <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="likes">❤️ Who Liked Me</TabsTrigger>
+                <TabsTrigger value="views">👀 Who Viewed Me</TabsTrigger>
+                </TabsList>
+            </Tabs>
+            </CardHeader>
 
-            {loading ? (
-                <div style={{ textAlign: 'center', padding: '20px' }}>Loading...</div>
-            ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    {data.length === 0 && (
-                        <div style={{ textAlign: 'center', padding: '30px', color: '#777' }}>
-                            {activeTab === 'likes' ? "No likes yet." : "No profile views yet."}
-                        </div>
-                    )}
+            <CardContent className="space-y-3">
 
-                    {data.map((user, index) => {
-                        const targetId = user.user_id || user.id;
-                        const dateStr = user.created_at || user.updated_at;
-
-                        return (
-                            <div 
-                                key={targetId || index} 
-                                onClick={() => targetId && navigate(`/profile/${targetId}`)}
-                                style={{ 
-                                    display: 'flex', alignItems: 'center', gap: '15px', padding: '15px', 
-                                    background: '#333', borderRadius: '8px', cursor: 'pointer', transition: '0.2s'
-                                }}
-                                onMouseEnter={(e) => e.currentTarget.style.background = '#444'}
-                                onMouseLeave={(e) => e.currentTarget.style.background = '#333'}
-                            >
-                                <div style={{ width: '50px', height: '50px', borderRadius: '50%', background: '#555', overflow: 'hidden', flexShrink: 0 }}>
-                                    {user.picture ? (
-                                        <img src={user.picture} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                    ) : (
-                                        <span style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', fontSize: '0.8em' }}>N/A</span>
-                                    )}
-                                </div>
-                                
-                                <div style={{ flex: 1 }}>
-                                    {/* Fallback to username if name is missing */}
-                                    <div style={{ fontWeight: 'bold', fontSize: '1.1em' }}>
-                                        {user.first_name ? `${user.first_name} ${user.last_name}` : user.username}
-                                    </div>
-                                    <div style={{ color: '#aaa', fontSize: '0.9em' }}>@{user.username}</div>
-                                </div>
-
-                                {dateStr && (
-                                    <div style={{ color: '#777', fontSize: '0.8em' }}>
-                                        {new Date(dateStr).toLocaleDateString()}
-                                    </div>
-                                )}
-                            </div>
-                        );
-                    })}
+            {!loading && data.length === 0 && (
+                <div className="py-10 text-center text-sm text-muted-foreground">
+                {activeTab === "likes"
+                    ? "No likes yet."
+                    : "No profile views yet."}
                 </div>
             )}
+
+            {!loading &&
+                data.map((user) => {
+                const targetId = user.user_id || user.id;
+                const dateStr = user.created_at || user.updated_at;
+
+                return (
+                    <button
+                    key={targetId}
+                    onClick={() =>
+                        targetId && navigate(`/profile/${targetId}`)
+                    }
+                    className="flex w-full items-center gap-4 rounded-lg border p-4 text-left transition hover:bg-muted"
+                    >
+                    <Avatar className="h-12 w-12">
+                        <AvatarImage src={user.picture ?? undefined} />
+                        <AvatarFallback>
+                        {user.first_name?.[0] ?? user.username?.[0]}
+                        </AvatarFallback>
+                    </Avatar>
+
+                    <div className="flex-1">
+                        <p className="font-medium">
+                        {user.first_name
+                            ? `${user.first_name} ${user.last_name}`
+                            : user.username}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                        @{user.username}
+                        </p>
+                    </div>
+
+                    {dateStr && (
+                        <span className="text-xs text-muted-foreground">
+                        {new Date(dateStr).toLocaleDateString()}
+                        </span>
+                    )}
+                    </button>
+                );
+                })}
+            </CardContent>
+        </Card>
         </div>
     );
 }

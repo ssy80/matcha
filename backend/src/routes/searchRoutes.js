@@ -1,16 +1,16 @@
-import express from 'express';
-import { getSuggestedProfiles, searchProfiles } from '../services/searchService.js';
+import express from "express";
+import { getSuggestedProfiles, searchProfiles } from "../services/searchService.js";
 
 
 const router = express.Router();
 
 
-router.get('/suggested_profiles', async (req, res) => {
+router.get("/suggested_profiles", async (req, res) => {
     await getSuggestedProfiles(req, res);
 });
 
 
-router.post('/search_profiles', async (req, res) => {
+router.post("/search_profiles", async (req, res) => {
     await searchProfiles(req, res);
 });
 

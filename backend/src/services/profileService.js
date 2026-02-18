@@ -1,16 +1,16 @@
-import { db } from '../db/database.js';
-import { Validation } from '../utils/validationUtils.js';
-import dotenv from 'dotenv';
-import { PictureUtil } from '../utils/pictureUtils.js';
-import { getUserById, getUserByEmail } from './userDbService.js';
-import { ViewedHistory } from '../models/viewed_history.js';
-import { LikedHistory } from '../models/liked_history.js';
-import { UserOnline } from '../models/user_online.js';
-import { UserBlocked } from '../models/user_blocked.js';
-import { UserFaked } from '../models/user_faked.js';
-import { getUserLocationByUserId, getDistanceKm } from './locationService.js';
-import { Event } from '../models/event.js';
-import { addEvent } from './eventService.js';
+import { db } from "../db/database.js";
+import { Validation } from "../utils/validationUtils.js";
+import dotenv from "dotenv";
+import { PictureUtil } from "../utils/pictureUtils.js";
+import { getUserById, getUserByEmail } from "./userDbService.js";
+import { ViewedHistory } from "../models/viewed_history.js";
+import { LikedHistory } from "../models/liked_history.js";
+import { UserOnline } from "../models/user_online.js";
+import { UserBlocked } from "../models/user_blocked.js";
+import { UserFaked } from "../models/user_faked.js";
+import { getUserLocationByUserId, getDistanceKm } from "./locationService.js";
+import { Event } from "../models/event.js";
+import { addEvent } from "./eventService.js";
 
 
 dotenv.config();
@@ -45,7 +45,6 @@ export const fakedProfile = async (req, res) =>{
         }
 
         const userFaked = new UserFaked(null, userId, fakedUserId, null, null);
-        console.log(userFaked)
         await addUserFaked(userFaked, isfaked);
         res.status(201).json({"success": true});
     }catch(err){
@@ -357,8 +356,8 @@ export const getProfileUser = async (req, res) => {
                 await addEvent({
                     userId: viewUserId,
                     fromUserId: userId,
-                    eventType: 'viewed_me',
-                    eventStatus: 'new'
+                    eventType: "viewed_me",
+                    eventStatus: "new"
                 });
             } catch (notifyErr) {
                 console.error("Failed to create view notification:", notifyErr);
@@ -530,19 +529,19 @@ export const patchUserProfile = async (req, res) => {
 async function updateUserData(user, interests, savedPictures){
     try{
         await db.run("BEGIN TRANSACTION");
-        await db.run('UPDATE users SET first_name = ?, last_name = ?, email = ?, gender = ?, biography = ?, date_of_birth = ?, \
-            sexual_preference = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?;',
+        await db.run("UPDATE users SET first_name = ?, last_name = ?, email = ?, gender = ?, biography = ?, date_of_birth = ?, \
+            sexual_preference = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?;",
             [user.firstName, user.lastName, user.email, user.gender, user.biography, user.dateOfBirth, user.sexualPreference, user.id]);
         if (interests){
-            await db.run('DELETE FROM user_interests WHERE user_id = ?;', [user.id]);
+            await db.run("DELETE FROM user_interests WHERE user_id = ?;", [user.id]);
             for (const interest of interests){
-                await db.run('INSERT INTO user_interests(user_id, interest) values(?,?);', [user.id, interest]);
+                await db.run("INSERT INTO user_interests(user_id, interest) values(?,?);", [user.id, interest]);
             }
         }
         if (savedPictures){
-            await db.run('DELETE FROM user_pictures WHERE user_id = ?;', [user.id]);
+            await db.run("DELETE FROM user_pictures WHERE user_id = ?;", [user.id]);
             for (const savedPic of savedPictures){
-                await db.run('INSERT INTO user_pictures(user_id, picture, is_profile_picture) values(?,?,?);', [user.id, savedPic.filename, savedPic.isProfilePicture]);
+                await db.run("INSERT INTO user_pictures(user_id, picture, is_profile_picture) values(?,?,?);", [user.id, savedPic.filename, savedPic.isProfilePicture]);
             }
         }
         await db.run("COMMIT");
@@ -556,7 +555,7 @@ async function updateUserData(user, interests, savedPictures){
 
 export const getUserInterestsByUserId = async (userId) => {
     try{
-        const rows = await db.all('SELECT * FROM user_interests WHERE user_id = ?', [userId]);
+        const rows = await db.all("SELECT * FROM user_interests WHERE user_id = ?", [userId]);
         const interests = rows.map(row => row.interest);
         return interests;
     }catch(err){
@@ -568,7 +567,7 @@ export const getUserInterestsByUserId = async (userId) => {
 
 async function getUserPicturesByUserId(userId){
     try{
-        const rows = await db.all('SELECT * FROM user_pictures WHERE user_id = ?', [userId]);
+        const rows = await db.all("SELECT * FROM user_pictures WHERE user_id = ?", [userId]);
         const pictures = rows.map(row => ({"picture": row.picture, "is_profile_picture": row.is_profile_picture}));
         return pictures;
     }catch(err){
@@ -580,9 +579,9 @@ async function getUserPicturesByUserId(userId){
 
 async function addViewedHistory(viewedHistory){
     try{
-        const row = await db.get('SELECT 1 FROM viewed_histories WHERE user_id = ? AND viewed_user_id = ?;', [viewedHistory.userId, viewedHistory.viewedUserId]);
+        const row = await db.get("SELECT 1 FROM viewed_histories WHERE user_id = ? AND viewed_user_id = ?;", [viewedHistory.userId, viewedHistory.viewedUserId]);
         if (!row){
-            await db.run('INSERT INTO viewed_histories(user_id, viewed_user_id) values(?,?);', [viewedHistory.userId, viewedHistory.viewedUserId]);
+            await db.run("INSERT INTO viewed_histories(user_id, viewed_user_id) values(?,?);", [viewedHistory.userId, viewedHistory.viewedUserId]);
             const event = new Event(null, viewedHistory.viewedUserId, viewedHistory.userId, "viewed_me", "new", null, null);
             await addEvent(event);
         }
@@ -595,18 +594,18 @@ async function addViewedHistory(viewedHistory){
 
 async function addLikedHistory(likedHistory, isLiked){
     try{
-        const row = await db.get('SELECT * FROM liked_histories WHERE user_id = ? AND liked_user_id = ?;', [likedHistory.userId, likedHistory.likedUserId]);
+        const row = await db.get("SELECT * FROM liked_histories WHERE user_id = ? AND liked_user_id = ?;", [likedHistory.userId, likedHistory.likedUserId]);
         if (isLiked){
             if (!row){
-                await db.run('INSERT INTO liked_histories(user_id, liked_user_id) values(?,?);', [likedHistory.userId, likedHistory.likedUserId]);
-                //add fame count
-                await db.run('UPDATE fame_ratings SET liked_count = liked_count + 1, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?;', [likedHistory.likedUserId]);
+                await db.run("INSERT INTO liked_histories(user_id, liked_user_id) values(?,?);", [likedHistory.userId, likedHistory.likedUserId]);
+
+                await db.run("UPDATE fame_ratings SET liked_count = liked_count + 1, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?;", [likedHistory.likedUserId]);
 
                 const event = new Event(null, likedHistory.likedUserId, likedHistory.userId, "liked_me", "new", null, null);
                 await addEvent(event);
                 
                 //check connected
-                const likedRow = await db.get('SELECT 1 FROM liked_histories WHERE user_id = ? AND liked_user_id = ?;', [likedHistory.likedUserId, likedHistory.userId]);
+                const likedRow = await db.get("SELECT 1 FROM liked_histories WHERE user_id = ? AND liked_user_id = ?;", [likedHistory.likedUserId, likedHistory.userId]);
                 if (likedRow){
                     const connectedEvent = new Event(null, likedHistory.likedUserId, likedHistory.userId, "connected", "new", null, null);
                     await addEvent(connectedEvent);
@@ -615,12 +614,12 @@ async function addLikedHistory(likedHistory, isLiked){
         }
         else{
             if (row){
-                await db.run('DELETE FROM liked_histories WHERE user_id = ? AND liked_user_id = ?;', [likedHistory.userId, likedHistory.likedUserId]);
+                await db.run("DELETE FROM liked_histories WHERE user_id = ? AND liked_user_id = ?;", [likedHistory.userId, likedHistory.likedUserId]);
                 //remove fame count
-                await db.run('UPDATE fame_ratings SET liked_count = liked_count - 1, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?;', [likedHistory.likedUserId]);
+                await db.run("UPDATE fame_ratings SET liked_count = liked_count - 1, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?;", [likedHistory.likedUserId]);
                 
                 //check disconnect
-                const likedRow = await db.get('SELECT 1 FROM liked_histories WHERE user_id = ? AND liked_user_id = ?;', [likedHistory.likedUserId, likedHistory.userId]);
+                const likedRow = await db.get("SELECT 1 FROM liked_histories WHERE user_id = ? AND liked_user_id = ?;", [likedHistory.likedUserId, likedHistory.userId]);
                 if (likedRow){
                     const disconnectedEvent = new Event(null, likedHistory.likedUserId, likedHistory.userId, "disconnected", "new", null, null);
                     await addEvent(disconnectedEvent);
@@ -671,7 +670,7 @@ export function getStars(total, likedCount){
 
 export async function getUserLikedCount(userId){
     try{
-        const row = await db.get('SELECT liked_count from fame_ratings WHERE user_id = ?;', [userId]);
+        const row = await db.get("SELECT liked_count from fame_ratings WHERE user_id = ?;", [userId]);
         if (!row){
             return null;
         }
@@ -686,7 +685,7 @@ export async function getUserLikedCount(userId){
 
 export async function getTotalUsers(){
     try{
-        const row = await db.get('SELECT count(*) as total from fame_ratings;');
+        const row = await db.get("SELECT count(*) as total from fame_ratings;");
         let total = 0;
         if (row)
             total = row.total;
@@ -700,7 +699,7 @@ export async function getTotalUsers(){
 
 async function getUserOnlineDb(userId){
     try{
-        const row = await db.get('SELECT * FROM user_onlines WHERE user_id = ?;', [userId]);
+        const row = await db.get("SELECT * FROM user_onlines WHERE user_id = ?;", [userId]);
         if(row){
             const userOnline = new UserOnline(row.user_id, row.is_online, row.created_at, row.updated_at);
             return userOnline;
@@ -715,7 +714,7 @@ async function getUserOnlineDb(userId){
 
 async function getViewedHistoryDb(viewedMeUserId, userId){
     try{
-        const row = await db.get('SELECT * FROM viewed_histories WHERE user_id = ? AND viewed_user_id = ?;', [viewedMeUserId, userId]);
+        const row = await db.get("SELECT * FROM viewed_histories WHERE user_id = ? AND viewed_user_id = ?;", [viewedMeUserId, userId]);
         if(row){
             const viewedHistory = new ViewedHistory(row.id, row.user_id, row.viewed_user_id, row.created_at, row.updated_at);
             return viewedHistory;
@@ -730,7 +729,7 @@ async function getViewedHistoryDb(viewedMeUserId, userId){
 
 export async function getLikedHistoryDb(likedMeUserId, userId){
     try{
-        const row = await db.get('SELECT * FROM liked_histories WHERE user_id = ? AND liked_user_id = ?;', [likedMeUserId, userId]);
+        const row = await db.get("SELECT * FROM liked_histories WHERE user_id = ? AND liked_user_id = ?;", [likedMeUserId, userId]);
         if(row){
             const likedHistory = new LikedHistory(row.id, row.user_id, row.liked_user_id, row.created_at, row.updated_at);
             return likedHistory;
@@ -745,15 +744,15 @@ export async function getLikedHistoryDb(likedMeUserId, userId){
 
 async function addUserBlocked(userBlocked, isBlocked){
     try{
-        const row = await db.get('SELECT * FROM user_blockeds WHERE user_id = ? AND blocked_user_id = ?;', [userBlocked.userId, userBlocked.blockedUserId]);
+        const row = await db.get("SELECT * FROM user_blockeds WHERE user_id = ? AND blocked_user_id = ?;", [userBlocked.userId, userBlocked.blockedUserId]);
         if (isBlocked){
             if (!row){
-                await db.run('INSERT INTO user_blockeds(user_id, blocked_user_id) values(?,?);', [userBlocked.userId, userBlocked.blockedUserId]);
+                await db.run("INSERT INTO user_blockeds(user_id, blocked_user_id) values(?,?);", [userBlocked.userId, userBlocked.blockedUserId]);
             }
         }
         else{
             if (row){
-                await db.run('DELETE FROM user_blockeds WHERE user_id = ? AND blocked_user_id = ?;', [userBlocked.userId, userBlocked.blockedUserId]);
+                await db.run("DELETE FROM user_blockeds WHERE user_id = ? AND blocked_user_id = ?;", [userBlocked.userId, userBlocked.blockedUserId]);
             }
         }
     }catch(err){
@@ -833,15 +832,15 @@ async function getLikedMeListDb(userId) {
 
 async function addUserFaked(userFaked, isFaked){
     try{
-        const row = await db.get('SELECT * FROM user_fakeds WHERE user_id = ? AND faked_user_id = ?;', [userFaked.userId, userFaked.fakedUserId]);
+        const row = await db.get("SELECT * FROM user_fakeds WHERE user_id = ? AND faked_user_id = ?;", [userFaked.userId, userFaked.fakedUserId]);
         if (isFaked){
             if (!row){
-                await db.run('INSERT INTO user_fakeds(user_id, faked_user_id) values(?,?);', [userFaked.userId, userFaked.fakedUserId]);
+                await db.run("INSERT INTO user_fakeds(user_id, faked_user_id) values(?,?);", [userFaked.userId, userFaked.fakedUserId]);
             }
         }
         else{
             if (row){
-                await db.run('DELETE FROM user_fakeds WHERE user_id = ? AND faked_user_id = ?;', [userFaked.userId, userFaked.fakedUserId]);
+                await db.run("DELETE FROM user_fakeds WHERE user_id = ? AND faked_user_id = ?;", [userFaked.userId, userFaked.fakedUserId]);
             }
         }
     }catch(err){
@@ -857,7 +856,7 @@ export function calculateAge(dateOfBirth) {
 
     let age = today.getFullYear() - birthDate.getFullYear();
 
-    // Check if the birthday hasn't happened yet this year
+    // Check if the birthday hasn"t happened yet this year
     const monthDiff = today.getMonth() - birthDate.getMonth();
     const dayDiff = today.getDate() - birthDate.getDate();
 
@@ -871,7 +870,7 @@ export function calculateAge(dateOfBirth) {
 
 export async function getUserBlocked(userId, blockdUserId){
     try{
-        const row = await db.get('SELECT * FROM user_blockeds WHERE user_id = ? AND blocked_user_id = ?;', [userId, blockdUserId]);
+        const row = await db.get("SELECT * FROM user_blockeds WHERE user_id = ? AND blocked_user_id = ?;", [userId, blockdUserId]);
         if(row){
             const userBlocked = new UserBlocked(row.id, row.user_id, row.blocked_user_id, row.created_at, row.updated_at);
             return userBlocked;
@@ -946,8 +945,8 @@ export const exportUserData = async (req, res) => {
             exported_at: new Date().toISOString()
         };
 
-        res.setHeader('Content-Type', 'application/json');
-        res.setHeader('Content-Disposition', `attachment; filename=matcha_data_${user.username}.json`);
+        res.setHeader("Content-Type", "application/json");
+        res.setHeader("Content-Disposition", `attachment; filename=matcha_data_${user.username}.json`);
         res.status(200).json(fullData);
 
     } catch (err) {

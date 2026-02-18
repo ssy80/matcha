@@ -1,7 +1,7 @@
-import fs from 'fs/promises';
-import dotenv from 'dotenv';
+import fs from "fs/promises";
+import dotenv from "dotenv";
 import crypto from "crypto";
-import path from 'path';
+import path from "path";
 
 
 dotenv.config();
@@ -15,14 +15,14 @@ export class PictureUtil{
     static async savePicture(picture){
 
         // Check if it's an object
-        if (typeof picture !== 'object' || picture === null) return null;
+        if (typeof picture !== "object" || picture === null) return null;
         
         // Check required properties exist
-        if (!picture.hasOwnProperty('base64_image')) return null;
-        if (!picture.hasOwnProperty('isProfilePicture')) return null;
+        if (!picture.hasOwnProperty("base64_image")) return null;
+        if (!picture.hasOwnProperty("isProfilePicture")) return null;
 
-        if (typeof picture.base64_image !== 'string') return null;
-        if (typeof picture.isProfilePicture !== 'number') return null;
+        if (typeof picture.base64_image !== "string") return null;
+        if (typeof picture.isProfilePicture !== "number") return null;
 
         const base64Data = picture.base64_image;
         const isProfilePicture = picture.isProfilePicture;
@@ -32,20 +32,20 @@ export class PictureUtil{
         }
         const imageType = matches[1].toLowerCase();
 
-        const allowedTypes = ['jpeg', 'jpg', 'png'];
+        const allowedTypes = ["jpeg", "jpg", "png"];
         if (!allowedTypes.includes(imageType)) {
             return null;
         }
 
         const base64Image = matches[2];
         const randomBytes = crypto.randomBytes(16);
-        const randomName = randomBytes.toString('hex');
+        const randomName = randomBytes.toString("hex");
 
         const uploadPath = path.join(process.cwd(), IMAGE_DIR);
         const filename = `${randomName}.${imageType}`;
         const filePath = path.join(uploadPath, filename);
 
-        const imageBuffer = Buffer.from(base64Image, 'base64');
+        const imageBuffer = Buffer.from(base64Image, "base64");
 
         if (imageBuffer.length > MAX_SIZE) {
             return null;

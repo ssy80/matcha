@@ -1,11 +1,8 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { useEffect, useState, useRef } from 'react';
-import api from '../api/axios';
-//import '../App.css';
-import { requestLocationPermission } from '../utils/gpsHelper';
-//import { getPublicIP } from '../utils/gpsHelper';
-
-import { Button } from "@/components/ui/button"
+import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState, useRef } from "react";
+import api from "@/api/axios";
+import { requestLocationPermission } from "@/utils/gpsHelper";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -13,19 +10,19 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   Sheet,
   SheetTrigger,
   SheetContent,
-} from "@/components/ui/sheet"
-
+} from "@/components/ui/sheet";
+import { formatMessageTime } from "@/utils/timeHelper";
 
 
 // Interface matching the Backend "Event" model + "from_username"
 interface AppEvent {
     id: number;
-    event_type: 'liked_me' | 'viewed_me' | 'connected' | 'disconnected' | 'new_message' | 'unliked_me';
+    event_type: "liked_me" | "viewed_me" | "connected" | "disconnected" | "new_message" | "unliked_me";
     from_user_id: number;
     from_username: string;
     created_at: string;
@@ -34,49 +31,44 @@ interface AppEvent {
 const Navbar = () => {
     const navigate = useNavigate();
     const [notifications, setNotifications] = useState<AppEvent[]>([]);
-    //const [showDropdown, setShowDropdown] = useState(false);
+    const [mobileOpen, setMobileOpen] = useState(false);
 
+    const pollInterval = useRef<number | null>(null);
 
     useEffect(() => {
         const initLocation = async () => {
             const location = await requestLocationPermission();
 
             if (location) {
-                console.log("Location:", location.latitude, location.longitude);
                 try{
                     await api.post("/location/update", location);
-                } catch (err) {
-                    console.error("Failed to update location:", err);
+                } catch (err: any) {
+                    const message = err?.response?.data?.error || "Unknown error";
+                    console.error(`Error failed to update location: ${message}`);
+                    alert(`Error failed to update location: ${message}`);
                 }
             } else{
-                navigate('/location/edit');
-            } /*else{
-                console.log("Location permission not granted or unavailable. use ip-based location.");
-                const ip = await getPublicIP();
-                if (ip) {
-                    console.log("🌐 IP:", ip);
-                    try{
-                        await api.post("/location/update", { ip });
-                    } catch (err) {
-                        console.error("Failed to update IP location:", err);
-                    }
-                }
-            }*/
+                //check got location already?
+                const res = await api.get("/location/get");
+                const locationData = res.data.success ? res.data.location : null
+                if (locationData.neighborhood === "unknown")
+                    navigate("/location/edit");
+            } 
         };
+
         initLocation();
     }, []);
 
-    // Polling Ref
-    const pollInterval = useRef<number | null>(null);
-
     const handleLogout = async () => {
         try {
-            await api.post('/users/logout');
-        } catch (err) {
-            console.warn("Logout failed on server, clearing local session anyway.");
+            await api.post("/users/logout");
+        } catch (err: any) {
+            const message = err?.response?.data?.error || "Unknown error";
+            console.error(`Error failed to logout: ${message}`);
+            alert(`Error failed to logout: ${message}`);
         } finally {
-            localStorage.removeItem('token');
-            navigate('/');
+            localStorage.removeItem("token");
+            navigate("/");
         }
     };
 
@@ -84,16 +76,17 @@ const Navbar = () => {
     useEffect(() => {
         const fetchEvents = async () => {
             try {
-                const res = await api.get('/event/get');
+                const res = await api.get("/event/get");
 
                 if (res.data.success && res.data.events.length > 0) {
                     const newEvents = res.data.events;
-                    console.log("🔔 New Notification:", newEvents);
-                    setNotifications(prev => [...newEvents, ...prev]);    
+                    //console.log("🔔 New Notification:", newEvents);
+                    setNotifications(prev => [...newEvents, ...prev]);
                 }
 
-            } catch (err) {
-                console.error("Error fetching events:", err);
+            } catch (err: any) {
+                const message = err?.response?.data?.error || "Unknown error";
+                console.error(`Error fetching events: ${message}`);
             }
         };
 
@@ -102,24 +95,24 @@ const Navbar = () => {
         return () => {
             if (pollInterval.current) clearInterval(pollInterval.current);
         };
+
     }, []);
 
     // Helper to format messages
     const getNotificationText = (evt: AppEvent) => {
         switch(evt.event_type) {
-            case 'liked_me': return `❤️ ${evt.from_username} liked you!`;
-            case 'viewed_me': return `👀 ${evt.from_username} viewed your profile.`;
-            case 'connected': return `💞 You matched with ${evt.from_username}!`;
-            case 'disconnected': return `💔 Connection lost with ${evt.from_username}.`;
-            case 'new_message': return `💌 Message from ${evt.from_username}`;
+            case "liked_me": return `❤️ ${evt.from_username} liked you!`;
+            case "viewed_me": return `👀 ${evt.from_username} viewed your profile.`;
+            case "connected": return `💞 You matched with ${evt.from_username}!`;
+            case "disconnected": return `💔 Connection lost with ${evt.from_username}.`;
+            case "new_message": return `💌 Message from ${evt.from_username}`;
             default: return `New interaction from ${evt.from_username}`;
         }
     };
 
     const handleNotificationClick = (evt: AppEvent) => {
-        //setShowDropdown(false);
-        if (evt.event_type === 'new_message') {
-            navigate('/chat');
+        if (evt.event_type === "new_message") {
+            navigate("/chat");
         } else {
             navigate(`/profile/${evt.from_user_id}`);
         }
@@ -139,8 +132,8 @@ const Navbar = () => {
 
             {/* Desktop Nav */}
             <nav className="ml-8 hidden items-center gap-6 md:flex">
-                <Link to="/home" className="text-sm text-muted-foreground hover:text-foreground">
-                Browsing
+                <Link to="/search" className="text-sm text-muted-foreground hover:text-foreground">
+                Search Profiles
                 </Link>
                 <Link to="/search/suggested" className="text-sm text-muted-foreground hover:text-foreground">
                 Suggested Profiles
@@ -203,7 +196,7 @@ const Navbar = () => {
                             {getNotificationText(notif)}
                         </span>
                         <span className="text-xs text-muted-foreground">
-                            {new Date(notif.created_at).toLocaleTimeString()}
+                            {formatMessageTime(notif.created_at)}
                         </span>
                         </DropdownMenuItem>
                     ))
@@ -221,7 +214,7 @@ const Navbar = () => {
                 </Button>
 
                 {/* Mobile menu */}
-                <Sheet>
+                <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
                 <SheetTrigger asChild>
                     <Button size="icon" variant="ghost" className="md:hidden">
                     ☰
@@ -229,10 +222,11 @@ const Navbar = () => {
                 </SheetTrigger>
 
                 <SheetContent side="right" className="flex flex-col gap-4 pt-10">
-                    <Link to="/home">Browsing</Link>
-                    <Link to="/chat">Chat</Link>
-                    <Link to="/history">Activity</Link>
-                    <Link to="/profile">My Profile</Link>
+                    <Link to="/search/" onClick={() => setMobileOpen(false)}>Search Profiles</Link>
+                    <Link to="/search/suggested" onClick={() => setMobileOpen(false)}>Suggested Profiles</Link>
+                    <Link to="/chat" onClick={() => setMobileOpen(false)}>Chat</Link>
+                    <Link to="/history" onClick={() => setMobileOpen(false)}>Activity</Link>
+                    <Link to="/profile" onClick={() => setMobileOpen(false)}>My Profile</Link>
 
                     <Button onClick={handleLogout} variant="destructive" className="cursor-pointer">
                     Logout

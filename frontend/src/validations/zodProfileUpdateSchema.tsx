@@ -2,8 +2,7 @@ import { z } from "zod"
 
 const base64ImageRegex = /^data:image\/(png|jpg|jpeg);base64,[A-Za-z0-9+/=]+$/
 
-//const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png"];
-const MAX_IMAGE_SIZE = 2 * 1024 * 1024; 
+export const MAX_IMAGE_SIZE = 2 * 1024 * 1024; 
 
 const getBase64Size = (base64: string) => {
     const base64Data = base64.split(",")[1];

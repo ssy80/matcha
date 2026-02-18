@@ -1,9 +1,11 @@
+
 #root {
   width: 100%;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  height: 100%;
+  margin: 0;
+  padding: 0;
 }
+
 
 .logo {
   height: 6em;
@@ -48,10 +50,10 @@
   padding: 15px 30px;
   background-color: #1a1a1a;
   border-bottom: 1px solid #333;
-  margin-bottom: 20px;
+  margin-bottom: 0;
   color: #fff;
 
-  position: sticky;
+  
   top: 0;
   z-index: 1000;
   width: 100%;
@@ -206,4 +208,8 @@
 
 .apply-btn:hover {
   background-color: #c2185b;
+}
+
+html, body {
+  height: 100%;
 }

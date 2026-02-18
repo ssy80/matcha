@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import api from "../api/axios";
+import api from "@/api/axios";
 import { useNavigate } from "react-router-dom";
 import {
     Card,
@@ -40,7 +40,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { validInterestValues } from "@/validations/zodProfileUpdateSchema";
 import { ClipLoader } from "react-spinners";
-import { formToSearchParams, searchParamsToForm } from "../utils/homeHelper";
+import { formToSearchParams, searchParamsToForm } from "@/utils/searchHelper";
 import { useSearchParams } from "react-router-dom";
 import { type UserProfile } from "./ViewProfile";
 
@@ -61,11 +61,12 @@ interface SearchUser {
 export type SortOption = "age" | "distance" | "fame" | "tags";
 export type SortOrder = "asc" | "desc";
 
-export default function Home() {
+export default function Search() {
 
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [users, setUsers] = useState<SearchUser[]>([]);
     const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
 
     const navigate = useNavigate();
 
@@ -92,11 +93,11 @@ export default function Home() {
 
         const fetchLoginProfile = async () => {
             try{
-                const res = await api.get('/profile/me');
+                const res = await api.get("/profile/me");
                 setProfile(res.data.success ? res.data.profile : null);
             }catch(err: any){
                 const message = err?.response?.data?.error || "Unknown error";
-                console.error("Error fetching login profile: ", message);
+                console.error(`Error fetching login profile: ${message}`);
                 setError(`Error fetching login profile: ${message}`);
             }
         }
@@ -111,10 +112,11 @@ export default function Home() {
         if (sortOption) params.set("sort", sortOption);
         if (sortOrder) params.set("order", sortOrder);
 
-        navigate({ pathname: "/home", search: params.toString() });
+        navigate({ pathname: "/search", search: params.toString() });
     }
 
     useEffect(() => {
+
         if (!searchParams.toString()) 
             return;
 
@@ -124,12 +126,15 @@ export default function Home() {
 
         const fetchSearch = async () => {
             try {
+                setLoading(true);
                 const res = await api.post("/search/search_profiles", criteria);
                 setUsers(res.data.success ? res.data.profiles : []);
             } catch (err: any) {
                 const message = err?.response?.data?.error || "Unknown error";
-                console.error("Error fetching matches: ", message);
+                console.error(`Error fetching matches: ${message}`);
                 setError(`Error fetching matches: ${message}`);
+            } finally {
+                setLoading(false);
             }
         };
 
@@ -178,21 +183,20 @@ export default function Home() {
     }
 
     if (error) {
-        return <div className="mt-4 text-red-500">Error: {error}</div>;
+        return <div className="mt-4 text-center text-red-500">Error: {error}</div>
     }
 
     if (profile?.gender === null){
         return (
-            <>
-            <div className="mt-4 text-red-500">Please complete your Profile by clicking My Profile and Edit Profile.</div>
-            </>
+            <div className="mt-4 text-center text-red-500">Please complete your Profile by clicking My Profile and Edit Profile.</div>
         );
     }
-    
+
+
     return (
         <div className="mx-auto max-w-7xl px-4 py-6">
         <h1 className="mb-6 text-center text-3xl font-bold">
-            Browse Profile
+            Search Profiles
         </h1>
 
         <Form {...form}>
@@ -355,15 +359,14 @@ export default function Home() {
 
             </CardContent>
 
-            <CardFooter className="flex justify-end">
-                <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting && <ClipLoader size={16} color="black" className="mr-2" />}
+            <CardFooter className="flex justify-center">
+                <Button type="submit" disabled={loading} className="flex items-center gap-2">
+                    {loading && <ClipLoader size={16} color="black" loading={loading}/>}
                     Search
                 </Button>
             </CardFooter>
            
             </Card>
-
         </form>
         </Form>
 
@@ -414,6 +417,15 @@ export default function Home() {
             </CardContent>
         </Card>
 
+        {isSubmitting && (
+            <div className="mt-4 text-center">Searching...</div>
+        )}
+
+        {!isSubmitting && users.length === 0 && searchParams.size !== 0 && (
+            <div className="mt-4 text-center">
+            No users matching search criteria.
+            </div>
+        )}
 
         {/* USER GRID */}
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">

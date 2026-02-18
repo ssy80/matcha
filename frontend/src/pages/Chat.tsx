@@ -1,6 +1,15 @@
 import { useEffect, useState, useRef } from "react";
-import api from '../api/axios';
+import api from "@/api/axios";
 import { useNavigate } from "react-router-dom";
+import {
+  CardHeader,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { formatMessageTime } from "@/utils/timeHelper";
+
 
 interface ChatUser {
     id: number;
@@ -16,7 +25,7 @@ interface Message {
     to_user_id: number;
     message: string;
     created_at: string;
-    message_status?: 'new' | 'read' | 'delivered';
+    message_status?: "new" | "read" | "delivered";
 }
 
 export default function Chat() {
@@ -26,52 +35,55 @@ export default function Chat() {
     const [newMessage, setNewMessage] = useState<string>("");
     const [myUserId, setMyUserId] = useState<number | null>(null);
 
-    // Responsive State
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+    const [error, setError] = useState("");
 
     const pollInterval = useRef<number | null>(null);
     const messagesEndRef = useRef<HTMLDivElement | null>(null);
     const navigate = useNavigate();
 
-    // 0. Handle Resize for Mobile
+    const scrollAreaRef = useRef<HTMLDivElement>(null);
+
     useEffect(() => {
         const handleResize = () => setIsMobile(window.innerWidth < 768);
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
     }, []);
 
-    // 1. Initial Load
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
-                const userResponse = await api.get("/profile/me");
-                if (userResponse.data.success) {
-                    setMyUserId(userResponse.data.profile.id);
-                }
-                const matchesResponse = await api.get("/profile/matches");
-                if (matchesResponse.data.success) {
-                    setMatches(matchesResponse.data.matches);
-                }
-            } catch (error) {
-                console.error("Failed to load chat init data", error);
+                let response = await api.get("/profile/me");
+                setMyUserId(response.data.success ? response.data.profile.id : null);
+
+                response = await api.get("/profile/matches");
+                setMatches(response.data.success ? response.data.matches : []);
+
+            } catch (err: any) {
+                const message = err?.response?.data?.error || "Unknown error";
+                console.error(`Error failed to load chat init data: ${message}`);
+                setError(`Error failed to load chat init data: ${message}`);
+                
             }
         };
         fetchInitialData();
     }, []);
 
-    // 2. Load History & Start Polling
+    //Load History & Start Polling
     useEffect(() => {
-        if (!activeUser) return;
+        if (!activeUser)
+            return;
 
         const loadHistory = async () => {
             try {
-                const historyResponse = await api.get(`/chat/history/${activeUser.id}`);
-                if (historyResponse.data.success) {
-                    setMessages(historyResponse.data.messages);
-                    setTimeout(scrollToBottom, 100);
-                }
-            } catch (error) {
-                console.error("Failed to load history", error);
+                const response = await api.get(`/chat/history/${activeUser.id}`);
+                setMessages(response.data.success ? response.data.messages : []);
+                setTimeout(scrollToBottom, 100);
+
+            } catch (err: any) {
+                const message = err?.response?.data?.error || "Unknown error";
+                console.error(`Error failed to load history: ${message}`);
+                alert(`Error failed to load history: ${message}`);
             }
         };
 
@@ -81,19 +93,23 @@ export default function Chat() {
         return () => stopPolling();
     }, [activeUser]);
 
-    // 3. Polling Logic
+    //Polling Logic
     const startPolling = () => {
-        if (pollInterval.current) clearInterval(pollInterval.current);
+        if (pollInterval.current)
+            clearInterval(pollInterval.current);
 
         pollInterval.current = window.setInterval(async () => {
-            if (!activeUser) return;
+            if (!activeUser) 
+                return;
+            
             try {
                 const response = await api.get(`/chat/history/${activeUser.id}`);
-                if (response.data.success) {
-                    setMessages(response.data.messages);
-                }
-            } catch (error) {
-                console.error("Polling error", error);
+                setMessages(response.data.success ? response.data.messages : []);
+
+            } catch (err: any) {
+                const message = err?.response?.data?.error || "Unknown error";
+                console.error(`Error failed to get chat message: ${message}`);
+                alert(`Error failed to get chat message: ${message}`);
             }
         }, 3000);
     };
@@ -105,18 +121,11 @@ export default function Chat() {
         }
     };
 
-    // 4. Timezone Fix Helper
-    const formatMessageTime = (dateString: string) => {
-        if (!dateString) return '';
-        let utcString = dateString;
-        if (!dateString.endsWith('Z')) utcString += 'Z';
-        return new Date(utcString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    };
-
-    // 5. Send Message
-    const handleSend = async (e: React.FormEvent) => {
+    // Send Message
+    const handleSend = async (e: React.SyntheticEvent) => {
         e.preventDefault();
-        if (!newMessage.trim() || !activeUser || !myUserId) return;
+        if (!newMessage.trim() || !activeUser || !myUserId)
+            return;
 
         const tempMessage: Message = {
             id: Date.now(),
@@ -124,21 +133,22 @@ export default function Chat() {
             to_user_id: activeUser.id,
             message: newMessage.trim(),
             created_at: new Date().toISOString(),
-            message_status: 'new'
+            message_status: "new"
         };
 
         setMessages((prev) => [...prev, tempMessage]);
         setNewMessage("");
-        setTimeout(scrollToBottom, 50);
 
         try {
-            await api.post("/chat/send", {
+            const payload = {
                 to_user_id: activeUser.id,
                 message: tempMessage.message,
-            });
-        } catch (error) {
-            console.error("Send failed", error);
-            alert("Failed to send message");
+            }
+            await api.post("/chat/send", payload);
+        } catch (err: any) {
+            const message = err?.response?.data?.error || "Unknown error";
+            console.error(`Error failed to send chat message: ${message}`);
+            alert(`Error failed to send chat message: ${message}`);
         }
     };
 
@@ -148,135 +158,176 @@ export default function Chat() {
         }
     };
 
+    useEffect(() => {
+        if (!scrollAreaRef.current)
+            return;
+
+        const viewport = scrollAreaRef.current.querySelector(
+            "[data-radix-scroll-area-viewport]"
+        ) as HTMLDivElement | null;
+
+        if (!viewport)
+            return;
+
+        const distanceFromBottom = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight;
+
+        const NEAR_BOTTOM_PX = 240;
+
+        if (distanceFromBottom < NEAR_BOTTOM_PX) {
+            viewport.scrollTop = viewport.scrollHeight;
+        }
+    }, [messages]);
+
+    if (error) {
+        return <div className="mt-4 text-center text-red-500">Error: {error}</div>
+    }
+
     return (
-        <div style={{ 
-            display: 'flex', 
-            height: 'calc(100vh - 80px)', 
-            maxWidth: '1000px', 
-            margin: '20px auto', 
-            border: '1px solid #444', 
-            borderRadius: '8px', 
-            overflow: 'hidden', 
-            background: '#222', 
-            color: '#fff',
-            width: isMobile ? '95%' : '100%' 
-        }}>
-            
-            {/* LEFT COLUMN: Matches List if not Mobile Mode or (is Mobile AND no active user)*/}
+        
+        <div className="mx-auto mt-4 flex h-full max-w-6xl rounded-xl border bg-background">
+
+            {/* LEFT: MATCHES LIST */}
             {(!isMobile || !activeUser) && (
-                <div style={{ 
-                    width: isMobile ? '100%' : '30%', 
-                    borderRight: isMobile ? 'none' : '1px solid #444', 
-                    overflowY: 'auto', 
-                    background: '#1a1a1a' 
-                }}>
-                    <h3 style={{ padding: '15px', margin: 0, borderBottom: '1px solid #444' }}>Matches</h3>
-                    {matches.length === 0 && <p style={{ padding: '15px', color: '#777' }}>No matches yet.</p>}
-                    
-                    {matches.map(user => (
-                        <div 
-                            key={user.id} 
-                            onClick={() => setActiveUser(user)}
-                            style={{ 
-                                padding: '15px', 
-                                cursor: 'pointer', 
-                                background: activeUser?.id === user.id ? '#333' : 'transparent',
-                                borderBottom: '1px solid #333',
-                                display: 'flex', alignItems: 'center', gap: '10px'
-                            }}
-                        >
-                            <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#555', overflow: 'hidden', flexShrink: 0 }}>
-                                {user.picture ? <img src={user.picture} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : null}
-                            </div>
-                            <div>
-                                <div style={{ fontWeight: 'bold' }}>{user.first_name}</div>
-                                <div style={{ fontSize: '0.8em', color: '#888' }}>@{user.username}</div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+            <aside className="w-full md:w-1/3 border-r">
+                <CardHeader className="border-b">
+                <h3 className="text-lg font-semibold">Matches</h3>
+                </CardHeader>
+
+                <ScrollArea className="h-full">
+                {matches.length === 0 && (
+                    <p className="p-4 text-muted-foreground">No matches yet.</p>
+                )}
+
+                {matches.map(user => (
+                    <button
+                    key={user.id}
+                    onClick={() => setActiveUser(user)}
+                    className={`flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-muted transition ${
+                        activeUser?.id === user.id ? "bg-muted" : ""
+                    }`}
+                    >
+                    <Avatar>
+                        <AvatarImage src={user.picture ?? undefined} />
+                        <AvatarFallback>
+                        {user.first_name[0]}
+                        </AvatarFallback>
+                    </Avatar>
+
+                    <div>
+                        <p className="font-medium">{user.first_name}</p>
+                        <p className="text-xs text-muted-foreground">@{user.username}</p>
+                    </div>
+                    </button>
+                ))}
+                </ScrollArea>
+            </aside>
             )}
 
-            {/* RIGHT COLUMN: Chat Area if not Mobile Mode OR (is Mobile AND active user)*/}
+            {/* RIGHT: CHAT PANEL */}
             {(!isMobile || activeUser) && (
-                <div style={{ 
-                    width: isMobile ? '100%' : '70%', 
-                    display: 'flex', 
-                    flexDirection: 'column' 
-                }}>
-                    {activeUser ? (
-                        <>
-                            {/* Header */}
-                            <div style={{ padding: '15px', borderBottom: '1px solid #444', background: '#2a2a2a', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                    {/* Mobile Back Button */}
-                                    {isMobile && (
-                                        <button 
-                                            onClick={() => setActiveUser(null)}
-                                            style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: '1.5em', cursor: 'pointer', padding: '0 5px' }}
-                                        >
-                                            ⬅️
-                                        </button>
-                                    )}
-                                    <h3 style={{ margin: 0 }}>{activeUser.first_name} {activeUser.last_name}</h3>
-                                </div>
-                                <button onClick={() => navigate(`/profile/${activeUser.id}`)} style={{ background: 'transparent', border: '1px solid #666', color: '#ccc', borderRadius: '4px', cursor: 'pointer', padding: '5px 10px' }}>View Profile</button>
-                            </div>
+            <section className="flex w-full md:w-2/3 h-full min-h-0 flex-col">
 
-                            {/* Messages Area */}
-                            <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                {messages.map((msg, idx) => {
-                                    const isMe = msg.from_user_id === myUserId;
-                                    return (
-                                        <div key={idx} style={{ alignSelf: isMe ? 'flex-end' : 'flex-start', maxWidth: '85%' }}>
-                                            <div style={{ 
-                                                background: isMe ? '#E91E63' : '#444', 
-                                                padding: '10px 15px', 
-                                                borderRadius: '15px', 
-                                                borderBottomRightRadius: isMe ? '2px' : '15px',
-                                                borderBottomLeftRadius: isMe ? '15px' : '2px',
-                                                wordWrap: 'break-word'
-                                            }}>
-                                                {msg.message}
-                                            </div>
-                                            <div style={{ fontSize: '0.7em', color: '#666', marginTop: '4px', textAlign: isMe ? 'right' : 'left' }}>
-                                                {formatMessageTime(msg.created_at)}
-                                                {isMe && (
-                                                    <span style={{ marginLeft: '5px', fontWeight: 'bold' }}>
-                                                        {msg.message_status === 'read' ? (
-                                                            <span style={{ color: '#4CAF50' }}>✓✓ Read</span>
-                                                        ) : (
-                                                            <span style={{ color: '#aaa' }}>✓ Delivered</span>
-                                                        )}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                                <div ref={messagesEndRef} />
-                            </div>
-
-                            {/* Input Area */}
-                            <form onSubmit={handleSend} style={{ padding: '15px', borderTop: '1px solid #444', display: 'flex', gap: '10px' }}>
-                                <input 
-                                    value={newMessage}
-                                    onChange={e => setNewMessage(e.target.value)}
-                                    placeholder="Type a message..."
-                                    style={{ flex: 1, padding: '10px', borderRadius: '20px', border: 'none', outline: 'none', background: '#333', color: '#fff' }}
-                                />
-                                <button type="submit" style={{ background: '#E91E63', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '20px', cursor: 'pointer', fontWeight: 'bold' }}>
-                                    Send
-                                </button>
-                            </form>
-                        </>
-                    ) : (
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#666', textAlign: 'center', padding: '20px' }}>
-                            Select a match from the list to start chatting
+                {activeUser ? (
+                <>
+                    {/* HEADER */}
+                    <div className="sticky top-0 z-10 grid w-full grid-cols-[1fr_auto] items-center border-b bg-background px-4 py-3">
+                    <div className="flex min-w-0 items-center gap-3">
+                        {isMobile && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setActiveUser(null)}
+                        >
+                            ←
+                        </Button>
+                        )}
+                        <Avatar>
+                        <AvatarImage src={activeUser.picture ?? undefined} />
+                        <AvatarFallback>
+                            {activeUser.first_name[0]}
+                        </AvatarFallback>
+                        </Avatar>
+                        <div>
+                        <p className="font-semibold">
+                            {activeUser.first_name} {activeUser.last_name}
+                        </p>
                         </div>
-                    )}
+                    </div>
+
+                    <Button
+                        variant="outline"
+                        className="shrink-0"
+                        size="sm"
+                        onClick={() => navigate(`/profile/${activeUser.id}`)}
+                    >
+                        View Profile
+                    </Button>
+                    </div>
+
+                    {/* MESSAGES */}
+                    <ScrollArea 
+                    ref={scrollAreaRef}
+                    className="flex-1 min-h-0 px-4 py-4"
+                    >
+                    <div className="flex flex-col gap-3">
+                        {messages.map((msg, idx) => {
+                        const isMe = msg.from_user_id === myUserId;
+
+                        return (
+                            <div
+                            key={idx}
+                            className={`flex ${isMe ? "justify-end" : "justify-start"}`}
+                            >
+                            <div
+                                className={`max-w-[75%] rounded-2xl px-4 py-2 text-sm ${
+                                isMe
+                                    ? "bg-primary text-primary-foreground"
+                                    : "bg-muted"
+                                }`}
+                            >
+                                {msg.message}
+                                <div
+                                className={`mt-1 text-[10px] text-muted-foreground ${
+                                    isMe ? "text-right" : ""
+                                }`}
+                                >
+                                {formatMessageTime(msg.created_at)}
+                                {isMe && (
+                                    <span className="ml-1">
+                                    {msg.message_status === "read"
+                                        ? "✓✓"
+                                        : "✓"}
+                                    </span>
+                                )}
+                                </div>
+                            </div>
+                            </div>
+                        );
+                        })}
+                        <div ref={messagesEndRef} />
+                    </div>
+                    </ScrollArea>
+
+                    {/* INPUT */}
+                    <form
+                    onSubmit={handleSend}
+                    className="flex gap-2 border-t px-4 py-3"
+                    >
+                    <Input
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        placeholder="Type a message..."
+                    />
+                    <Button type="submit">Send</Button>
+                    </form>
+                </>
+                ) : (
+                <div className="flex flex-1 items-center justify-center text-muted-foreground">
+                    Select a match to start chatting
                 </div>
+                )}
+            </section>
             )}
         </div>
-    );
+        );
 }

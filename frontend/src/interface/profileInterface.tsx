@@ -2,9 +2,6 @@ import type { ValidInterestValues } from "@/validations/zodProfileUpdateSchema";
 import type { ValidGenderValues } from "@/validations/zodProfileUpdateSchema";
 import type { ValidSexualPreferenceValues } from "@/validations/zodProfileUpdateSchema";
 
-//export type Gender = "male" | "female" | "other";
-//export type SexualPreference = "male" | "female" | "bi-sexual";
-
 
 export interface ProfileInterface {
     id: number;

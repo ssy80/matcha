@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import api from "../api/axios";
+import api from "@/api/axios";
 
 
 export default function ActivateUser() {
     const location = useLocation();
     const [message, setMessage] = useState("");
+    const [error, setError] = useState("");
 
     // Extract query params
     const params = new URLSearchParams(location.search);
@@ -24,27 +25,34 @@ export default function ActivateUser() {
 
             }catch(err: any){
                 const message = err?.response?.data?.error || "Unknown error";
-                console.error("Error activate user: ", message);
-                setMessage(`Error activate user: ${message}`);
+                console.error(`Error activate user: ${message}`);
+                setError(`Error activate user: ${message}`);
             }
         }
 
         activateUser();
     },[activationUUID])
 
+
     return (
         <div className="flex min-h-screen items-start justify-center bg-background px-4">
-            <div className="flex max-w-md flex-col items-center text-center gap-4">
+            <div className="flex mt-4 max-w-md flex-col items-center text-center gap-4">
             
                 {/* Title */}
                 <h1 className="mb-2 text-xl font-semibold">
                 🍵 Matcha - Account Activation
                 </h1>
 
-                {/* Message */} 
-                <p className="mb-6 text-lg text-muted-foreground">
+                {/* Message */}
+                {error ? 
+                    <p className="mb-6 text-lg text-red-500">
+                    {error}
+                    </p>
+                    :
+                    <p className="mb-6 text-lg text-muted-foreground">
                     {message}
-                </p>
+                    </p>
+                }
 
                 {/* Back to Landing page */}
                 <Link to="/home" className="text-sm text-primary hover:underline">

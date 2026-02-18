@@ -1,9 +1,9 @@
-import api from '../api/axios';
-import { useNavigate } from 'react-router-dom';
+import api from "@/api/axios";
+import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { forgetPasswordSchema } from '@/validations/zodForgetPasswordSchema';
-import type { ForgetPasswordFormValues } from '@/validations/zodForgetPasswordSchema';
+import { forgetPasswordSchema } from "@/validations/zodForgetPasswordSchema";
+import type { ForgetPasswordFormValues } from "@/validations/zodForgetPasswordSchema";
 import { ClipLoader } from "react-spinners";
 import {
   Form,

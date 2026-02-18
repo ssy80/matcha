@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import api from "../api/axios";
+import api from "@/api/axios";
 import { useNavigate } from "react-router-dom";
 import {
   Card,
@@ -13,9 +13,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Spinner } from "@/components/ui/spinner";
 import { useSearchParams } from "react-router-dom";
-import { type SortOption, type SortOrder } from "./Home";
+import { type SortOption, type SortOrder } from "./Search";
 import { type UserProfile } from "./ViewProfile";
 
 
@@ -45,16 +44,16 @@ export default function Home() {
 
     const sortOption = (searchParams.get("sort") ?? undefined) as SortOption | undefined;
     const sortOrder  = (searchParams.get("order") ?? undefined) as SortOrder | undefined;
-    
+
     useEffect(() => {
     
         const fetchLoginProfile = async () => {
             try{
-                const res = await api.get('/profile/me');
+                const res = await api.get("/profile/me");
                 setProfile(res.data.success ? res.data.profile : null);
             }catch(err: any){
                 const message = err?.response?.data?.error || "Unknown error";
-                console.error("Error fetching login profile: ", message);
+                console.error(`Error fetching login profile: ${message}`);
                 setError(`Error fetching login profile: ${message}`);
             }
         }
@@ -67,12 +66,12 @@ export default function Home() {
         const getSuggestedUsers = async () => {
             setLoading(true);
             try{
-                const res = await api.get('/search/suggested_profiles');
+                const res = await api.get("/search/suggested_profiles");
                 setUsers(res.data.success ? res.data.profiles : []);
             }
             catch (err: any) {
                 const message = err?.response?.data?.error || "Unknown error";
-                console.error("Error fetching suggested users: ", message);
+                console.error(`Error fetching suggested users: ${message}`);
                 setError(`Error fetching suggested users: ${message}`);
             } finally {
                 setLoading(false);
@@ -124,28 +123,25 @@ export default function Home() {
 
     if (loading && users.length === 0){
         return (
-            <>
-            <Spinner/><span>Loading Suggested Users...</span>
-            </> 
+            <div className="mt-4 text-center">Loading Suggested Profiles...</div>
         );
     }
 
     if (error) {
-        return <div className="mt-4 text-red-500">Error: {error}</div>;
+        return <div className="mt-4 text-center text-red-500">Error: {error}</div>
     }
 
+    // check profile is completed.
     if (profile?.gender === null){
         return (
-            <>
-            <div className="mt-4 text-red-500">Please complete your Profile by clicking My Profile and Edit Profile.</div>
-            </>
+            <div className="mt-4 text-center text-red-500">Please complete your Profile by clicking My Profile and Edit Profile.</div>
         );
     }
     
     return (
         <div className="mx-auto max-w-7xl px-4 py-6">
         <h1 className="mb-6 text-center text-3xl font-bold">
-            Suggested People
+            Suggested Profiles
         </h1>
 
         {/* FILTERS */}

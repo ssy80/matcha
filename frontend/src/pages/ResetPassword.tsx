@@ -1,10 +1,9 @@
-import { useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import api from '../api/axios';
+import { useSearchParams, useNavigate } from "react-router-dom";
+import api from "@/api/axios";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { resetPasswordSchema } from "../validations/zodResetPasswordSchema";
-import type { ResetPasswordFormValues } from "../validations/zodResetPasswordSchema";
+import { resetPasswordSchema } from "@/validations/zodResetPasswordSchema";
+import type { ResetPasswordFormValues } from "@/validations/zodResetPasswordSchema";
 import {
   Form,
   FormControl,
@@ -39,16 +38,11 @@ const ResetPassword = () => {
     });
 
     // Get the token from the URL (e.g., ?token=xyz)
-    const token = searchParams.get('reset_uuid');
+    const token = searchParams.get("reset_uuid");
     
-    useEffect(() => {
-        if (token){
-            console.log('Reset token found in URL:', token);
-        }
-    }, [token]);
-
     const onSubmit = async (data: ResetPasswordFormValues) => {
-        if (!token) return
+        if (!token) 
+            return
 
         try {
             const payload = {
@@ -59,6 +53,7 @@ const ResetPassword = () => {
             await api.post("/users/reset_user_password", payload);
             alert("Password reset successful! You can now login.");
             navigate("/login");
+
         } catch (err: any) {
             const message = err?.response?.data?.error || "Unknown error";
             console.error(`Password reset failed: ${message}`);

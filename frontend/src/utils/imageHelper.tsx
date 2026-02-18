@@ -1,4 +1,3 @@
-
 export const imageUrlToBase64 = async (url: string): Promise<string> => {
     const response = await fetch(url);
 

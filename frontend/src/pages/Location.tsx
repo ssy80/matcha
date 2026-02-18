@@ -1,9 +1,9 @@
-import api from '../api/axios';
-import { useNavigate } from 'react-router-dom';
+import api from "@/api/axios";
+import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { manualLocationUpdateSchema } from '@/validations/zodManualLocationUpdateSchema';
-import type { ManualLocationUpdateFormValues } from '@/validations/zodManualLocationUpdateSchema';
+import { manualLocationUpdateSchema } from "@/validations/zodManualLocationUpdateSchema";
+import type { ManualLocationUpdateFormValues } from "@/validations/zodManualLocationUpdateSchema";
 import { ClipLoader } from "react-spinners";
 import {
   Form,
@@ -22,7 +22,7 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import { getPublicIP } from '../utils/gpsHelper';
+import { getPublicIP } from "@/utils/gpsHelper";
 
 
 const Location = () => {

@@ -1,5 +1,5 @@
-import { db } from '../db/database.js';
-import dotenv from 'dotenv';
+import { db } from "../db/database.js";
+import dotenv from "dotenv";
 
 
 dotenv.config();

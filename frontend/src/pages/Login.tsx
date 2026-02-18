@@ -1,10 +1,10 @@
-import api from '../api/axios';
-import { useNavigate } from 'react-router-dom';
-import { Link } from 'react-router-dom';
+import api from "@/api/axios";
+import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { loginSchema } from '../validations/zodLoginSchema';
-import type { LoginFormValues } from '../validations/zodLoginSchema';
+import { loginSchema } from "@/validations/zodLoginSchema";
+import type { LoginFormValues } from "@/validations/zodLoginSchema";
 import {
   Form,
   FormControl,
@@ -39,16 +39,12 @@ const Login = () => {
 
     const onSubmit = async (data: LoginFormValues) => {
         try {
-            const response = await api.post("/users/login", data);
-            const token = response?.data?.token || null;
-
-            if (typeof token !== "string" || token.trim().length === 0) {
-                alert("Login failed: Invalid token received");
-                return;
-            }
-
+            const res = await api.post("/users/login", data);
+            const token = res.data.success ? res.data.token : null
+            
             localStorage.setItem("token", token);
-            navigate("/home");
+            navigate("/search/suggested");
+            
         } catch (err: any) {
             const message = err?.response?.data?.error || "Unknown error";
             console.error(`Login failed: ${message}`);
@@ -108,7 +104,7 @@ const Login = () => {
                 {/* Forgot password */}
                 <div className="text-right">
                     <Link
-                    to="/forget-password"
+                    to="/forget_password"
                     className="text-sm text-muted-foreground underline hover:text-foreground"
                     >
                     Forgot password?

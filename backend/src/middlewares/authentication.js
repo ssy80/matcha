@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import { promisify } from "util";
 import dotenv from "dotenv";
-import { db } from '../db/database.js';
+import { db } from "../db/database.js";
 
 
 dotenv.config();
@@ -12,12 +12,12 @@ const jwtVerifyAsync = promisify(jwt.verify); //wrap the callback nature of jwt.
 
 export const authenticateToken = async (req, res, next) => {
     const authorization = req.headers.authorization;
-    if (!authorization || !authorization.startsWith('Bearer ')) {
+    if (!authorization || !authorization.startsWith("Bearer ")) {
         res.status(401).json({"success": false, "error": "invalid authorization format"});
         return;
     }
 
-    const jwtToken = authorization.split(' ')[1];
+    const jwtToken = authorization.split(" ")[1];
     if (!jwtToken){
         res.status(401).json({"success": false, "error": "no token provided"});
         return;
@@ -47,12 +47,12 @@ export const authenticateToken = async (req, res, next) => {
 
 async function updateUserOnline(userId) {
     try {
-        const row = await db.get('SELECT 1 FROM user_onlines WHERE user_id = ?', [userId]);
+        const row = await db.get("SELECT 1 FROM user_onlines WHERE user_id = ?", [userId]);
         
         if (row) {
-            await db.run('UPDATE user_onlines SET is_online = 1, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?', [userId]);
+            await db.run("UPDATE user_onlines SET is_online = 1, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?", [userId]);
         } else {
-            await db.run('INSERT INTO user_onlines (user_id, is_online, created_at, updated_at) VALUES (?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)', [userId]);
+            await db.run("INSERT INTO user_onlines (user_id, is_online, created_at, updated_at) VALUES (?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)", [userId]);
         }
     } catch (err) {
         console.error("error updateUserOnline: ", err);

@@ -1,9 +1,9 @@
-import { db } from '../db/database.js';
-import { Validation } from '../utils/validationUtils.js';
-import dotenv from 'dotenv';
-import { getUserById} from './userDbService.js';
-import { getUserLocationByUserId } from '../services/locationService.js';
-import { getTotalUsers, getStars, getUserBlocked, getUserInterestsByUserId } from '../services/profileService.js';
+import { db } from "../db/database.js";
+import { Validation } from "../utils/validationUtils.js";
+import dotenv from "dotenv";
+import { getUserById} from "./userDbService.js";
+import { getUserLocationByUserId } from "../services/locationService.js";
+import { getTotalUsers, getStars, getUserBlocked, getUserInterestsByUserId } from "../services/profileService.js";
 
 
 dotenv.config();
@@ -204,7 +204,7 @@ export const searchProfiles = async (req, res) =>{
 
         searchProfiles.forEach(profile => {
             profile.distance_km = parseFloat(profile.distance_km.toFixed(2));
-            profile.interests = profile.interests.split(',');
+            profile.interests = profile.interests.split(",");
             const stars = getStars(totalUsers, profile.liked_count);
             profile.fame_rating = {"stars": stars, "liked_count": profile.liked_count};
             if (profile.profile_picture){
@@ -251,19 +251,29 @@ export const getSuggestedProfiles = async (req, res) =>{
 
         suggestedProfiles.forEach(profile => {
             profile.distance_km = parseFloat(profile.distance_km.toFixed(2));
-            profile.interests = profile.interests.split(',');
+            profile.interests = profile.interests.split(",");
             const stars = getStars(totalUsers, profile.liked_count);
             profile.fame_rating = {"stars":stars, "liked_count": profile.liked_count};
             if (profile.profile_picture){
                 profile.profile_picture = `${IMAGE_URL}${profile.profile_picture}`;
             }
+
+            // Match Score Logic
+            const distScore = Math.max(0, 100 - profile.distance_km) * 100;
+            const tagScore = (profile.num_shared_interests || 0) * 10;
+            const fameScore = stars * 5;
+            profile.match_score = distScore + tagScore + fameScore;
         });
 
-        suggestedProfiles.sort((a, b) => 
+        /*suggestedProfiles.sort((a, b) => 
             a.distance_km - b.distance_km || 
             b.num_shared_interest - a.num_shared_interest || 
             b.fame_rating.stars - a.fame_rating.stars
+        );*/
+        suggestedProfiles.sort((a, b) => 
+            b.match_score - a.match_score 
         );
+
         res.status(200).json({"success": true, "profiles": suggestedProfiles});
     }catch(err){
         console.error("error getSuggestedProfiles: ", err);

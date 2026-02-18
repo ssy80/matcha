@@ -2,7 +2,7 @@ export class Validation{
 
     static isEmail(value)
     {
-        if (typeof value !== 'string') return false;
+        if (typeof value !== "string") return false;
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return emailRegex.test(value.trim());
@@ -10,7 +10,7 @@ export class Validation{
 
     static isLengthBetween(value, min, max)
     {
-        if (typeof value !== 'string') return false;
+        if (typeof value !== "string") return false;
 
         const len = String(value.trim()).length;
         return (len >= min && len <= max);
@@ -18,7 +18,7 @@ export class Validation{
 
     static isAlpha(value)
     {
-        if (typeof value !== 'string') return false;
+        if (typeof value !== "string") return false;
 
         const alphaRegex = /^[A-Za-z]+$/;
         return alphaRegex.test(value.trim());
@@ -26,7 +26,7 @@ export class Validation{
 
     static isAlphaNumeric(value)
     {
-        if (typeof value !== 'string') return false;
+        if (typeof value !== "string") return false;
     
         const alphaNumericRegex = /^[A-Za-z0-9]+$/;
         return alphaNumericRegex.test(value.trim());
@@ -35,7 +35,7 @@ export class Validation{
     /* Passwords criteria: 6-12 (1 upper, 1 lower, 1 number, 1 special char)*/
     static isValidPassword(value)
     {
-        if (typeof value !== 'string') return false;
+        if (typeof value !== "string") return false;
         
         if (value.length < 6 || value.length > 12) {
             return false;
@@ -57,11 +57,11 @@ export class Validation{
         }
 
         // Check for at least one special character
-        if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(value))
+        if (!/[!@#$%^&*()_+\-=\[\]{};":"\\|,.<>\/?]/.test(value))
         {
             return false;
         }
-        const commonWords = ['password', '123456', 'qwerty', 'admin', 'welcome', 'matcha', 'login', 'user'];
+        const commonWords = ["password", "123456", "qwerty", "admin", "welcome", "matcha", "login", "user"];
         const lowerValue = value.toLowerCase();
         for (const word of commonWords) {
             if (lowerValue.includes(word)) {
@@ -72,28 +72,28 @@ export class Validation{
     }
 
     static isValidGender(gender){
-        if (typeof gender !== 'string')
+        if (typeof gender !== "string")
             return false;
 
-        const validValues = ['male', 'female', 'other'];
+        const validValues = ["male", "female", "other"];
 
         return validValues.includes(gender);
     }
 
     static isValidSexualPreference(preference){
-        if (typeof preference !== 'string') 
+        if (typeof preference !== "string") 
             return false;
 
-        const validValues = ['male', 'female', 'bi-sexual'];
+        const validValues = ["male", "female", "bi-sexual"];
         
         return validValues.includes(preference);
     }
 
     static isValidInterest(interest){
-        if (typeof interest !== 'string') 
+        if (typeof interest !== "string") 
             return false;
 
-        const validValues = ['#music', '#movie', '#gym', '#swim', '#jog', '#cycle', '#animal','#vegan', '#dinner', '#travel', '#dance'];
+        const validValues = ["#music", "#movie", "#gym", "#swim", "#jog", "#cycle", "#animal","#vegan", "#dinner", "#travel", "#dance"];
         
         return validValues.includes(interest);
     }
@@ -151,7 +151,7 @@ export class Validation{
         if (dob > today) 
             return false;
 
-        const [year, month, day] = dateOfBirth.split('-').map(Number);
+        const [year, month, day] = dateOfBirth.split("-").map(Number);
         if (month < 1 || month > 12) 
             return false;
         if (day < 1 || day > 31) 

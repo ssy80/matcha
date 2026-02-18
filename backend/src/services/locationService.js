@@ -1,8 +1,8 @@
-import { db } from '../db/database.js';
-import dotenv from 'dotenv';
-import axios from 'axios';
-import { UserLocation } from '../models/user_location.js';
-import { Validation } from '../utils/validationUtils.js';
+import { db } from "../db/database.js";
+import dotenv from "dotenv";
+import axios from "axios";
+import { UserLocation } from "../models/user_location.js";
+import { Validation } from "../utils/validationUtils.js";
 
 dotenv.config();
 
@@ -169,8 +169,8 @@ export const updateUserLocation = async(req, res) => {
 async function updateUserLocationDb(userLocation){
     try{
         
-        await db.run('UPDATE user_locations SET latitude = ?, longitude = ?, neighborhood = ?, \
-            city = ?, country = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?;',
+        await db.run("UPDATE user_locations SET latitude = ?, longitude = ?, neighborhood = ?, \
+            city = ?, country = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?;",
             [userLocation.latitude, userLocation.longitude, userLocation.neighborhood,
                 userLocation.city, userLocation.country, userLocation.userId
             ]);
@@ -185,7 +185,7 @@ async function updateUserLocationDb(userLocation){
 export async function getUserLocationByUserId(userId)
 {
     try{
-        const row = await db.get('SELECT * FROM user_locations WHERE user_id = ?', [userId]);
+        const row = await db.get("SELECT * FROM user_locations WHERE user_id = ?", [userId]);
 
         if (row){
             const userLocation = new UserLocation(row.user_id, row.latitude, row.longitude, row.neighborhood, row.city, row.country, row.created_at, row.updated_at);
@@ -236,7 +236,7 @@ async function ipToLatLon(ip){
         let latitude = null;
         let longitude = null;
 
-        console.log("IP data:", ipData);
+        //console.log("IP data:", ipData);
 
         if (ipData.latitude && ipData.longitude) {
             latitude = parseFloat(ipData.latitude);
