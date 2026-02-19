@@ -9,49 +9,35 @@ export const getPublicIP = async (): Promise<string | null> => {
     }
 };
 
-
 export const requestLocationPermission = async (): Promise<{
-    latitude: number;
-    longitude: number;
+  latitude: number;
+  longitude: number;
 } | null> => {
-    if (!("geolocation" in navigator)) {
-        return null;
-    }
+  if (!navigator.geolocation) {
+    return null;
+  }
 
-    try {
-        const permission = await navigator.permissions.query({
-            name: "geolocation" as PermissionName,
-        });
-
-        if (permission.state === "denied") {
-            return null;
+  try {
+    const position = await new Promise<GeolocationPosition>((resolve, reject) =>
+    navigator.geolocation.getCurrentPosition(
+        resolve,
+        reject,
+        {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
         }
+    )
+    );
 
-        const location = await getCurrentPositionAsync();
-        return location;
-
-    } catch (err) {
-        console.warn("Location request failed:", err);
-        return null;
-    }
-};
-
-
-const getCurrentPositionAsync = (): Promise<{
-    latitude: number;
-    longitude: number;
-}> => {
-    return new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(
-            (pos) => {
-                resolve({
-                    latitude: pos.coords.latitude,
-                    longitude: pos.coords.longitude,
-                });
-            },
-            (err) => reject(err)
-        );
-    });
+    return {
+    latitude: position.coords.latitude,
+    longitude: position.coords.longitude,
+    };
+  } catch (err) {
+    console.warn("Location request failed:", err);
+    return null;
+  }
 };
 
 interface GeocodeResult {

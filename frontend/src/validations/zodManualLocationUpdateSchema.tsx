@@ -7,7 +7,15 @@ export const manualLocationUpdateSchema = z.object({
         .min(3, "Neighborhood must be at least 3 characters")
         .max(50, "Neighborhood cannot exceed 50 characters"),
 
-    ip: z.string().optional(),
+    latitude: z
+        .number()
+        .min(-90, "Latitude must be >= -90")
+        .max(90, "Latitude must be <= 90"),
+
+    longitude: z
+        .number()
+        .min(-180, "Longitude must be >= -180")
+        .max(180, "Longitude must be <= 180"),
 
 })
 

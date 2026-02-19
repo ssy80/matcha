@@ -1,7 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import api from "@/api/axios";
-import { requestLocationPermission } from "@/utils/gpsHelper";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -34,30 +33,6 @@ const Navbar = () => {
     const [mobileOpen, setMobileOpen] = useState(false);
 
     const pollInterval = useRef<number | null>(null);
-
-    useEffect(() => {
-        const initLocation = async () => {
-            const location = await requestLocationPermission();
-
-            if (location) {
-                try{
-                    await api.post("/location/update", location);
-                } catch (err: any) {
-                    const message = err?.response?.data?.error || "Unknown error";
-                    console.error(`Error failed to update location: ${message}`);
-                    alert(`Error failed to update location: ${message}`);
-                }
-            } else{
-                //check got location already?
-                const res = await api.get("/location/get");
-                const locationData = res.data.success ? res.data.location : null
-                if (locationData.neighborhood === "unknown")
-                    navigate("/location/edit");
-            } 
-        };
-
-        initLocation();
-    }, []);
 
     const handleLogout = async () => {
         try {

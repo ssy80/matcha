@@ -23,10 +23,7 @@ app.use(
         crossOriginResourcePolicy: { policy: "cross-origin" },
     })
 );
-app.use(cors({
-    origin: true,
-    credentials: true,
-}));
+app.use(cors());
 
 // static images dir
 app.use("/images", express.static("public/images"));

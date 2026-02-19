@@ -22,7 +22,6 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import { getPublicIP } from "@/utils/gpsHelper";
 
 
 const Location = () => {
@@ -33,26 +32,16 @@ const Location = () => {
         resolver: zodResolver(manualLocationUpdateSchema),
         defaultValues: {
             neighborhood: "",
-            ip: "",
+            latitude: 0,
+            longitude: 0,
         },
     })
     
     const onSubmit = async (data: ManualLocationUpdateFormValues) => {
         try {
 
-            const ip = await getPublicIP();
-
-            if (!ip) {
-                form.setError("neighborhood", {
-                    type: "manual",
-                    message: "Unable to detect your public IP address",
-                });
-                return;
-            }
-
             await api.post("/location/manual_update", {
-                ...data,
-                ip: ip,
+                ...data
             });
             
             alert("Location update request successful.");
@@ -71,7 +60,7 @@ const Location = () => {
         <Card className="w-full max-w-md">
 
             <CardHeader>
-            <CardTitle>Update Location</CardTitle>
+            <CardTitle>Manual Update Location</CardTitle>
             <CardDescription>
                 Enter your location
             </CardDescription>
@@ -100,6 +89,48 @@ const Location = () => {
                         <FormMessage />
                     </FormItem>
                     )}
+                />
+
+                {/* Latitude */}
+                <FormField
+                control={form.control}
+                name="latitude"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Latitude</FormLabel>
+                    <FormControl>
+                        <Input
+                        type="number"
+                        step="any"
+                        placeholder="e.g. 12.9716"
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+
+                {/* Longitude */}
+                <FormField
+                control={form.control}
+                name="longitude"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Longitude</FormLabel>
+                    <FormControl>
+                        <Input
+                        type="number"
+                        step="any"
+                        placeholder="e.g. 77.5946"
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
                 />
 
                 {/* Submit */}

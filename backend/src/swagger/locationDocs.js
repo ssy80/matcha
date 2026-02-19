@@ -20,14 +20,21 @@
  *               - ip
  *               - neighborhood
  *             properties:
- *               ip:
- *                 type: string
- *                 description: Valid IPv4 address used for geolocation lookup
- *                 example: "42.61.211.133"
  *               neighborhood:
  *                 type: string
  *                 description: Neighborhood name (3–50 characters")
  *                 example: "Jurong West"
+ *               latitude:
+ *                 type: number
+ *                 format: float
+ *                 description: Latitude coordinate (use with longitude)
+ *                 example: 1.3804850253907623
+ *               longitude:
+ *                 type: number
+ *                 format: float
+ *                 description: Longitude coordinate (use with latitude)
+ *                 example: 103.69842170992649
+ * 
  *     responses:
  *       '201':
  *         description: Successfully updated user location
@@ -52,23 +59,15 @@
  *                 error:
  *                   type: string
  *                   examples:
- *                     invalidIp:
- *                       value: "invalid ip"
  *                     invalidNeighborhood:
  *                       value: "invalid neighborhood"
- *       '502':
- *         description: IP geolocation service unavailable or failed
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 error:
- *                   type: string
- *                   example: "failed to fetch geolocation data"
+ *                     invalidLatitude:
+ *                       value: "invalid latitude"
+ *                     invalidLongitude:
+ *                       value: "invalid longitude"
+ *                     invalidLatitudeLongitude:
+ *                       value: "invalid latitude or longitude"
+ * 
  *       '401':
  *         description: Unauthorized - Missing or invalid authentication token
  *         content:

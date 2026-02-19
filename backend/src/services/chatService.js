@@ -73,6 +73,7 @@ async function addChatMessage(chatMessage){
         const eventChat = await db.get("SELECT * FROM events WHERE user_id = ? AND from_user_id = ? AND \
             event_type = 'new_message' AND event_status = 'new';",
                 [chatMessage.toUserId, chatMessage.fromUserId]);
+
         if (eventChat){
             await db.run("UPDATE events SET updated_at = CURRENT_TIMESTAMP WHERE id = ?;", [eventChat.id]);
         }

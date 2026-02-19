@@ -348,7 +348,12 @@ export const getProfileUser = async (req, res) => {
             "is_blocked": isBlocked
         }
 
-        if (userId !== viewUserId){
+        const blockedMeUser = await getUserBlocked(viewUserId, userId);
+        let blockedMe = false;
+        if (blockedMeUser)
+            blockedMe = true;
+
+        if (userId !== viewUserId && !blockedMe){
             const viewedHistory = new ViewedHistory(null, userId, viewUserId, null, null);
             await addViewedHistory(viewedHistory);
 
@@ -601,8 +606,15 @@ async function addLikedHistory(likedHistory, isLiked){
 
                 await db.run("UPDATE fame_ratings SET liked_count = liked_count + 1, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?;", [likedHistory.likedUserId]);
 
-                const event = new Event(null, likedHistory.likedUserId, likedHistory.userId, "liked_me", "new", null, null);
-                await addEvent(event);
+                const blockedMeUser = await getUserBlocked(likedHistory.likedUserId, likedHistory.userId);
+                let blockedMe = false;
+                if (blockedMeUser)
+                    blockedMe = true;
+
+                if (!blockedMe){
+                    const event = new Event(null, likedHistory.likedUserId, likedHistory.userId, "liked_me", "new", null, null);
+                    await addEvent(event);
+                }
                 
                 //check connected
                 const likedRow = await db.get("SELECT 1 FROM liked_histories WHERE user_id = ? AND liked_user_id = ?;", [likedHistory.likedUserId, likedHistory.userId]);
@@ -614,7 +626,9 @@ async function addLikedHistory(likedHistory, isLiked){
         }
         else{
             if (row){
+
                 await db.run("DELETE FROM liked_histories WHERE user_id = ? AND liked_user_id = ?;", [likedHistory.userId, likedHistory.likedUserId]);
+                
                 //remove fame count
                 await db.run("UPDATE fame_ratings SET liked_count = liked_count - 1, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?;", [likedHistory.likedUserId]);
                 

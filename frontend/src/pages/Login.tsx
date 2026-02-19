@@ -23,11 +23,14 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { ClipLoader } from "react-spinners";
+import { requestLocationPermission } from "@/utils/gpsHelper";
+import { useEffect, useState } from "react";
 
 
 const Login = () => {
 
     const navigate = useNavigate();
+    const [isLocationChecked, setIsLocationChecked] = useState("");
 
     const form = useForm<LoginFormValues>({
         resolver: zodResolver(loginSchema),
@@ -37,13 +40,25 @@ const Login = () => {
         },
     })
 
+    useEffect(()=>{
+
+        const redirect = () => {
+            if (isLocationChecked === "gps" || isLocationChecked === "set")
+                navigate("/search/suggested");
+            else if(isLocationChecked === "unknown")
+                navigate("/location/edit");
+        }
+        
+        redirect();
+    },[isLocationChecked]);
+
     const onSubmit = async (data: LoginFormValues) => {
         try {
             const res = await api.post("/users/login", data);
             const token = res.data.success ? res.data.token : null
             
             localStorage.setItem("token", token);
-            navigate("/search/suggested");
+            initLocation();
             
         } catch (err: any) {
             const message = err?.response?.data?.error || "Unknown error";
@@ -53,6 +68,34 @@ const Login = () => {
     }
 
     const { isSubmitting } = form.formState;
+
+
+    const initLocation = async () => {
+
+        const location = await requestLocationPermission();
+
+        if (location) {
+            try{
+                await api.post("/location/update", location);
+                setIsLocationChecked("gps");
+            } catch (err: any) {
+                const message = err?.response?.data?.error || "Unknown error";
+                console.error(`Error failed to update location: ${message}`);
+                setIsLocationChecked("unknown");
+            }
+            
+        } else{
+            
+            //no gps permission, check got location already?
+            const res = await api.get("/location/get");
+            const locationData = res.data.success ? res.data.location : null
+            if (locationData.neighborhood === "unknown")
+                setIsLocationChecked("unknown");
+            else
+                setIsLocationChecked("set");
+        }
+    };
+
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-background px-4">

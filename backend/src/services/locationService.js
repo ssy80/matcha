@@ -14,15 +14,9 @@ export async function manualUpdateUserLocation(req, res){
         const userId = req.user.id;
         const manualLocationData = req.body;
 
-        let ip = manualLocationData?.ip ?? null;
-        let neighborhood = manualLocationData?.neighborhood ?? "unknown";
-        if (ip !== null && (typeof ip !== "string")){
-            return res.status(400).json({"success": false, "error": "invalid ip"});
-        }
-        if(ip === null || !Validation.isValidIPv4(ip.trim())){
-            return res.status(400).json({"success": false, "error": "invalid ip"});
-        }
-        ip = ip.trim();
+        const neighborhood = manualLocationData?.neighborhood ?? "unknown";
+        const latitude = manualLocationData?.latitude ?? null;
+        const longitude = manualLocationData?.longitude ?? null;
 
         if (neighborhood !== null && (typeof neighborhood !== "string") && !Validation.isLengthBetween(neighborhood.trim(), 3, 50)){
             return res.status(400).json({"success": false, "error": "invalid neighborhood"});
@@ -30,11 +24,17 @@ export async function manualUpdateUserLocation(req, res){
         if (neighborhood === "unknown"){
             return res.status(400).json({"success": false, "error": "invalid neighborhood"});
         }
-        const ipLocation = await ipToLatLon(ip);
-        if (ipLocation === null){
-            return res.status(502).json({"success": false, "error": "failed to fetch geolocation data"});
+
+        if (latitude !== null && (typeof latitude !== "number")) {
+            return res.status(400).json({"success": false, "error": "invalid latitude"});
         }
-        const { latitude, longitude } = ipLocation;
+        if (longitude !== null && (typeof longitude !== "number")) {
+            return res.status(400).json({"success": false, "error": "invalid longitude"});
+        }
+
+        if (latitude === null || longitude === null || !Validation.isValidCoordinates(latitude, longitude)){
+            return res.status(400).json({"success": false, "error": "invalid latitude or longitude"});
+        }
 
         const userLocation = new UserLocation(userId, latitude, longitude, neighborhood, "unknown", "unknown", null, null);
         await updateUserLocationDb(userLocation);
@@ -235,8 +235,6 @@ async function ipToLatLon(ip){
 
         let latitude = null;
         let longitude = null;
-
-        //console.log("IP data:", ipData);
 
         if (ipData.latitude && ipData.longitude) {
             latitude = parseFloat(ipData.latitude);
