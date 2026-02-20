@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { formatMessageTime } from "@/utils/timeHelper";
+import { createSocket } from "@/utils/socketHelper";
 
 
 interface ChatUser {
@@ -38,7 +39,6 @@ export default function Chat() {
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     const [error, setError] = useState("");
 
-    const pollInterval = useRef<number | null>(null);
     const messagesEndRef = useRef<HTMLDivElement | null>(null);
     const navigate = useNavigate();
 
@@ -69,7 +69,7 @@ export default function Chat() {
         fetchInitialData();
     }, []);
 
-    //Load History & Start Polling
+    //Load History & Start websocket
     useEffect(() => {
         if (!activeUser)
             return;
@@ -88,38 +88,32 @@ export default function Chat() {
         };
 
         loadHistory();
-        startPolling();
+
+        const token = localStorage.getItem("token");
+        if (!token) 
+            return;
+
+        const socket = createSocket(token);
+
+        socket.on("chat_message", (msg) => {
+
+            const isCurrentChat =
+            (msg.from_user_id === activeUser.id && msg.to_user_id === myUserId) ||
+            (msg.from_user_id === myUserId && msg.to_user_id === activeUser.id);
+
+            if (!isCurrentChat)
+                return;
         
-        return () => stopPolling();
+            setMessages(prev => [...prev, msg]);
+        });
+
+        socket.on("connect_error", (err) => {
+            console.error("Socket connection error:", err.message);
+        });
+
+        return () => {socket.disconnect();};
     }, [activeUser]);
 
-    //Polling Logic
-    const startPolling = () => {
-        if (pollInterval.current)
-            clearInterval(pollInterval.current);
-
-        pollInterval.current = window.setInterval(async () => {
-            if (!activeUser) 
-                return;
-            
-            try {
-                const response = await api.get(`/chat/history/${activeUser.id}`);
-                setMessages(response.data.success ? response.data.messages : []);
-
-            } catch (err: any) {
-                const message = err?.response?.data?.error || "Unknown error";
-                console.error(`Error failed to get chat message: ${message}`);
-                alert(`Error failed to get chat message: ${message}`);
-            }
-        }, 3000);
-    };
-
-    const stopPolling = () => {
-        if (pollInterval.current) {
-            clearInterval(pollInterval.current);
-            pollInterval.current = null;
-        }
-    };
 
     // Send Message
     const handleSend = async (e: React.SyntheticEvent) => {

@@ -137,7 +137,7 @@ export default function Home() {
             <div className="mt-4 text-center text-red-500">Please complete your Profile by clicking My Profile and Edit Profile.</div>
         );
     }
-    
+
     return (
         <div className="mx-auto max-w-7xl px-4 py-6">
         <h1 className="mb-6 text-center text-3xl font-bold">
@@ -191,6 +191,11 @@ export default function Home() {
 
         </Card>
 
+        {(!loading && users.length === 0) && (
+            <div className="mt-4 text-center">
+            No suggested profiles
+            </div>
+        )}
 
         {/* USER GRID */}
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">

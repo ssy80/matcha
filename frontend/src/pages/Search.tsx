@@ -423,7 +423,7 @@ export default function Search() {
 
         {!isSubmitting && users.length === 0 && searchParams.size !== 0 && (
             <div className="mt-4 text-center">
-            No users matching search criteria.
+            No profiles matching search criteria.
             </div>
         )}
 

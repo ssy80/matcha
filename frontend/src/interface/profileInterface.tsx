@@ -17,5 +17,4 @@ export interface ProfileInterface {
     sexual_preference: ValidSexualPreferenceValues;
     pictures: { picture: string; is_profile_picture: number }[];
     last_seen: string;
-    is_online: boolean;
 }

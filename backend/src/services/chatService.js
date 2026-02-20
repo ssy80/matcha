@@ -25,12 +25,13 @@ export const getChatMessages = async (req, res) => {
 }
 
 
-export async function sendChatMessage(req, res){
-    try{
+export async function sendChatMessage(req, res) {
+    try {
         const userId = req.user.id;
         const chatData = req.body;
         let toUserId = chatData?.to_user_id ?? null;
         let message = chatData?.message ?? null;
+
         if (toUserId == null || typeof toUserId !== "number" || !Number.isInteger(toUserId)){
             res.status(400).json({"success": false, "error": "invalid to_user_id"});
             return;
@@ -53,20 +54,29 @@ export async function sendChatMessage(req, res){
             res.status(409).json({"success": false, "error": "blocked"});
             return;
         }
+
         const chatMessage = new ChatMessage(null, userId, toUserId, message, "new", null, null);
-        await addChatMessage(chatMessage);
-        res.status(201).json({"success": true});
-    }catch(err){
-        console.error("error sendChatMessages: ", err);
-        res.status(500).json({"success": false, "error": "internal server error"});
+        const result = await addChatMessage(req, chatMessage);
+        const messageId = result.lastID;
+
+        const fullMessage = await getChatMessagesById(messageId);
+
+        const io = req.app.get("io");
+
+        io.to(`user_${toUserId}`).emit("chat_message", fullMessage);
+
+            res.status(201).json({ success: true });
+    } catch (err) {
+        console.error("sendChatMessage:", err);
+        res.status(500).json({ success: false });
     }
 }
 
 
-async function addChatMessage(chatMessage){
+async function addChatMessage(req, chatMessage){
     try{
         
-        await db.run("INSERT INTO chat_messages(from_user_id, to_user_id, message, message_status) VALUES(?,?,?,?)",
+        const result = await db.run("INSERT INTO chat_messages(from_user_id, to_user_id, message, message_status) VALUES(?,?,?,?)",
             [chatMessage.fromUserId, chatMessage.toUserId, chatMessage.message, chatMessage.messageStatus]);
         
         //check got same event    
@@ -79,8 +89,10 @@ async function addChatMessage(chatMessage){
         }
         else{
             const event = new Event(null, chatMessage.toUserId, chatMessage.fromUserId, "new_message", "new", null, null);
-            await addEvent(event);
+            await addEvent(req, event);
         }
+
+        return result;
     }catch(err){
             console.error("error addChatMessage: ", err);
             throw (err);
@@ -90,8 +102,7 @@ async function addChatMessage(chatMessage){
 
 async function getChatMessagesDb(userId){
     try{
-        
-        const rows = db.all("SELECT c.*, fu.username as from_username FROM chat_messages c, users fu WHERE to_user_id = ? AND message_status = 'new' AND c.from_user_id = fu.id;",[userId]);
+        const rows = await db.all("SELECT c.*, fu.username as from_username FROM chat_messages c, users fu WHERE to_user_id = ? AND message_status = 'new' AND c.from_user_id = fu.id;",[userId]);
         return rows;
     }catch(err){
             console.error("error getChatMessagesDb: ", err);
@@ -120,11 +131,11 @@ export const getConversation = async (req, res) => {
             return res.status(400).json({ success: false, error: "Missing user ID" });
         }
 
-        await db.run(`
+        /*await db.run(`
             UPDATE chat_messages 
             SET message_status = 'read' 
             WHERE from_user_id = ? AND to_user_id = ?
-        `, [otherUserId, userId]);
+        `, [otherUserId, userId]);*/
 
         const query = `
             SELECT * FROM chat_messages 
@@ -140,3 +151,16 @@ export const getConversation = async (req, res) => {
         res.status(500).json({ success: false, error: "internal server error" });
     }
 };
+
+
+async function getChatMessagesById(messageId){
+    try{
+        const row = await db.get("SELECT c.*, u.username AS from_username FROM chat_messages c JOIN users u ON u.id = c.from_user_id WHERE c.id = ?",
+            [messageId]
+        );
+        return row;
+    }catch(err){
+            console.error("error getChatMessagesById: ", err);
+            throw (err);
+    }
+}

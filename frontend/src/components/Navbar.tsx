@@ -1,6 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect, useState, useRef } from "react";
-import api from "@/api/axios";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -16,6 +15,7 @@ import {
   SheetContent,
 } from "@/components/ui/sheet";
 import { formatMessageTime } from "@/utils/timeHelper";
+import { createSocket } from "@/utils/socketHelper";
 
 
 // Interface matching the Backend "Event" model + "from_username"
@@ -32,43 +32,30 @@ const Navbar = () => {
     const [notifications, setNotifications] = useState<AppEvent[]>([]);
     const [mobileOpen, setMobileOpen] = useState(false);
 
-    const pollInterval = useRef<number | null>(null);
-
     const handleLogout = async () => {
-        try {
-            await api.post("/users/logout");
-        } catch (err: any) {
-            const message = err?.response?.data?.error || "Unknown error";
-            console.error(`Error failed to logout: ${message}`);
-            alert(`Error failed to logout: ${message}`);
-        } finally {
-            localStorage.removeItem("token");
-            navigate("/");
-        }
+        localStorage.removeItem("token");
+        navigate("/");
     };
 
-    // Poll for Notifications
     useEffect(() => {
-        const fetchEvents = async () => {
-            try {
-                const res = await api.get("/event/get");
 
-                if (res.data.success && res.data.events.length > 0) {
-                    const newEvents = res.data.events;
-                    //console.log("🔔 New Notification:", newEvents);
-                    setNotifications(prev => [...newEvents, ...prev]);
-                }
+        const token = localStorage.getItem("token");
+        if (!token) 
+            return;
 
-            } catch (err: any) {
-                const message = err?.response?.data?.error || "Unknown error";
-                console.error(`Error fetching events: ${message}`);
-            }
-        };
+        const socket = createSocket(token);
 
-        pollInterval.current = window.setInterval(fetchEvents, 3000);
+        socket.on("event_created", (event) => {
+            //console.log("New Notification:", event);
+            setNotifications(prev => [event, ...prev]);
+        });
+
+        socket.on("connect_error", (err) => {
+            console.error("Socket connection error:", err.message);
+        });
 
         return () => {
-            if (pollInterval.current) clearInterval(pollInterval.current);
+            socket.disconnect();
         };
 
     }, []);

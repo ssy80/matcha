@@ -17,7 +17,6 @@ dotenv.config();
 
 const IMAGE_URL = `${process.env.API_HOST_URL}:${process.env.API_HOST_PORT}${process.env.PUBLIC_IMAGE_DIR}`;
 
-
 export const fakedProfile = async (req, res) =>{
     try{
         const userId = req.user.id;
@@ -105,7 +104,7 @@ export const blockedProfile = async (req, res) =>{
         }
 
         const likedHistory = new LikedHistory(null, userId, blockedUserId, null, null);
-        await addLikedHistory(likedHistory, false);
+        await addLikedHistory(req, likedHistory, false);
 
         const userBlocked = new UserBlocked(null, userId, blockedUserId, null, null);
         await addUserBlocked(userBlocked, isBlocked);
@@ -259,7 +258,7 @@ export const likedProfile = async(req, res) => {
         }
 
         const likedHistory = new LikedHistory(null, userId, likedUserId, null, null);
-        await addLikedHistory(likedHistory, isLiked);
+        await addLikedHistory(req, likedHistory, isLiked);
         res.status(201).json({"success": true});
     }catch(err){
         console.error("error likedProfile: ", err);
@@ -355,18 +354,7 @@ export const getProfileUser = async (req, res) => {
 
         if (userId !== viewUserId && !blockedMe){
             const viewedHistory = new ViewedHistory(null, userId, viewUserId, null, null);
-            await addViewedHistory(viewedHistory);
-
-            try {
-                await addEvent({
-                    userId: viewUserId,
-                    fromUserId: userId,
-                    eventType: "viewed_me",
-                    eventStatus: "new"
-                });
-            } catch (notifyErr) {
-                console.error("Failed to create view notification:", notifyErr);
-            }
+            await addViewedHistory(req, viewedHistory);
         }
 
         res.status(200).json({"success": true, "profile": data});
@@ -420,7 +408,6 @@ export const getProfileMe = async (req, res) => {
             "sexual_preference": user.sexualPreference,
             "pictures": pictures,
             "last_seen": userOnline?.updatedAt ?? null,
-            "is_online": userOnline.is_online === 1,
             "fame_rating": fameRating,
             "location": location
         }
@@ -582,13 +569,13 @@ async function getUserPicturesByUserId(userId){
 }
 
 
-async function addViewedHistory(viewedHistory){
+async function addViewedHistory(req, viewedHistory){
     try{
         const row = await db.get("SELECT 1 FROM viewed_histories WHERE user_id = ? AND viewed_user_id = ?;", [viewedHistory.userId, viewedHistory.viewedUserId]);
         if (!row){
             await db.run("INSERT INTO viewed_histories(user_id, viewed_user_id) values(?,?);", [viewedHistory.userId, viewedHistory.viewedUserId]);
             const event = new Event(null, viewedHistory.viewedUserId, viewedHistory.userId, "viewed_me", "new", null, null);
-            await addEvent(event);
+            await addEvent(req, event);
         }
     }catch(err){
         console.error("error addViewedHistory: ", err);
@@ -597,7 +584,7 @@ async function addViewedHistory(viewedHistory){
 }
 
 
-async function addLikedHistory(likedHistory, isLiked){
+async function addLikedHistory(req, likedHistory, isLiked){
     try{
         const row = await db.get("SELECT * FROM liked_histories WHERE user_id = ? AND liked_user_id = ?;", [likedHistory.userId, likedHistory.likedUserId]);
         if (isLiked){
@@ -613,14 +600,14 @@ async function addLikedHistory(likedHistory, isLiked){
 
                 if (!blockedMe){
                     const event = new Event(null, likedHistory.likedUserId, likedHistory.userId, "liked_me", "new", null, null);
-                    await addEvent(event);
+                    await addEvent(req, event);
                 }
                 
                 //check connected
                 const likedRow = await db.get("SELECT 1 FROM liked_histories WHERE user_id = ? AND liked_user_id = ?;", [likedHistory.likedUserId, likedHistory.userId]);
                 if (likedRow){
                     const connectedEvent = new Event(null, likedHistory.likedUserId, likedHistory.userId, "connected", "new", null, null);
-                    await addEvent(connectedEvent);
+                    await addEvent(req, connectedEvent);
                 }
             }
         }
@@ -636,7 +623,7 @@ async function addLikedHistory(likedHistory, isLiked){
                 const likedRow = await db.get("SELECT 1 FROM liked_histories WHERE user_id = ? AND liked_user_id = ?;", [likedHistory.likedUserId, likedHistory.userId]);
                 if (likedRow){
                     const disconnectedEvent = new Event(null, likedHistory.likedUserId, likedHistory.userId, "disconnected", "new", null, null);
-                    await addEvent(disconnectedEvent);
+                    await addEvent(req, disconnectedEvent);
                 }
             }
         }

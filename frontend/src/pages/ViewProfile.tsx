@@ -263,7 +263,6 @@ const ViewProfile = () => {
             <Separator />
 
             {/* Profile main */}
-            {/* Profile main */}
             <CardContent className="mt-6 flex flex-col items-center gap-6 md:flex-row md:items-start md:justify-center">
 
             {/* Avatar */}
