@@ -62,10 +62,30 @@ export async function sendChatMessage(req, res) {
         const fullMessage = await getChatMessagesById(messageId);
 
         const io = req.app.get("io");
+        
+        const roomName = `user_${toUserId}`;
+        const room = io.sockets.adapter.rooms.get(roomName);
 
-        io.to(`user_${toUserId}`).emit("chat_message", fullMessage);
+        let shouldCreateNotification = true;
+        if (room && room.size > 0) {
+            
+            for (const socketId of room) {
+                const recipientSocket = io.sockets.sockets.get(socketId);
 
-            res.status(201).json({ success: true });
+                if (recipientSocket?.activeChatWith === userId) {
+                    shouldCreateNotification = false;
+                    break;
+                }
+            }
+            io.to(roomName).emit("chat_message", fullMessage);
+        }
+
+        if (shouldCreateNotification) {
+            const event = new Event(null, chatMessage.toUserId, chatMessage.fromUserId, "new_message", "new", null, null);
+            await addEvent(req, event);
+        }
+
+        res.status(201).json({ success: true });
     } catch (err) {
         console.error("sendChatMessage:", err);
         res.status(500).json({ success: false });
@@ -79,19 +99,6 @@ async function addChatMessage(req, chatMessage){
         const result = await db.run("INSERT INTO chat_messages(from_user_id, to_user_id, message, message_status) VALUES(?,?,?,?)",
             [chatMessage.fromUserId, chatMessage.toUserId, chatMessage.message, chatMessage.messageStatus]);
         
-        //check got same event    
-        const eventChat = await db.get("SELECT * FROM events WHERE user_id = ? AND from_user_id = ? AND \
-            event_type = 'new_message' AND event_status = 'new';",
-                [chatMessage.toUserId, chatMessage.fromUserId]);
-
-        if (eventChat){
-            await db.run("UPDATE events SET updated_at = CURRENT_TIMESTAMP WHERE id = ?;", [eventChat.id]);
-        }
-        else{
-            const event = new Event(null, chatMessage.toUserId, chatMessage.fromUserId, "new_message", "new", null, null);
-            await addEvent(req, event);
-        }
-
         return result;
     }catch(err){
             console.error("error addChatMessage: ", err);

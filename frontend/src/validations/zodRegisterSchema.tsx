@@ -3,7 +3,7 @@ import { z } from "zod"
 
 export const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{6,}$/
 
-const isAtLeast18 = (dateString: string) => {
+export const isAtLeast18 = (dateString: string) => {
     const today = new Date();
     const birthDate = new Date(dateString);
 
@@ -16,7 +16,7 @@ const isAtLeast18 = (dateString: string) => {
     return age >= 18;
 }
 
-const isYearAtLeast1900 = (dateString: string) => {
+export const isYearAtLeast1900 = (dateString: string) => {
     const year = new Date(dateString).getFullYear()
     return year >= 1900
 }

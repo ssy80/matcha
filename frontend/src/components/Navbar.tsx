@@ -45,9 +45,12 @@ const Navbar = () => {
 
         const socket = createSocket(token);
 
-        socket.on("event_created", (event) => {
-            //console.log("New Notification:", event);
+        socket.on("event_created", (event, ack) => {
+
             setNotifications(prev => [event, ...prev]);
+
+            if (ack) 
+                ack("received");
         });
 
         socket.on("connect_error", (err) => {

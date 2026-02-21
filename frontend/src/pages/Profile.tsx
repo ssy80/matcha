@@ -69,6 +69,7 @@ const Profile = () => {
             sexual_preference: undefined,
             interests: [],
             pictures: [],
+            date_of_birth: "",
         },
     });
 
@@ -88,9 +89,10 @@ const Profile = () => {
                     sexual_preference: profile.sexual_preference ?? undefined,
                     interests: profile.interests ?? [],
                     pictures,
+                    date_of_birth: profile.date_of_birth ?? "",
                 })
             } catch (err: any) {
-                console.error(`Error failed to load profile images: ${err}`);
+                console.error(`Error failed to load profile: ${err}`);
             }
         }
         loadProfile();
@@ -259,6 +261,21 @@ const Profile = () => {
                         </FormControl>
                         <FormMessage />
                         </FormItem>
+                    )}
+                />
+
+                {/* Date of Birth */}
+                <FormField
+                    control={form.control}
+                    name="date_of_birth"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Date of Birth</FormLabel>
+                        <FormControl>
+                        <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
                     )}
                 />
 

@@ -78,6 +78,16 @@ io.on("connection", async (socket) => {
 
     socket.join(`user_${userId}`);
 
+    socket.activeChatWith = null;
+
+    socket.on("active_chat", (userId) => {
+        socket.activeChatWith = userId;
+    });
+
+    socket.on("inactive_chat", () => {
+        socket.activeChatWith = null;
+    });
+
     try {
         const pendingEvents = await getEventsDb(userId, "new");
 

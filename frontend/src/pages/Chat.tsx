@@ -95,6 +95,8 @@ export default function Chat() {
 
         const socket = createSocket(token);
 
+        socket.emit("active_chat", activeUser.id);
+
         socket.on("chat_message", (msg) => {
 
             const isCurrentChat =
@@ -111,7 +113,10 @@ export default function Chat() {
             console.error("Socket connection error:", err.message);
         });
 
-        return () => {socket.disconnect();};
+        return () => {
+            socket.emit("inactive_chat"); 
+            socket.disconnect();
+        };
     }, [activeUser]);
 
 

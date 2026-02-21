@@ -29,9 +29,21 @@ export async function addEvent(req, event) {
         const insertedId = result.lastID;
         const fullEvent = await getEventById(insertedId);
 
-        io.to(`user_${event.userId}`).emit("event_created", fullEvent);
+        const roomName = `user_${event.userId}`;
+        const room = io.sockets.adapter.rooms.get(roomName);
 
-        await updateEventStatus(fullEvent, "delivered");
+        if (room && room.size > 0) {
+
+            io.to(roomName)
+              .timeout(5000)
+              .emit("event_created", fullEvent, async (err, responses) => {
+
+                  if (!err && responses.length > 0) {
+                      await updateEventStatus(fullEvent, "delivered");
+                  } 
+              });
+
+        }
 
     } catch (err) {
         console.error("error addEvent:", err);

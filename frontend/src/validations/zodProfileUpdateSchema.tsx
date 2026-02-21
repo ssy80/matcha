@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { isAtLeast18, isYearAtLeast1900 } from "./zodRegisterSchema";
 
 const base64ImageRegex = /^data:image\/(png|jpg|jpeg);base64,[A-Za-z0-9+/=]+$/
 
@@ -83,6 +84,11 @@ export const updateProfileSchema = z.object({
         .max(5, "You can upload up to 5 pictures")
         .refine((pictures) => pictures.filter((p) => p.isProfilePicture === 1).length === 1,
             {message: "Exactly one picture must be marked as profile picture",}),
+    date_of_birth: z
+        .string()
+        .min(1, "Date of birth is required")
+        .refine(isYearAtLeast1900, {message: "Year of birth must be 1900 or later",})
+        .refine(isAtLeast18, {message: "You must be at least 18 years old",}),
 
 })
 
