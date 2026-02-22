@@ -31,6 +31,7 @@ const Login = () => {
 
     const navigate = useNavigate();
     const [isLocationChecked, setIsLocationChecked] = useState("");
+    const [loading, setLoading] = useState(false);
 
     const form = useForm<LoginFormValues>({
         resolver: zodResolver(loginSchema),
@@ -42,6 +43,8 @@ const Login = () => {
 
     useEffect(()=>{
 
+        setLoading(false);
+        
         const redirect = () => {
             if (isLocationChecked === "gps" || isLocationChecked === "set")
                 navigate("/search/suggested");
@@ -54,20 +57,21 @@ const Login = () => {
 
     const onSubmit = async (data: LoginFormValues) => {
         try {
+            setLoading(true);
+            
             const res = await api.post("/users/login", data);
             const token = res.data.success ? res.data.token : null
             
             localStorage.setItem("token", token);
             initLocation();
-            
+
         } catch (err: any) {
             const message = err?.response?.data?.error || "Unknown error";
             console.error(`Login failed: ${message}`);
             alert(`Login failed: ${message}`);
+            setLoading(false);
         }
     }
-
-    const { isSubmitting } = form.formState;
 
 
     const initLocation = async () => {
@@ -158,9 +162,9 @@ const Login = () => {
                 <Button
                     type="submit"
                     className="w-full"
-                    disabled={isSubmitting}
+                    disabled={loading}
                 >
-                    {isSubmitting && <ClipLoader size={16} color="black" className="mr-2" />}
+                    {loading && <ClipLoader size={16} color="black" className="mr-2" />}
                     Login
                 </Button>
                 </form>

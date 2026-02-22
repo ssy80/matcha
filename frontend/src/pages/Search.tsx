@@ -227,7 +227,7 @@ export default function Search() {
                         </FormItem>
                     )}
                     />
-
+                    <span>-</span>
                     {/* Max age */}
                     <FormField
                     control={form.control}
@@ -286,6 +286,7 @@ export default function Search() {
                             {...field}
                             onChange={(e) => field.onChange(Number(e.target.value))}
                         />
+                        <span>-</span>
                         <FormField
                             control={form.control}
                             name="max_stars"

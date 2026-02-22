@@ -606,8 +606,10 @@ async function addLikedHistory(req, likedHistory, isLiked){
                 //check connected
                 const likedRow = await db.get("SELECT 1 FROM liked_histories WHERE user_id = ? AND liked_user_id = ?;", [likedHistory.likedUserId, likedHistory.userId]);
                 if (likedRow){
-                    const connectedEvent = new Event(null, likedHistory.likedUserId, likedHistory.userId, "connected", "new", null, null);
-                    await addEvent(req, connectedEvent);
+                    const connectedEventTo = new Event(null, likedHistory.likedUserId, likedHistory.userId, "connected", "new", null, null);
+                    const connectedEventFrom = new Event(null, likedHistory.userId, likedHistory.likedUserId, "connected", "new", null, null);
+                    await addEvent(req, connectedEventTo);
+                    await addEvent(req, connectedEventFrom);
                 }
             }
         }
@@ -622,8 +624,10 @@ async function addLikedHistory(req, likedHistory, isLiked){
                 //check disconnect
                 const likedRow = await db.get("SELECT 1 FROM liked_histories WHERE user_id = ? AND liked_user_id = ?;", [likedHistory.likedUserId, likedHistory.userId]);
                 if (likedRow){
-                    const disconnectedEvent = new Event(null, likedHistory.likedUserId, likedHistory.userId, "disconnected", "new", null, null);
-                    await addEvent(req, disconnectedEvent);
+                    const disconnectedEventTo = new Event(null, likedHistory.likedUserId, likedHistory.userId, "disconnected", "new", null, null);
+                    const disconnectedEventFrom = new Event(null, likedHistory.userId, likedHistory.likedUserId, "disconnected", "new", null, null);
+                    await addEvent(req, disconnectedEventTo);
+                    await addEvent(req, disconnectedEventFrom);
                 }
             }
         }

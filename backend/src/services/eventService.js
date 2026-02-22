@@ -35,10 +35,10 @@ export async function addEvent(req, event) {
         if (room && room.size > 0) {
 
             io.to(roomName)
-              .timeout(5000)
+              .timeout(15000)
               .emit("event_created", fullEvent, async (err, responses) => {
 
-                  if (!err && responses.length > 0) {
+                  if (responses && responses.length > 0) {
                       await updateEventStatus(fullEvent, "delivered");
                   } 
               });
