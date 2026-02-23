@@ -150,11 +150,11 @@ export const searchProfiles = async (req, res) =>{
             distSet = new Set(usersByDist.map(u => u.id));
         }
         if (criteria.min_age){
-            const usersByAge = await getUsersByAge(user, userLocation, criteria);
+            const usersByAge = await getUsersByAge(user, criteria);
             ageSet = new Set(usersByAge.map(u => u.id));
         }
         if (criteria.interests && criteria.interests.length > 0){
-            const interestUsers = await getUsersByInterests(user, userLocation, criteria);
+            const interestUsers = await getUsersByInterests(user, criteria);
             interestSet = new Set(interestUsers.map(u => u.user_id));
         }
 
@@ -407,11 +407,15 @@ async function getUsersByDist(user, userLocation, criteria){
             u.user_status = 'activated'
             AND u.id != ?
             AND (
-                u.sexual_preference = ? OR u.sexual_preference = 'bi-sexual'
-            )
-            AND (
                 ? = 'bi-sexual' OR u.gender = ?
             )
+            AND (
+                u.sexual_preference = 'bi-sexual' OR u.sexual_preference = ?
+            )
+            AND (
+                ? != 'other' OR u.sexual_preference = 'bi-sexual'
+            )
+
         ;`;
         
         const distUsers = await db.all(distQuery, 
@@ -422,9 +426,11 @@ async function getUsersByDist(user, userLocation, criteria){
                 criteria.min_dist_km,
                 criteria.max_dist_km,
                 user.id,
-                user.gender,
                 user.sexualPreference,
-                user.sexualPreference === 'bi-sexual' ? user.gender : user.sexualPreference
+                user.sexualPreference,
+                user.gender,
+                user.gender
+
             ]);
         return distUsers;
     }catch(err){
@@ -434,7 +440,7 @@ async function getUsersByDist(user, userLocation, criteria){
 }
 
 
-async function getUsersByAge(user, userLocation, criteria){
+async function getUsersByAge(user, criteria){
     try{
         const ageQuery = `
             SELECT id
@@ -447,20 +453,25 @@ async function getUsersByAge(user, userLocation, criteria){
             u.user_status = 'activated'
             AND u.id != ?
             AND (
-                u.sexual_preference = ? OR u.sexual_preference = 'bi-sexual'
-            )
-            AND (
                 ? = 'bi-sexual' OR u.gender = ?
             )
+            AND (
+                u.sexual_preference = 'bi-sexual' OR u.sexual_preference = ?
+            )
+            AND (
+                ? != 'other' OR u.sexual_preference = 'bi-sexual'
+            )
+
         ;`;
         const ageUsers = await db.all(ageQuery, 
             [
                 criteria.min_age,
                 criteria.max_age,
                 user.id,
-                user.gender,
                 user.sexualPreference,
-                user.sexualPreference === 'bi-sexual' ? user.gender : user.sexualPreference
+                user.sexualPreference,
+                user.gender,
+                user.gender
             ]);
         return ageUsers;
     }catch(err){
@@ -470,7 +481,7 @@ async function getUsersByAge(user, userLocation, criteria){
 }
 
 
-async function getUsersByInterests(user, userLocation, criteria){
+async function getUsersByInterests(user, criteria){
     try{
         const interestQuery = `
             SELECT ui.user_id
@@ -481,11 +492,15 @@ async function getUsersByInterests(user, userLocation, criteria){
             u.user_status = 'activated'
             AND u.id != ?
             AND (
-                u.sexual_preference = ? OR u.sexual_preference = 'bi-sexual'
-            )
-            AND (
                 ? = 'bi-sexual' OR u.gender = ?
             )
+            AND (
+                u.sexual_preference = 'bi-sexual' OR u.sexual_preference = ?
+            )
+            AND (
+                ? != 'other' OR u.sexual_preference = 'bi-sexual'
+            )
+
             GROUP BY ui.user_id
             HAVING COUNT(DISTINCT interest) = ?
             ;`;
@@ -494,9 +509,11 @@ async function getUsersByInterests(user, userLocation, criteria){
             [
                 ...criteria.interests,
                 user.id,
-                user.gender,
                 user.sexualPreference,
-                user.sexualPreference === 'bi-sexual' ? user.gender : user.sexualPreference,
+                user.sexualPreference,
+                user.gender,
+                user.gender,
+
                 criteria.interests.length
             ]);
         return interestUsers;
@@ -521,12 +538,17 @@ async function getUsersByFameRating(user, criteria){
             AND 
             u.user_status = 'activated'
             AND u.id != ?
-            AND (
-                u.sexual_preference = ? OR u.sexual_preference = 'bi-sexual'
-            )
+
             AND (
                 ? = 'bi-sexual' OR u.gender = ?
             )
+            AND (
+                u.sexual_preference = 'bi-sexual' OR u.sexual_preference = ?
+            )
+            AND (
+                ? != 'other' OR u.sexual_preference = 'bi-sexual'
+            )
+
         ;`;
         
         const likedUsers = await db.all(likedQuery,
@@ -534,9 +556,10 @@ async function getUsersByFameRating(user, criteria){
                 criteria.min_stars,
                 criteria.max_stars,
                 user.id,
-                user.gender,
                 user.sexualPreference,
-                user.sexualPreference === 'bi-sexual' ? user.gender : user.sexualPreference
+                user.sexualPreference,
+                user.gender,
+                user.gender,
             ]);
         return likedUsers;
     }catch(err){
