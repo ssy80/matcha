@@ -137,22 +137,8 @@ export const searchProfiles = async (req, res) =>{
         if (interests !== null){
             criteria.interests = interests;
         }
-        if (min_stars !== null){
-            const totalUsers = await getTotalUsers();
-            const fifth = Math.ceil(totalUsers / 5);
-            if (min_stars === 0){
-                criteria.min_liked_count = 0;      
-            }else{
-                const count = fifth * min_stars;
-                criteria.min_liked_count = count - fifth + 1;
-            }
-            if (max_stars === 0){
-                criteria.max_liked_count = 0;         
-            }else{
-                const count = fifth * max_stars;
-                criteria.max_liked_count = count;
-            }
-        }
+        criteria.min_stars = min_stars;
+        criteria.max_stars = max_stars;
 
         let distSet = null;
         let ageSet = null;
@@ -171,10 +157,9 @@ export const searchProfiles = async (req, res) =>{
             const interestUsers = await getUsersByInterests(user, userLocation, criteria);
             interestSet = new Set(interestUsers.map(u => u.user_id));
         }
-        if (criteria.min_liked_count) {
-            const likedUsers = await getUsersByFameRating(user, userLocation, criteria);
-            likedSet = new Set(likedUsers.map(u => u.user_id));
-        }
+
+        const likedUsers = await getUsersByFameRating(user, criteria);
+        likedSet = new Set(likedUsers.map(u => u.user_id));
 
         let intersectedSet = null;
 
@@ -521,14 +506,18 @@ async function getUsersByInterests(user, userLocation, criteria){
     }
 }
 
-
-async function getUsersByFameRating(user, userLocation, criteria){
+async function getUsersByFameRating(user, criteria){
     try{
         const likedQuery = `
             SELECT fr.user_id
             FROM fame_ratings fr
             INNER JOIN users u ON u.id = fr.user_id
-            WHERE liked_count BETWEEN ? AND ?
+            WHERE
+            CEILING(
+                    (fr.liked_count * 5.0) /
+                    (SELECT COUNT(*) FROM users WHERE user_status = 'activated')
+                )
+                BETWEEN ? AND ?
             AND 
             u.user_status = 'activated'
             AND u.id != ?
@@ -542,8 +531,8 @@ async function getUsersByFameRating(user, userLocation, criteria){
         
         const likedUsers = await db.all(likedQuery,
             [
-                criteria.min_liked_count,
-                criteria.max_liked_count,
+                criteria.min_stars,
+                criteria.max_stars,
                 user.id,
                 user.gender,
                 user.sexualPreference,
@@ -555,7 +544,6 @@ async function getUsersByFameRating(user, userLocation, criteria){
         throw err;
     }
 }
-
 
 async function getSearchProfileUser(user_id, userLocation){
     try{
